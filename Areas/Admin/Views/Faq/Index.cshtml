@@ -1,0 +1,62 @@
+@model List<Faq>
+@{
+    ViewData["Title"] = "SSS Yönetimi";
+    ViewBag.SiteActive = "faq";
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-0">Sıkça Sorulan Sorular</h2>
+        <p class="text-muted small mb-0">Yayınlanan (Aktif) sorular hem herkese açık "/sss" sayfasında hem de arama motorlarına/yapay zekâ destekli cevap sistemlerine sunulan FAQPage yapılandırılmış verisinde kullanılır.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">+ Yeni Soru</a>
+</div>
+
+@await Html.PartialAsync("_SeoSubNav")
+
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Henüz soru eklenmedi.</p>
+}
+else
+{
+    @foreach (var group in Model.GroupBy(f => string.IsNullOrWhiteSpace(f.Category) ? "Genel" : f.Category))
+    {
+        <h6 class="text-muted mt-4 mb-2">@group.Key</h6>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Sıra</th>
+                        <th>Soru</th>
+                        <th>Durum</th>
+                        <th class="text-end">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var f in group.OrderBy(f => f.DisplayOrder))
+                    {
+                        <tr>
+                            <td class="text-muted">@f.DisplayOrder</td>
+                            <td>@f.Question</td>
+                            <td>
+                                <span class="badge @(f.IsActive ? "bg-success" : "bg-secondary")">@(f.IsActive ? "Yayında" : "Pasif")</span>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex gap-2 justify-content-end">
+                                    <form asp-action="ToggleActive" asp-route-id="@f.Id" method="post">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">@(f.IsActive ? "Yayından Kaldır" : "Yayınla")</button>
+                                    </form>
+                                    <a asp-action="Edit" asp-route-id="@f.Id" class="btn btn-sm btn-outline-secondary">Düzenle</a>
+                                    <form asp-action="Delete" asp-route-id="@f.Id" method="post" data-confirm="Bu soru kalıcı olarak silinecek." data-confirm-title="Silinsin mi?" data-confirm-ok="Sil" data-confirm-danger>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}

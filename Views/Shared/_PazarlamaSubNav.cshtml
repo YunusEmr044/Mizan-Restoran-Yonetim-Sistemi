@@ -1,0 +1,9 @@
+@{
+    var active = ViewBag.PazarlamaActive as string ?? "";
+}
+<div class="ry-cat-chips mb-4">
+    <a class="ry-cat-chip @(active == "campaigns" ? "active" : "")" asp-area="Admin" asp-controller="Campaigns" asp-action="Index"><i class="bi bi-megaphone"></i> Kampanyalar</a>
+    <a class="ry-cat-chip @(active == "customers" ? "active" : "")" asp-area="Admin" asp-controller="Customers" asp-action="Index"><i class="bi bi-people"></i> Müşteriler</a>
+    <a class="ry-cat-chip @(active == "reservations" ? "active" : "")" asp-area="Admin" asp-controller="Reservations" asp-action="Index"><i class="bi bi-calendar-check"></i> Rezervasyonlar</a>
+    <a class="ry-cat-chip @(active == "feedback" ? "active" : "")" asp-area="Admin" asp-controller="Feedback" asp-action="Index"><i class="bi bi-star"></i> Geri Bildirimler</a>
+</div>

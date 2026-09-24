@@ -1,0 +1,35 @@
+@model HomeFeature
+@{
+    ViewData["Title"] = "Özelliği Düzenle";
+}
+<h2 class="mb-4">Özelliği Düzenle</h2>
+<form asp-action="FeaturesEdit" asp-route-id="@Model.Id" method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <input type="hidden" asp-for="Id" />
+    <div class="mb-3">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Icon" class="form-label"></label>
+        <input asp-for="Icon" class="form-control" />
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label asp-for="DisplayOrder" class="form-label"></label>
+            <input asp-for="DisplayOrder" class="form-control" />
+        </div>
+        <div class="col-md mb-3 d-flex align-items-end">
+            <div class="form-check">
+                <input asp-for="IsActive" class="form-check-input" />
+                <label asp-for="IsActive" class="form-check-label"></label>
+            </div>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+    <a asp-action="Features" class="btn btn-outline-secondary">Vazgeç</a>
+</form>

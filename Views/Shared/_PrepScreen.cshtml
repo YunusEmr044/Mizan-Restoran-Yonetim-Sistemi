@@ -1,0 +1,110 @@
+@model List<OrderItem>
+@* Mutfak ve Bar ekranlarının ortak görünümü. Kullanım: çağıran view ViewBag.PrepEmoji/PrepTitle doldurur; asp-action="Ilerlet" çağıran controller'a (Mutfak/Bar) gider. *@
+@{
+    var emoji = ViewBag.PrepEmoji as string ?? "🍽";
+    var title = ViewBag.PrepTitle as string ?? "Hazırlık Ekranı";
+    var yeniCount = Model.Count(i => i.Status == OrderStatus.Yeni);
+    var hazirlaniyorCount = Model.Count(i => i.Status == OrderStatus.Hazirlaniyor);
+    var hazirCount = Model.Count(i => i.Status == OrderStatus.Hazir);
+}
+<h2 class="mb-1">@emoji @title</h2>
+<p class="text-muted mb-3">Sipariş geldikçe burada belirir. Kalemi sırayla "Hazırlanıyor" ve "Hazır" olarak işaretleyin; hazır olan kalem garson tarafından servis edilince listeden düşer.</p>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Bekleyen sipariş kalemi yok. 👍</p>
+}
+else
+{
+    <div class="ry-prep-summary">
+        <span class="badge bg-secondary">Yeni: @yeniCount</span>
+        <span class="badge" style="background: var(--ry-accent); color:#241a0c;">Hazırlanıyor: @hazirlaniyorCount</span>
+        <span class="badge bg-success">Hazır: @hazirCount</span>
+    </div>
+}
+
+<div class="ry-prep-grid">
+    @foreach (var item in Model)
+    {
+        var bekleme = item.Order?.SentAt.HasValue == true ? (int)(DateTime.Now - item.Order.SentAt.Value).TotalMinutes : 0;
+        var late = bekleme >= 15;
+        var warn = bekleme >= 8 && !late;
+        var statusClass = item.Status switch
+        {
+            OrderStatus.Yeni => "ry-prep-yeni",
+            OrderStatus.Hazirlaniyor => "ry-prep-hazirlaniyor",
+            OrderStatus.Hazir => "ry-prep-hazir",
+            _ => "ry-prep-yeni"
+        };
+        var statusLabel = item.Status switch
+        {
+            OrderStatus.Yeni => "Yeni",
+            OrderStatus.Hazirlaniyor => "Hazırlanıyor",
+            OrderStatus.Hazir => "Hazır",
+            _ => item.Status.ToString()
+        };
+        var badgeClass = item.Status switch
+        {
+            OrderStatus.Yeni => "bg-secondary",
+            OrderStatus.Hazirlaniyor => "text-dark",
+            OrderStatus.Hazir => "bg-success",
+            _ => "bg-secondary"
+        };
+        <div class="ry-prep-card @statusClass @(late ? "ry-prep-late" : "")">
+            <div class="ry-prep-top">
+                <span class="ry-prep-table">@item.Order?.Table?.Name</span>
+                <span class="ry-prep-time @(late ? "ry-prep-time-danger" : warn ? "ry-prep-time-warn" : "")">
+                    <i class="bi bi-clock"></i> @bekleme dk
+                </span>
+            </div>
+            <div class="ry-prep-body">
+                <div class="ry-prep-name">@item.MenuItemName <span class="ry-prep-qty">×@item.Quantity</span></div>
+                @if (item.Options.Any())
+                {
+                    <div class="ry-prep-options">+ @string.Join(", ", item.Options.Select(o => o.Name))</div>
+                }
+                @if (!string.IsNullOrEmpty(item.Notes))
+                {
+                    <div class="ry-prep-note">📝 @item.Notes</div>
+                }
+                <span class="badge @badgeClass ry-prep-status-badge" style="@(item.Status == OrderStatus.Hazirlaniyor ? "background: var(--ry-accent);" : "")">@statusLabel</span>
+            </div>
+            <div class="ry-prep-footer">
+                @if (item.Status != OrderStatus.Hazir)
+                {
+                    <form asp-action="Ilerlet" method="post">
+                        <input type="hidden" name="id" value="@item.Id" />
+                        <button type="submit" class="btn btn-sm @(item.Status == OrderStatus.Yeni ? "btn-outline-primary" : "btn-success")">
+                            @if (item.Status == OrderStatus.Yeni)
+                            {
+                                <text>▶ Hazırlanıyor Olarak İşaretle</text>
+                            }
+                            else
+                            {
+                                <text>✅ Hazır Olarak İşaretle</text>
+                            }
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <div class="ry-prep-done"><i class="bi bi-check-circle-fill"></i> Hazır — garson bekleniyor</div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@* Bip sesi realtime.js'ten geliyor; burada sadece kendi grubuna (mutfak/bar) ait olayda listeyi tazeliyoruz. "notifications" grubu burada tetiklemez. *@
+<script>
+    (function () {
+        document.addEventListener('ry:realtime', function (e) {
+            var group = e.detail && e.detail.group;
+            if (!group || group === 'notifications') { return; }
+            var myGroups = (document.body.getAttribute('data-ry-realtime') || '').split(/\s+/);
+            if (myGroups.indexOf(group) !== -1) {
+                setTimeout(function () { location.reload(); }, 600);
+            }
+        });
+    })();
+</script>

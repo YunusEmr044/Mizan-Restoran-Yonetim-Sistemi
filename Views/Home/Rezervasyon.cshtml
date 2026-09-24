@@ -1,0 +1,81 @@
+@model Reservation
+@{
+    ViewData["Title"] = "Rezervasyon";
+    Layout = "_PublicLayout";
+}
+<style>
+    .py-res-hero {
+        background: linear-gradient(135deg, var(--py-bg-soft), var(--py-bg));
+        color: #fff;
+        padding: 4.5rem 0 3rem;
+        text-align: center;
+    }
+    .py-res-card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 2.4rem;
+        box-shadow: 0 25px 55px -28px rgba(30,20,10,.4);
+        border: 1px solid rgba(0,0,0,.05);
+    }
+    .py-res-card .form-label { font-weight: 500; font-size: .88rem; color: var(--py-muted); }
+    .py-res-card .form-control {
+        border-radius: 10px;
+        padding: .65rem .9rem;
+        border: 1px solid rgba(0,0,0,.12);
+    }
+    .py-res-card .form-control:focus {
+        border-color: var(--py-gold);
+        box-shadow: 0 0 0 .2rem rgba(var(--py-gold-rgb),.18);
+    }
+</style>
+
+<div class="py-res-hero">
+    <div class="container">
+        <div class="py-eyebrow justify-content-center">Yeriniz Ayrılsın</div>
+        <h1 class="py-serif fw-bold">Rezervasyon</h1>
+        <p class="text-white-50 mb-0">Formu doldurun, sizi ağırlamaktan mutluluk duyarız.</p>
+    </div>
+</div>
+
+<div class="py-section">
+    <div class="container" style="max-width: 620px;">
+        <div class="py-res-card py-reveal">
+            <form asp-action="Rezervasyon" method="post">
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label"><i class="bi bi-person me-1"></i>Ad Soyad</label>
+                    <input asp-for="Name" class="form-control" placeholder="Adınız Soyadınız" />
+                </div>
+                <div class="row">
+                    <div class="col-md mb-3">
+                        <label asp-for="Phone" class="form-label"><i class="bi bi-telephone me-1"></i>Telefon</label>
+                        <input asp-for="Phone" class="form-control" placeholder="05xx xxx xx xx" />
+                    </div>
+                    <div class="col-md mb-3">
+                        <label asp-for="Email" class="form-label"><i class="bi bi-envelope me-1"></i>E-posta</label>
+                        <input asp-for="Email" class="form-control" placeholder="ornek@eposta.com" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col mb-3">
+                        <label asp-for="Date" class="form-label"><i class="bi bi-calendar3 me-1"></i>Tarih</label>
+                        <input asp-for="Date" class="form-control" type="date" />
+                    </div>
+                    <div class="col mb-3">
+                        <label asp-for="Time" class="form-label"><i class="bi bi-clock me-1"></i>Saat</label>
+                        <input asp-for="Time" class="form-control" type="time" />
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="PartySize" class="form-label"><i class="bi bi-people me-1"></i>Kişi Sayısı</label>
+                    <input asp-for="PartySize" class="form-control" type="number" min="1" />
+                </div>
+                <div class="mb-4">
+                    <label asp-for="Note" class="form-label"><i class="bi bi-chat-left-text me-1"></i>Not</label>
+                    <textarea asp-for="Note" class="form-control" rows="2" placeholder="Özel bir isteğiniz var mı?"></textarea>
+                </div>
+                <button type="submit" class="btn btn-py-gold w-100 btn-lg"><i class="bi bi-send-check me-2"></i>Rezervasyon Talebi Gönder</button>
+            </form>
+        </div>
+    </div>
+</div>

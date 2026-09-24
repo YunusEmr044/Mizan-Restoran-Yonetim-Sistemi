@@ -1,0 +1,53 @@
+@model Order
+@{
+    ViewData["Title"] = "Sepetim";
+    Layout = "_CustomerLayout";
+}
+<style>
+    .customer-page { min-height: calc(100vh - 2rem); background: linear-gradient(135deg,var(--cust-dark),var(--cust-dark)); color:#fff; padding:clamp(1.5rem,4vw,3.5rem) 1rem; }
+    .customer-panel { max-width:760px; margin:auto; }
+    .customer-eyebrow { color:var(--cust-primary-light); text-transform:uppercase; letter-spacing:.2em; font-size:.72rem; font-weight:700; }
+    .customer-page h1 { font:700 clamp(2rem,5vw,3rem) var(--cust-heading-font); }
+    .customer-card { background:#fff; color:#2d241c; border-radius:20px; padding:1rem; box-shadow:0 20px 45px rgba(0,0,0,.22); }
+    .customer-item { display:flex; justify-content:space-between; gap:1rem; padding:1rem; border-bottom:1px solid #eee5d8; }
+    .customer-item:last-child { border-bottom:0; }
+    .customer-total { color:var(--cust-primary); font-size:1.25rem; font-weight:700; }
+    .customer-primary { border:0; border-radius:999px; padding:.85rem 1.2rem; background:linear-gradient(135deg,var(--cust-primary-light),var(--cust-primary)); color:var(--cust-dark); font-weight:700; }
+    .customer-secondary { display:inline-block; border:1px solid rgba(var(--cust-primary-rgb),.4); border-radius:999px; padding:.78rem 1.2rem; color:var(--cust-primary-light); text-decoration:none; }
+    .customer-secondary:hover { background:var(--cust-primary-light); color:var(--cust-dark); }
+</style>
+<div class="customer-page">
+<div class="customer-panel">
+<div class="customer-eyebrow">Sipariş özeti</div>
+<h1 class="mb-2">Sepetiniz</h1>
+<p style="color:#d8c9b2;">Göndermeden önce kontrol edin. Onayladığınızda siparişiniz mutfağa ve bara iletilecek.</p>
+
+<div class="customer-card mb-4">
+    @foreach (var item in Model.Items)
+    {
+        <div class="customer-item">
+            <div>
+                <span>@item.MenuItemName x @item.Quantity</span>
+                @if (item.Options.Any())
+                {
+                    <div class="text-muted small mt-1">+ @string.Join(", ", item.Options.Select(o => o.Name))</div>
+                }
+            </div>
+            <strong>@item.LineTotal.ToString("0.00") ₺</strong>
+        </div>
+    }
+    </div>
+
+@if (!string.IsNullOrEmpty(Model.Notes))
+{
+    <p class="text-muted small">Not: @Model.Notes</p>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4"><span style="color:#d8c9b2;">Toplam</span><span class="customer-total">@Model.Total.ToString("0.00") ₺</span></div>
+
+<form asp-action="OnaylaVeGonder" asp-route-token="@Model.Table!.QrToken" asp-route-id="@Model.Id" method="post">
+    <button type="submit" class="customer-primary w-100 mb-3">Siparişi Onayla ve Gönder <span class="ms-1">→</span></button>
+</form>
+<a class="customer-secondary w-100 text-center" asp-action="Index" asp-route-token="@Model.Table!.QrToken">← Menüye Dön</a>
+</div>
+</div>

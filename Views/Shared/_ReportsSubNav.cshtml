@@ -1,0 +1,8 @@
+@{
+    var active = ViewBag.ReportsActive as string ?? "";
+}
+<div class="ry-cat-chips mb-4">
+    <a class="ry-cat-chip @(active == "satis" ? "active" : "")" asp-area="Admin" asp-controller="Reports" asp-action="Satis"><i class="bi bi-graph-up"></i> Satış</a>
+    <a class="ry-cat-chip @(active == "urunler" ? "active" : "")" asp-area="Admin" asp-controller="Reports" asp-action="Urunler"><i class="bi bi-basket"></i> Ürünler</a>
+    <a class="ry-cat-chip @(active == "kasa" ? "active" : "")" asp-area="Admin" asp-controller="Reports" asp-action="Kasa"><i class="bi bi-cash-coin"></i> Kasa</a>
+</div>

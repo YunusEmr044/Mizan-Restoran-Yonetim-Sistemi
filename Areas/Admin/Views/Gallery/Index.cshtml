@@ -1,0 +1,47 @@
+@model List<GalleryImage>
+@{
+    ViewData["Title"] = "Galeri";
+    ViewBag.SiteActive = "gallery";
+}
+<div class="d-flex justify-content-between mb-3">
+    <h2>Galeri</h2>
+    <a asp-action="Create" class="btn btn-primary">+ Fotoğraf Yükle</a>
+</div>
+
+<div class="row row-cols-1 row-cols-md-4 g-3">
+    @foreach (var img in Model)
+    {
+        <div class="col">
+            <div class="card">
+                <div class="position-relative">
+                    <img src="@img.ImageUrl" class="card-img-top" style="height:150px;object-fit:cover;" alt="@img.Caption" />
+                    @if (img.ShowOnHomepage)
+                    {
+                        <span class="badge bg-warning text-dark position-absolute top-0 end-0 m-2"><i class="bi bi-house-fill"></i> Ana sayfada</span>
+                    }
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(img.Caption))
+                    {
+                        <p class="small text-muted mb-2">@img.Caption</p>
+                    }
+                    <form asp-action="UpdateOrder" method="post" class="d-flex gap-2 mb-2">
+                        <input type="hidden" name="id" value="@img.Id" />
+                        <input type="number" name="displayOrder" value="@img.DisplayOrder" class="form-control form-control-sm" style="width:70px;" />
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">Sıra</button>
+                    </form>
+                    <form asp-action="ToggleHomepage" asp-route-id="@img.Id" method="post" class="mb-2">
+                        <button type="submit" class="btn btn-sm @(img.ShowOnHomepage ? "btn-warning" : "btn-outline-secondary") w-100">
+                            @(img.ShowOnHomepage ? "Ana Sayfadan Kaldır" : "Ana Sayfada Göster")
+                        </button>
+                    </form>
+                    <a asp-action="Delete" asp-route-id="@img.Id" class="btn btn-sm btn-outline-danger w-100">Sil</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+@if (!Model.Any())
+{
+    <p class="text-muted">Henüz galeri fotoğrafı yok.</p>
+}

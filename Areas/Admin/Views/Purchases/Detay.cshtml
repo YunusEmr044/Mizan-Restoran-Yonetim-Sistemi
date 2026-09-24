@@ -1,0 +1,26 @@
+@model Purchase
+@{
+    ViewData["Title"] = "Satın Alma Detayı";
+}
+<h2 class="mb-1">@Model.Supplier?.Name</h2>
+<p class="text-muted">@Model.PurchaseDate.ToString("dd.MM.yyyy") @if (!string.IsNullOrEmpty(Model.InvoiceNumber)) { <text>— Fatura No: @Model.InvoiceNumber</text> }</p>
+
+<table class="table">
+    <thead><tr><th>Malzeme</th><th>Miktar</th><th>Birim Fiyat</th><th>Tutar</th></tr></thead>
+    <tbody>
+    @foreach (var item in Model.Items)
+    {
+        <tr>
+            <td>@item.InventoryItem?.Name</td>
+            <td>@item.Quantity.ToString("0.###") @item.InventoryItem?.Unit</td>
+            <td>@item.UnitPrice.ToString("0.00") ₺</td>
+            <td>@item.LineTotal.ToString("0.00") ₺</td>
+        </tr>
+    }
+    </tbody>
+    <tfoot>
+        <tr><th colspan="3">Toplam</th><th>@Model.Total.ToString("0.00") ₺</th></tr>
+    </tfoot>
+</table>
+
+<a asp-action="Index" class="btn btn-outline-secondary">← Satın Almalara Dön</a>

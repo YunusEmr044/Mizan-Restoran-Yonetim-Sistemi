@@ -1,0 +1,41 @@
+@model List<Supplier>
+@{
+    ViewData["Title"] = "Tedarikçiler";
+    ViewBag.StokActive = "suppliers";
+}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-0">Tedarikçiler</h2>
+        <p class="text-muted small mb-0">@Model.Count tedarikçi</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">+ Yeni Tedarikçi</a>
+</div>
+
+@await Html.PartialAsync("_StokSubNav")
+
+<div class="table-responsive">
+    <table class="table align-middle">
+        <thead><tr><th>Firma</th><th>Yetkili</th><th>Telefon</th><th>E-posta</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var s in Model)
+        {
+            <tr>
+                <td class="fw-semibold">@s.Name</td>
+                <td>@(s.ContactName ?? "—")</td>
+                <td>@(s.Phone ?? "—")</td>
+                <td>@(s.Email ?? "—")</td>
+                <td class="text-end">
+                    <div class="btn-group btn-group-sm">
+                        <a asp-action="Edit" asp-route-id="@s.Id" class="btn btn-outline-secondary">Düzenle</a>
+                        <a asp-action="Delete" asp-route-id="@s.Id" class="btn btn-outline-danger">Sil</a>
+                    </div>
+                </td>
+            </tr>
+        }
+        @if (!Model.Any())
+        {
+            <tr><td colspan="5" class="text-muted">Henüz tedarikçi eklenmemiş.</td></tr>
+        }
+        </tbody>
+    </table>
+</div>

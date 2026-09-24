@@ -1,0 +1,141 @@
+@model List<Category>
+@{
+    ViewData["Title"] = "Menü";
+    Layout = "_CustomerLayout";
+    var table = (RestaurantTable)ViewBag.Table;
+    var optionsByItem = ((List<MenuItemOption>)ViewBag.OptionsByItem).ToLookup(o => o.MenuItemId);
+}
+<style>
+    :root { --customer-dark: var(--cust-dark); --customer-gold: var(--cust-primary); --customer-cream: #faf6ef; --customer-muted: #756b5d; }
+    .customer-hero { background: linear-gradient(135deg,var(--cust-dark),var(--cust-dark)); color:#fff; padding:2rem 1rem 1.6rem; }
+    .customer-inner { max-width:1180px; margin:auto; }
+    .customer-eyebrow { color:var(--cust-primary-light); text-transform:uppercase; letter-spacing:.2em; font-size:.7rem; font-weight:700; }
+    .customer-hero h1 { font-family:var(--cust-heading-font); font-size:clamp(1.8rem,5vw,3rem); margin:.35rem 0 .2rem; }
+    .customer-actions { display:flex; gap:.65rem; margin-top:1.25rem; }
+    .customer-actions form { flex:1; }
+    .customer-actions button { width:100%; border:1px solid rgba(var(--cust-primary-rgb),.5); border-radius:999px; padding:.7rem .8rem; background:transparent; color:#f4d59e; }
+    .customer-actions button:hover { background:var(--cust-primary); color:var(--cust-dark); }
+    .customer-nav { position:sticky; top:0; z-index:20; padding:.75rem 1rem; background:rgba(250,246,239,.94); backdrop-filter:blur(12px); border-bottom:1px solid rgba(var(--cust-primary-rgb),.25); overflow-x:auto; white-space:nowrap; }
+    .customer-nav a { display:inline-block; color:#44382b; text-decoration:none; border:1px solid rgba(68,56,43,.18); border-radius:999px; padding:.48rem 1rem; margin-right:.35rem; font-size:.84rem; }
+    .customer-nav a.active, .customer-nav a:hover { background:var(--cust-primary); border-color:var(--cust-primary); color:var(--cust-dark); }
+    .customer-content { max-width:1180px; margin:auto; padding:2rem 1rem 8rem; }
+    .category-title { display:flex; align-items:center; gap:1rem; margin:2.4rem 0 1.1rem; scroll-margin-top:70px; }
+    .category-title h2 { margin:0; color:#241a12; font:700 1.7rem var(--cust-heading-font); }
+    .category-title div { height:1px; flex:1; background:linear-gradient(90deg,var(--cust-primary),transparent); }
+    .menu-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:1rem; }
+    .menu-card { background:#fff; border:1px solid rgba(50,35,20,.07); border-radius:18px; padding:1.05rem; box-shadow:0 14px 30px -22px rgba(30,20,10,.5); }
+    .menu-card h3 { color:#2d241c; font-size:1rem; margin:0 0 .25rem; }
+    .menu-description { color:var(--customer-muted); font-size:.82rem; min-height:1.25rem; }
+    .menu-price { color:var(--cust-primary); font-weight:700; font-size:1.05rem; }
+    .quantity { display:flex; align-items:center; gap:.35rem; }
+    .quantity button { width:31px; height:31px; border:0; border-radius:50%; background:#eee2cc; color:#513918; font-weight:700; }
+    .quantity input { width:42px; text-align:center; border:1px solid #e0d3bf; border-radius:8px; padding:.3rem; }
+    .option-list { border-top:1px solid #eee5d8; margin-top:.75rem; padding-top:.55rem; }
+    .option-list label { color:#756b5d; font-size:.78rem; }
+    .order-bar { position:fixed; bottom:0; left:0; right:0; z-index:30; background:rgba(var(--cust-dark-rgb),.96); padding:.8rem 1rem; box-shadow:0 -10px 30px rgba(30,20,10,.2); }
+    .order-bar-inner { max-width:1180px; margin:auto; display:flex; align-items:center; gap:1rem; }
+    .order-bar small { color:#e6d7bf; flex:1; }
+    .order-submit { border:0; border-radius:999px; padding:.8rem 1.5rem; background:var(--cust-primary); color:var(--cust-dark); font-weight:700; }
+    .order-submit:hover { background:var(--cust-primary-light); }
+    .menu-card h3 { font-size:clamp(.9rem, 1.5vw, 1rem); }
+</style>
+
+<header class="customer-hero">
+    <div class="customer-inner">
+        <div class="customer-eyebrow">Masanızın menüsü</div>
+        <h1>@table.Name</h1>
+@{
+    var konum = string.Join(" / ", new[] { table.Area?.Branch?.Restaurant?.Name, table.Area?.Branch?.Name, table.Area?.Name }.Where(s => !string.IsNullOrEmpty(s)));
+}
+@if (!string.IsNullOrEmpty(konum))
+{
+    <p class="mb-0" style="color:#d8c9b2;">@konum</p>
+}
+    <div class="customer-actions">
+        <form asp-action="CallWaiter" asp-route-token="@table.QrToken" method="post"><button type="submit">🔔 Garson Çağır</button></form>
+        <form asp-action="HesapIste" asp-route-token="@table.QrToken" method="post"><button type="submit">🧾 Hesap İste</button></form>
+    </div>
+    </div>
+</header>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+@if (TempData["Info"] != null)
+{
+    <div class="alert alert-success">@TempData["Info"]</div>
+}
+
+<nav class="customer-nav">
+    <div class="customer-inner">
+        @foreach (var category in Model.Where(c => c.MenuItems.Any()))
+        {
+            <a href="#cat-@category.Id" data-category="cat-@category.Id">@category.Name</a>
+        }
+    </div>
+</nav>
+
+<form asp-action="PlaceOrder" asp-route-token="@table.QrToken" method="post" id="orderForm">
+<main class="customer-content">
+    @foreach (var category in Model)
+    {
+        if (!category.MenuItems.Any())
+        {
+            continue;
+        }
+        <div class="category-title" id="cat-@category.Id"><h2>@category.Name</h2><div></div></div>
+        <div class="menu-grid">
+            @foreach (var item in category.MenuItems)
+            {
+                <article class="menu-card">
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                        <div><h3>@item.Name</h3><div class="menu-description">@item.Description</div></div>
+                        <div class="menu-price">@item.Price.ToString("0.00") ₺</div>
+                    </div>
+                    <div class="quantity mt-3"><button type="button" data-change="-1">−</button><input type="number" min="0" max="20" value="0" name="quantities[@item.Id]" /><button type="button" data-change="1">+</button></div>
+                    @if (optionsByItem[item.Id].Any())
+                    {
+                        <div class="option-list">
+                            @foreach (var opt in optionsByItem[item.Id])
+                            {
+                                <div class="form-check form-check-inline small">
+                                    <input class="form-check-input" type="checkbox" name="selectedOptions" value="@opt.Id" id="opt@(opt.Id)" />
+                                    <label class="form-check-label" for="opt@(opt.Id)">
+                                        @opt.Name @(opt.ExtraPrice > 0 ? $"(+{opt.ExtraPrice:0.00} ₺)" : "")
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    }
+                </article>
+            }
+        </div>
+    }
+    <div class="mb-3 mt-4" style="max-width:600px;">
+        <label class="form-label">Not (opsiyonel)</label>
+        <textarea name="notes" class="form-control" rows="2"></textarea>
+    </div>
+</main>
+<div class="order-bar"><div class="order-bar-inner"><small>Ürünlerinizi seçin, siparişinizi kolayca oluşturun.</small><button type="submit" class="order-submit">Sepete Ekle →</button></div></div>
+</form>
+
+<script>
+    document.querySelectorAll('[data-change]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            var input = button.parentElement.querySelector('input');
+            var next = Math.max(0, Math.min(20, Number(input.value || 0) + Number(button.dataset.change)));
+            input.value = next;
+        });
+    });
+    var pills = document.querySelectorAll('[data-category]');
+    var sections = document.querySelectorAll('.category-title');
+    function activate(id) { pills.forEach(function (p) { p.classList.toggle('active', p.dataset.category === id); }); }
+    pills.forEach(function (p) { p.addEventListener('click', function () { activate(p.dataset.category); }); });
+    if (sections.length) {
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) { if (e.isIntersecting) activate(e.target.id); });
+        }, { rootMargin: '-75px 0px -70% 0px' });
+        sections.forEach(function (section) { observer.observe(section); });
+    }
+</script>

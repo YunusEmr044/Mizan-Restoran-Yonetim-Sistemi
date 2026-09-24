@@ -1,0 +1,82 @@
+@model List<Feedback>
+@{
+    ViewData["Title"] = "Geri Bildirimler";
+    ViewBag.PazarlamaActive = "feedback";
+    double avg = ViewBag.AverageRating;
+    var canManage = User.HasClaim(Permissions.ClaimType, Permissions.Feedback.Manage);
+}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h2 class="mb-0">Müşteri Geri Bildirimleri</h2>
+    <div class="text-warning fs-5">
+        @for (var i = 1; i <= 5; i++)
+        {
+            <i class="bi @(i <= Math.Round(avg) ? "bi-star-fill" : "bi-star")"></i>
+        }
+        <span class="text-muted small">(@avg.ToString("0.0") ortalama, @Model.Count değerlendirme)</span>
+    </div>
+</div>
+
+@await Html.PartialAsync("_PazarlamaSubNav")
+
+<div class="list-group">
+    @foreach (var f in Model)
+    {
+        <div class="list-group-item">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <strong>@(string.IsNullOrEmpty(f.Name) ? "İsimsiz" : f.Name)</strong>
+                    @if (f.IsPublished)
+                    {
+                        <span class="badge bg-success">Sitede yayında</span>
+                    }
+                </div>
+                <span class="text-warning text-nowrap">
+                    @for (var i = 1; i <= 5; i++)
+                    {
+                        <i class="bi @(i <= f.Rating ? "bi-star-fill" : "bi-star")"></i>
+                    }
+                </span>
+            </div>
+            @if (!string.IsNullOrEmpty(f.Comment))
+            {
+                <p class="mb-1">@f.Comment</p>
+            }
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="text-muted small">
+                    @f.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                    @if (f.Table != null)
+                    {
+                        <text> — @f.Table.Name</text>
+                    }
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    @if (canManage && f.IsPublished)
+                    {
+                        <form asp-action="SetHomeOrder" asp-route-id="@f.Id" method="post" class="d-flex align-items-center gap-1">
+                            <label class="small text-muted mb-0" title="Ana sayfada gösterim sırası - boş bırakılırsa otomatik (en yeni önce) seçilir">Sıra</label>
+                            <input type="number" name="homeOrder" value="@f.HomeDisplayOrder" class="form-control form-control-sm" style="width:70px;" placeholder="oto" />
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Kaydet</button>
+                        </form>
+                    }
+                    @if (canManage)
+                    {
+                        <form asp-action="TogglePublish" asp-route-id="@f.Id" method="post">
+                            @if (f.IsPublished)
+                            {
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Yayından Kaldır</button>
+                            }
+                            else
+                            {
+                                <button type="submit" class="btn btn-sm btn-outline-success" @(string.IsNullOrEmpty(f.Comment) || f.Rating < 4 ? "disabled" : "") title="Sadece yorumlu ve 4+ yıldızlı değerlendirmeler ana sayfada gösterilir">Sitede Yayınla</button>
+                            }
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    @if (!Model.Any())
+    {
+        <p class="text-muted">Henüz geri bildirim yok.</p>
+    }
+</div>

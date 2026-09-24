@@ -1,0 +1,99 @@
+@model List<RestaurantTable>
+@{
+    ViewData["Title"] = "Masalar";
+    ViewBag.MenuYonetimiActive = "tables";
+    // ÖNEMLİ: t.Area yerine t.AreaId ile grupluyoruz - AsNoTracking() nedeniyle EF Core aynı Area için ayrı nesne örnekleri üretir, GroupBy(t => t.Area) referans eşitliğine bakıp yanlış bölerdi.
+    var areaGroups = Model
+        .GroupBy(t => t.AreaId)
+        .OrderBy(g => g.First().Area?.Branch?.Restaurant?.Name)
+        .ThenBy(g => g.First().Area?.Branch?.Name)
+        .ThenBy(g => g.First().Area?.Name)
+        .ToList();
+    var groupIndex = 0;
+}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-0">Masalar / QR Kodları</h2>
+        <p class="text-muted small mb-0">@Model.Count masa, @areaGroups.Count alan — alan başlığına tıklayınca o alandaki masalar açılır/kapanır</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">+ Yeni Masa</a>
+</div>
+
+@await Html.PartialAsync("_MenuYonetimiSubNav")
+
+@{
+    object? qrBaseSourceValue = ViewBag.QrBaseSource;
+    var qrBaseMissing = qrBaseSourceValue is RestoranYonetim.Services.PublicUrlSource qrSource && qrSource == RestoranYonetim.Services.PublicUrlSource.Request;
+}
+<div class="alert @(qrBaseMissing ? "alert-warning" : "alert-light border") small d-flex flex-wrap align-items-center gap-2 py-2">
+    <i class="bi bi-qr-code"></i>
+    <span>QR kodları şu adrese yönleniyor: <strong>@ViewBag.QrBaseUrl</strong>@(qrBaseMissing ? " (site adresi ayarlanmamış)" : "")</span>
+    @if (User.IsInRole(RestoranYonetim.Security.RolePermissions.SuperAdmin))
+    {
+        <a asp-controller="Settings" asp-action="Index" class="ms-auto">Ayarlar'dan değiştir</a>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Henüz masa eklenmemiş.</p>
+}
+
+@foreach (var group in areaGroups)
+{
+    groupIndex++;
+    var area = group.First().Area;
+    var collapseId = $"ryAreaCollapse{groupIndex}";
+    var boşCount = group.Count(t => t.Status == TableStatus.Bos);
+    var isOpen = groupIndex == 1;
+    <div class="ry-area-group mb-3">
+        <button type="button" class="ry-area-header @(isOpen ? "" : "collapsed")" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="@(isOpen ? "true" : "false")">
+            <span class="ry-area-header-title">
+                <i class="bi bi-chevron-down ry-area-chevron"></i>
+                <i class="bi bi-geo-alt"></i>
+                @(area?.Name ?? "Alan Atanmamış")
+                <span class="text-muted fw-normal small">
+                    @(area?.Branch?.Restaurant?.Name) @(area?.Branch != null ? "/ " + area.Branch.Name : "")
+                </span>
+            </span>
+            <span class="ry-area-header-meta">
+                <span class="badge bg-light text-dark border">@group.Count() masa</span>
+                <span class="badge bg-success">@boşCount boş</span>
+            </span>
+        </button>
+        <div class="collapse @(isOpen ? "show" : "")" id="@collapseId">
+            <div class="ry-table-grid">
+                @foreach (var t in group.OrderBy(t => t.Name))
+                {
+                    var statusClass = t.Status switch
+                    {
+                        TableStatus.Bos => "bg-success",
+                        TableStatus.Dolu => "bg-danger",
+                        TableStatus.Rezerve => "text-dark",
+                        TableStatus.SiparisBekliyor => "text-dark",
+                        TableStatus.HesapIstendi => "bg-danger",
+                        TableStatus.Temizleniyor => "bg-secondary",
+                        _ => "bg-secondary"
+                    };
+                    <div class="ry-table-card">
+                        <div class="ry-table-card-top">
+                            <span class="ry-table-card-name">@t.Name</span>
+                            <span class="badge @statusClass ry-table-status-badge" style="@((t.Status == TableStatus.Rezerve || t.Status == TableStatus.SiparisBekliyor) ? "background: var(--ry-accent);" : "")">@t.Status</span>
+                        </div>
+                        <img src="@Url.Action("QrImage", new { id = t.Id })" class="ry-table-card-qr" alt="QR kodu" loading="lazy" />
+                        <div class="ry-table-card-actions">
+                            <a href="@Url.Content($"~/menu/{t.QrToken}")" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary" title="Önizle"><i class="bi bi-eye"></i></a>
+                            <a href="@Url.Action("QrImage", new { id = t.Id })" download="@($"{t.Name}-qr.png")" class="btn btn-sm btn-outline-secondary" title="QR İndir"><i class="bi bi-download"></i></a>
+                            <a asp-action="Edit" asp-route-id="@t.Id" class="btn btn-sm btn-outline-secondary" title="Düzenle"><i class="bi bi-pencil"></i></a>
+                            <form asp-action="RenewQr" asp-route-id="@t.Id" method="post" class="d-inline"
+                                  data-confirm="Yeni bir QR kodu oluşturulacak; masadaki eski QR kodu artık çalışmaz." data-confirm-title="QR kodu yenilensin mi?" data-confirm-ok="QR Kodunu Yenile" data-confirm-danger>
+                                <button type="submit" class="btn btn-sm btn-outline-warning" title="QR Yenile"><i class="bi bi-arrow-repeat"></i></button>
+                            </form>
+                            <a asp-action="Delete" asp-route-id="@t.Id" class="btn btn-sm btn-outline-danger" title="Sil"><i class="bi bi-trash"></i></a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}

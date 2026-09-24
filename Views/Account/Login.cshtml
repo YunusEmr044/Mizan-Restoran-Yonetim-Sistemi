@@ -1,0 +1,82 @@
+@model RestoranYonetim.Controllers.LoginViewModel
+@{
+    ViewData["Title"] = "Giriş";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Giriş - Mizan</title>
+    <link rel="icon" href="~/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="~/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+    <style>
+        :root { color-scheme: light; font-family: Poppins, sans-serif; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: linear-gradient(135deg, #17130e, #3a2b1c); }
+        .login-card { width: min(430px, calc(100% - 32px)); padding: 42px; background: #fffdf9; border-radius: 18px; box-shadow: 0 25px 70px rgba(0,0,0,.35); }
+        .brand-mark { display: block; width: 76px; height: auto; margin: 0 auto 12px; }
+        .brand { color: #b17d35; font-family: "Playfair Display", serif; font-size: 2.1rem; text-align: center; margin-bottom: 0; line-height: 1.1; }
+        .tagline { color: #a0927f; text-align: center; font-size: .72rem; letter-spacing: .22em; text-transform: uppercase; margin: 4px 0 14px; }
+        .subtitle { color: #756b5d; text-align: center; margin: 0 0 30px; font-size: .9rem; }
+        label { display: block; color: #40382e; font-size: .88rem; font-weight: 600; margin: 16px 0 7px; }
+        input { width: 100%; border: 1px solid #ded4c7; border-radius: 9px; padding: 12px 13px; font: inherit; outline: none; }
+        input:focus { border-color: #b17d35; box-shadow: 0 0 0 3px rgba(177,125,53,.15); }
+        .password-wrap { position: relative; }
+        .password-wrap input { padding-right: 48px; }
+        .password-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; margin: 0; padding: 0; background: transparent; color: #756b5d; }
+        .password-toggle:hover { background: transparent; color: #956526; }
+        button { width: 100%; margin-top: 24px; border: 0; border-radius: 9px; padding: 13px; color: white; background: #b17d35; font: 600 1rem Poppins, sans-serif; cursor: pointer; }
+        button:hover { background: #956526; }
+        .errors { color: #b42318; font-size: .85rem; margin-bottom: 10px; }
+        .login-note { color: #8b8174; font-size: .78rem; text-align: center; margin-top: 22px; }
+    </style>
+</head>
+<body>
+    <main class="login-card">
+        <img src="~/img/logo-mark.svg" alt="" class="brand-mark" />
+        <div class="brand">Mizan</div>
+        <div class="tagline">Restoran Yönetim Sistemi</div>
+        <p class="subtitle">@(Model.Locked ? "Oturum kilitli - devam etmek için şifreni gir" : "Personel ve yönetim paneline giriş")</p>
+        <form method="post" action="/admin">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="ReturnUrl" />
+            <div asp-validation-summary="All" class="errors"></div>
+            <label asp-for="Email"></label>
+            @if (Model.Locked)
+            {
+                <input asp-for="Email" autocomplete="username" readonly />
+            }
+            else
+            {
+                <input asp-for="Email" autocomplete="username" autofocus />
+            }
+            <label asp-for="Password"></label>
+            <div class="password-wrap">
+                <input asp-for="Password" autocomplete="current-password" autofocus="@Model.Locked" />
+                <button type="button" class="password-toggle" id="passwordToggle" aria-label="Şifreyi göster">◉</button>
+            </div>
+            <button type="submit">Giriş Yap</button>
+        </form>
+        <div class="login-note">Yetkili personel erişimi</div>
+    </main>
+</body>
+<script>
+    (function () {
+        var password = document.getElementById('Password');
+        var toggle = document.getElementById('passwordToggle');
+        if (!password || !toggle) return;
+        toggle.addEventListener('click', function () {
+            var visible = password.type === 'text';
+            password.type = visible ? 'password' : 'text';
+            toggle.setAttribute('aria-label', visible ? 'Şifreyi göster' : 'Şifreyi gizle');
+            toggle.textContent = visible ? '◉' : '○';
+        });
+    })();
+</script>
+</html>

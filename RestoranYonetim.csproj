@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>restoran-yonetim-secrets</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="QRCoder" Version="1.4.3" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.0" />
+  </ItemGroup>
+
+  <!-- dotnet watch varsayılan olarak wwwroot altındaki her dosyayı da izliyor; kullanıcı
+       admin panelden bir görsel yüklediğinde (ör. ürün/kapak görseli) oraya yeni bir dosya
+       düşüyor ve dotnet watch bunu "kaynak kodu değişti" sanıp Hot Reload uygulamaya
+       çalışıyor - bu da HotReloadMSBuildWorkspace içinde bir çökmeye yol açabiliyor
+       (bilinen bir dotnet-watch sınırlaması, uygulama kodumuzla ilgisi yok). Yüklenen
+       dosyaların bulunduğu klasörü izlemeden çıkarıyoruz. -->
+  <ItemGroup>
+    <Watch Remove="wwwroot\uploads\**\*.*" />
+  </ItemGroup>
+
+  <!-- Tek tıkla başlatma dosyası publish klasörüne de kopyalansın (bkz. README "Tek Tıkla Başlatma"). -->
+  <ItemGroup>
+    <None Update="Baslat.bat" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

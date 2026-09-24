@@ -1,0 +1,94 @@
+@{
+    ViewData["Title"] = "Satış Raporu";
+    ViewBag.ReportsActive = "satis";
+    DateTime start = ViewBag.Start;
+    DateTime end = ViewBag.End;
+    decimal totalRevenue = ViewBag.TotalRevenue;
+    int totalCount = ViewBag.TotalCount;
+    decimal avgTicket = ViewBag.AvgTicket;
+    var daily = (List<DailySalesRow>)ViewBag.Daily;
+    var paymentBreakdown = (List<PaymentBreakdownRow>)ViewBag.PaymentBreakdown;
+}
+<div class="mb-3">
+    <h2 class="mb-0">Raporlar</h2>
+    <p class="text-muted small mb-0">Satış Raporu</p>
+</div>
+
+@await Html.PartialAsync("_ReportsSubNav")
+
+<form method="get" class="row g-2 align-items-end mb-4">
+    <div class="col-auto">
+        <label class="form-label small">Başlangıç</label>
+        <input type="date" name="start" class="form-control" value="@start.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-auto">
+        <label class="form-label small">Bitiş</label>
+        <input type="date" name="end" class="form-control" value="@end.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Filtrele</button>
+    </div>
+    <div class="col-auto">
+        <a asp-action="SatisExport" asp-route-start="@start.ToString("yyyy-MM-dd")" asp-route-end="@end.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary"><i class="bi bi-download"></i> CSV İndir</a>
+    </div>
+</form>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="ry-kpi">
+            <div class="ry-kpi-label"><i class="bi bi-cash-stack"></i> Toplam Ciro</div>
+            <div class="ry-kpi-value">@totalRevenue.ToString("0.00") ₺</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="ry-kpi">
+            <div class="ry-kpi-label"><i class="bi bi-receipt"></i> Kapanan Adisyon Sayısı</div>
+            <div class="ry-kpi-value">@totalCount</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="ry-kpi">
+            <div class="ry-kpi-label"><i class="bi bi-calculator"></i> Ortalama Fiş</div>
+            <div class="ry-kpi-value">@avgTicket.ToString("0.00") ₺</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-7">
+        <h5>Günlük Kırılım</h5>
+        <table class="table">
+            <thead><tr><th>Tarih</th><th>Adisyon</th><th>Ciro</th></tr></thead>
+            <tbody>
+            @foreach (var d in daily)
+            {
+                <tr>
+                    <td>@d.Date.ToString("dd.MM.yyyy")</td>
+                    <td>@d.Count</td>
+                    <td>@d.Total.ToString("0.00") ₺</td>
+                </tr>
+            }
+            @if (!daily.Any())
+            {
+                <tr><td colspan="3" class="text-muted">Seçilen aralıkta veri yok.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="col-md-5">
+        <h5>Ödeme Yöntemi Dağılımı</h5>
+        <table class="table">
+            <thead><tr><th>Yöntem</th><th>Tutar</th></tr></thead>
+            <tbody>
+            @foreach (var p in paymentBreakdown)
+            {
+                <tr><td>@p.Method</td><td>@p.Total.ToString("0.00") ₺</td></tr>
+            }
+            @if (!paymentBreakdown.Any())
+            {
+                <tr><td colspan="2" class="text-muted">Seçilen aralıkta veri yok.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

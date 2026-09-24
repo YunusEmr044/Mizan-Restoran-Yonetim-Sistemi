@@ -1,0 +1,70 @@
+@model List<Feedback>
+@* Model: sadece yayınlanmış (Feedback.IsPublished) ve 4+ yıldızlı yorumlar geçilmeli (bkz. FeedbackController). *@
+@{
+    var sectionTitle = ViewData["Title"] as string;
+    if (string.IsNullOrWhiteSpace(sectionTitle)) { sectionTitle = "Misafirlerimiz Ne Diyor"; }
+}
+@if (Model != null && Model.Any())
+{
+    <style>
+        .py-testi-card {
+            background: #fff;
+            border-radius: var(--py-radius);
+            padding: 1.8rem 1.6rem;
+            box-shadow: 0 16px 36px -24px rgba(30,20,10,.3);
+            border: 1px solid rgba(0,0,0,.05);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .py-testi-stars { color: var(--py-gold); font-size: .95rem; margin-bottom: .6rem; }
+        .py-testi-comment {
+            color: #3a3025;
+            font-style: italic;
+            flex: 1;
+            margin-bottom: 1rem;
+        }
+        .py-testi-comment::before { content: "\201C"; }
+        .py-testi-comment::after { content: "\201D"; }
+        .py-testi-name { font-weight: 700; }
+        .py-testi-name-row { display: flex; align-items: center; gap: .7rem; }
+        .py-testi-avatar {
+            width: 40px; height: 40px; border-radius: 50%; flex: none;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, var(--py-gold-light), var(--py-gold));
+            color: #241a0c; font-weight: 700;
+        }
+    </style>
+    <section class="py-section">
+        <div class="container">
+            <div class="text-center mb-5 py-reveal">
+                <div class="py-eyebrow justify-content-center">Yorumlar</div>
+                <h2 class="py-serif fw-bold">@sectionTitle</h2>
+            </div>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                @foreach (var f in Model)
+                {
+                    var displayName = string.IsNullOrWhiteSpace(f.Name) ? "Misafirimiz" : f.Name;
+                    <div class="col py-reveal">
+                        <div class="py-testi-card">
+                            <div class="py-testi-stars">
+                                @for (var i = 1; i <= 5; i++)
+                                {
+                                    <i class="bi @(i <= f.Rating ? "bi-star-fill" : "bi-star")"></i>
+                                }
+                            </div>
+                            <p class="py-testi-comment">@f.Comment</p>
+                            <div class="py-testi-name-row">
+                                <div class="py-testi-avatar">@displayName.Substring(0, 1).ToUpper()</div>
+                                <div>
+                                    <div class="py-testi-name">@displayName</div>
+                                    <div class="text-muted small">@f.CreatedAt.ToString("MMMM yyyy")</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}

@@ -1,0 +1,68 @@
+@model MenuItem
+@{
+    ViewData["Title"] = "Ürün Düzenle";
+}
+<h2 class="mb-4">Ürün Düzenle</h2>
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="mb-3">
+        <label class="form-label">Ürün Görseli</label>
+        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+        {
+            <div class="mb-2 d-flex align-items-center gap-3">
+                <img src="@Model.ImageUrl" alt="@Model.Name" style="width:90px;height:90px;object-fit:cover;border-radius:12px;border:1px solid var(--ry-border);" />
+                <div class="form-check">
+                    <input type="checkbox" name="removeImage" value="true" class="form-check-input" id="removeImage" />
+                    <label class="form-check-label" for="removeImage">Görseli kaldır</label>
+                </div>
+            </div>
+        }
+        <input type="file" name="imageFile" class="form-control" accept="image/*" />
+        <div class="form-text">Yeni bir dosya seçersen mevcut görselin yerine geçer.</div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control"></textarea>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Price" class="form-label"></label>
+        <input asp-for="Price" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="CategoryId" class="form-label"></label>
+        <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-select"></select>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Department" class="form-label">Hazırlanacağı Bölüm</label>
+        <select asp-for="Department" class="form-select">
+            <option value="0">Mutfak</option>
+            <option value="1">Bar</option>
+        </select>
+        <div class="form-text">Sipariş bu ürünü Mutfak veya Bar ekranından hangisine düşecek belirler.</div>
+    </div>
+    <div class="form-check mb-3">
+        <input asp-for="IsAvailable" class="form-check-input" />
+        <label asp-for="IsAvailable" class="form-check-label"></label>
+    </div>
+    <div class="card mb-3">
+        <div class="card-body">
+            <h6 class="card-title mb-2">Ana Sayfa - Öne Çıkan Lezzetler</h6>
+            <div class="form-check mb-2">
+                <input asp-for="IsFeaturedHome" class="form-check-input" />
+                <label asp-for="IsFeaturedHome" class="form-check-label"></label>
+            </div>
+            <div class="mb-0" style="max-width:160px;">
+                <label asp-for="FeaturedOrder" class="form-label small"></label>
+                <input asp-for="FeaturedOrder" class="form-control form-control-sm" />
+                <div class="form-text">Küçük sayı önce gösterilir.</div>
+            </div>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>

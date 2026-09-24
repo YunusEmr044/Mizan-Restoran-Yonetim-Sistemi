@@ -1,0 +1,151 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    decimal todayRevenue = ViewBag.TodayRevenue;
+    int todayOrderCount = ViewBag.TodayOrderCount;
+    int openTables = ViewBag.OpenTables;
+    int pendingPayment = ViewBag.PendingPaymentAdisyonlar;
+    int activeWaiterCalls = ViewBag.ActiveWaiterCalls;
+    int pendingDiscounts = ViewBag.PendingDiscounts;
+    int lowStockCount = ViewBag.LowStockCount;
+    var lowStockItems = (List<InventoryItem>)ViewBag.LowStockItems;
+    var topProducts = ViewBag.TopProducts;
+    var openShift = (CashShift?)ViewBag.OpenShift;
+}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h2 class="mb-1">Hoş geldiniz</h2>
+        <p class="text-muted mb-0">İşletmenizin bugünkü durumuna genel bakış.</p>
+    </div>
+</div>
+<style>
+    .dashboard-card-link { display:block; color:inherit; text-decoration:none; height:100%; }
+    .dashboard-card-link:hover { color:inherit; }
+    .dashboard-card-link .ry-kpi, .dashboard-card-link .card { transition:transform .2s ease, box-shadow .2s ease; }
+    .dashboard-card-link:hover .ry-kpi, .dashboard-card-link:hover .card { transform:translateY(-2px); box-shadow:0 10px 24px rgba(30,20,10,.12); }
+</style>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <a asp-area="Admin" asp-controller="Reports" asp-action="Satis" class="dashboard-card-link">
+        <div class="ry-kpi d-flex align-items-start justify-content-between">
+            <div>
+                <div class="ry-kpi-label">Bugünkü Ciro</div>
+                <div class="ry-kpi-value">@todayRevenue.ToString("0.00") ₺</div>
+            </div>
+            <i class="bi bi-cash-stack"></i>
+        </div>
+        </a>
+    </div>
+    <div class="col-md-3 col-6">
+        <a asp-area="Admin" asp-controller="Reports" asp-action="Urunler" class="dashboard-card-link">
+        <div class="ry-kpi d-flex align-items-start justify-content-between">
+            <div>
+                <div class="ry-kpi-label">Bugünkü Sipariş</div>
+                <div class="ry-kpi-value">@todayOrderCount</div>
+            </div>
+            <i class="bi bi-receipt-cutoff"></i>
+        </div>
+        </a>
+    </div>
+    <div class="col-md-3 col-6">
+        <a asp-area="Admin" asp-controller="Tables" asp-action="Index" class="dashboard-card-link">
+        <div class="ry-kpi d-flex align-items-start justify-content-between">
+            <div>
+                <div class="ry-kpi-label">Dolu Masa</div>
+                <div class="ry-kpi-value">@openTables</div>
+            </div>
+            <i class="bi bi-table"></i>
+        </div>
+        </a>
+    </div>
+    <div class="col-md-3 col-6">
+        <a asp-area="" asp-controller="Kasa" asp-action="Index" class="dashboard-card-link">
+        <div class="ry-kpi d-flex align-items-start justify-content-between">
+            <div>
+                <div class="ry-kpi-label">Kasa Vardiyası</div>
+                <div class="ry-kpi-value @(openShift != null ? "text-success" : "text-danger")" style="font-size:1.15rem;">
+                    @(openShift != null ? "Açık" : "Kapalı")
+                </div>
+            </div>
+            <i class="bi @(openShift != null ? "bi-unlock" : "bi-lock")"></i>
+        </div>
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <a asp-area="" asp-controller="Kasa" asp-action="Index" class="dashboard-card-link">
+        <div class="ry-kpi" style="border-left: 4px solid #cd9f56;">
+            <div class="ry-kpi-label">Ödeme Bekleyen Masa</div>
+            <div class="ry-kpi-value">@pendingPayment</div>
+            <span class="small text-primary">Kasaya git →</span>
+        </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a asp-area="" asp-controller="Staff" asp-action="Index" class="dashboard-card-link">
+        <div class="ry-kpi" style="border-left: 4px solid #0dcaf0;">
+            <div class="ry-kpi-label">Aktif Garson Çağrısı</div>
+            <div class="ry-kpi-value">@activeWaiterCalls</div>
+            <span class="small text-primary">Sipariş ekranına git →</span>
+        </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a asp-area="" asp-controller="Kasa" asp-action="Index" class="dashboard-card-link">
+        <div class="ry-kpi" style="border-left: 4px solid #6c757d;">
+            <div class="ry-kpi-label">Bekleyen İndirim Talebi</div>
+            <div class="ry-kpi-value">@pendingDiscounts</div>
+            <span class="small text-primary">Kasaya git →</span>
+        </div>
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <a asp-area="Admin" asp-controller="Inventory" asp-action="Index" class="dashboard-card-link">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                <span><i class="bi bi-exclamation-triangle text-warning me-1"></i>Kritik Stok Seviyesi</span>
+                <span class="badge bg-danger">@lowStockCount</span>
+            </div>
+            <ul class="list-group list-group-flush">
+                @foreach (var item in lowStockItems)
+                {
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>@item.Name</span>
+                        <span class="text-danger">@item.CurrentQuantity.ToString("0.###") @item.Unit</span>
+                    </li>
+                }
+                @if (!lowStockItems.Any())
+                {
+                    <li class="list-group-item text-muted">Kritik seviyede malzeme yok.</li>
+                }
+            </ul>
+            <div class="card-footer bg-white"><span class="small text-primary">Stok listesine git →</span></div>
+        </div>
+        </a>
+    </div>
+    <div class="col-md-6">
+        <a asp-area="Admin" asp-controller="Reports" asp-action="Urunler" class="dashboard-card-link">
+        <div class="card">
+            <div class="card-header bg-white"><i class="bi bi-trophy text-warning me-1"></i>Son 30 Günün En Çok Satan Ürünleri</div>
+            <ul class="list-group list-group-flush">
+                @foreach (var p in topProducts)
+                {
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>@p.Name</span>
+                        <span>@p.Quantity adet — @(((decimal)p.Revenue).ToString("0.00")) ₺</span>
+                    </li>
+                }
+                @if (topProducts.Count == 0)
+                {
+                    <li class="list-group-item text-muted">Henüz veri yok.</li>
+                }
+            </ul>
+        </div>
+        </a>
+    </div>
+</div>

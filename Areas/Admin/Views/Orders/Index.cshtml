@@ -1,0 +1,121 @@
+@model List<Order>
+@{
+    ViewData["Title"] = "Tüm Siparişler";
+    ViewBag.MenuYonetimiActive = "orders";
+    var statuses = Model.Select(o => o.Status).Distinct().OrderBy(s => (int)s).ToList();
+    var canCancel = User.HasClaim(Permissions.ClaimType, Permissions.Orders.Cancel);
+}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-0">Tüm Siparişler</h2>
+        <p class="text-muted small mb-0">Son @Model.Count sipariş (en yeni üstte)</p>
+    </div>
+</div>
+
+@await Html.PartialAsync("_MenuYonetimiSubNav")
+
+<div class="mb-3">
+    <div class="ry-search-box">
+        <i class="bi bi-search"></i>
+        <input type="search" id="orderSearch" class="form-control" placeholder="Masa adına göre ara..." autocomplete="off" />
+    </div>
+</div>
+
+@if (statuses.Count > 1)
+{
+    <div class="ry-cat-chips mb-4" id="statusChips">
+        <button type="button" class="ry-cat-chip active" data-status="">Tümü <span class="ry-cat-chip-count">@Model.Count</span></button>
+        @foreach (var s in statuses)
+        {
+            var count = Model.Count(o => o.Status == s);
+            <button type="button" class="ry-cat-chip" data-status="@s.ToString().ToLowerInvariant()">@s <span class="ry-cat-chip-count">@count</span></button>
+        }
+    </div>
+}
+
+<div class="table-responsive">
+    <table class="table align-middle" id="ordersTable">
+        <thead><tr><th>#</th><th>Masa</th><th>Kaynak</th><th>Tarih</th><th>Durum</th><th>Tutar</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var o in Model)
+        {
+            <tr data-table="@(o.Table?.Name?.ToLowerInvariant() ?? "")" data-status="@o.Status.ToString().ToLowerInvariant()">
+                <td class="text-muted">#@o.Id</td>
+                <td class="fw-semibold">@o.Table?.Name</td>
+                <td>
+                    @if (o.IsDraft)
+                    {
+                        <span class="badge bg-secondary">Taslak</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-light text-dark border">@o.Source</span>
+                    }
+                </td>
+                <td>@o.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                <td>
+                    @{
+                        var badgeClass = o.Status switch
+                        {
+                            OrderStatus.Yeni => "bg-secondary",
+                            OrderStatus.Hazirlaniyor => "text-dark",
+                            OrderStatus.Hazir => "bg-info text-dark",
+                            OrderStatus.ServisEdildi => "bg-success",
+                            OrderStatus.IptalEdildi => "bg-danger",
+                            _ => "bg-secondary"
+                        };
+                    }
+                    <span class="badge @badgeClass" style="@(o.Status == OrderStatus.Hazirlaniyor ? "background: var(--ry-accent);" : "")">@o.Status</span>
+                </td>
+                <td class="fw-semibold">@o.Total.ToString("0.00") ₺</td>
+                <td class="text-end">
+                    @if (canCancel && o.Status != OrderStatus.ServisEdildi && o.Status != OrderStatus.IptalEdildi)
+                    {
+                        <form asp-action="CancelOrder" asp-route-id="@o.Id" method="post" data-confirm="#@o.Id numaralı sipariş iptal edilecek. Bu işlem geri alınamaz." data-confirm-title="Sipariş iptal edilsin mi?" data-confirm-ok="Siparişi İptal Et" data-confirm-danger>
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="İptal Et"><i class="bi bi-x-circle"></i> İptal Et</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<p class="text-muted small" id="ordersEmptyState" style="display:none;">Aramanızla eşleşen sipariş bulunamadı.</p>
+
+@section Scripts {
+    <script>
+        (function () {
+            var searchInput = document.getElementById('orderSearch');
+            var chips = document.querySelectorAll('#statusChips .ry-cat-chip');
+            var rows = document.querySelectorAll('#ordersTable tbody tr');
+            var emptyState = document.getElementById('ordersEmptyState');
+            var activeStatus = '';
+
+            function applyFilter() {
+                var q = (searchInput.value || '').trim().toLowerCase();
+                var visible = 0;
+                rows.forEach(function (row) {
+                    var table = row.getAttribute('data-table') || '';
+                    var status = row.getAttribute('data-status') || '';
+                    var matchesStatus = !activeStatus || status === activeStatus;
+                    var matchesSearch = !q || table.indexOf(q) !== -1;
+                    var show = matchesStatus && matchesSearch;
+                    row.style.display = show ? '' : 'none';
+                    if (show) { visible++; }
+                });
+                emptyState.style.display = visible === 0 ? '' : 'none';
+            }
+
+            searchInput.addEventListener('input', applyFilter);
+            chips.forEach(function (chip) {
+                chip.addEventListener('click', function () {
+                    chips.forEach(function (c) { c.classList.remove('active'); });
+                    chip.classList.add('active');
+                    activeStatus = chip.getAttribute('data-status') || '';
+                    applyFilter();
+                });
+            });
+        })();
+    </script>
+}

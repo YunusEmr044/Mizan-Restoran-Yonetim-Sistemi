@@ -1,0 +1,33 @@
+@model Customer
+@{
+    ViewData["Title"] = "Yeni Müşteri";
+}
+<h2 class="mb-4">Yeni Müşteri</h2>
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label asp-for="Phone" class="form-label"></label>
+            <input asp-for="Phone" class="form-control" />
+        </div>
+        <div class="col-md mb-3">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" />
+        </div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Level" class="form-label"></label>
+        <select asp-for="Level" class="form-select">
+            <option value="0">Standart</option>
+            <option value="1">Silver</option>
+            <option value="2">Gold</option>
+            <option value="3">VIP</option>
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>

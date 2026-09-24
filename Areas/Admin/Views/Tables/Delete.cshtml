@@ -1,0 +1,10 @@
+@model RestaurantTable
+@{
+    ViewData["Title"] = "Masa Sil";
+}
+<h2 class="mb-4">Masayı Sil</h2>
+<p>"<strong>@Model.Name</strong>" (@(Model.Area?.Name)) masasını silmek istediğinize emin misiniz? Bu masaya ait siparişler de etkilenebilir.</p>
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+    <button type="submit" class="btn btn-danger">Evet, Sil</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>

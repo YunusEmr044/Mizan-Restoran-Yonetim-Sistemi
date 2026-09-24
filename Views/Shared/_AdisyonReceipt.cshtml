@@ -1,0 +1,185 @@
+@model Adisyon
+@* Ekranda gizli (d-none), sadece @@media print'te görünür olup sayfanın geri kalanını visibility:hidden yapar. Kullanım: ViewBag.ReceiptRestaurantName/Address/Phone doldurulmalı (bkz. KasaController.Detay, StaffController.Adisyon). *@
+@{
+    var restaurantName = ViewBag.ReceiptRestaurantName as string;
+    if (string.IsNullOrWhiteSpace(restaurantName)) { restaurantName = "Restoran"; }
+    var restaurantAddress = ViewBag.ReceiptRestaurantAddress as string;
+    var restaurantPhone = ViewBag.ReceiptRestaurantPhone as string;
+
+    var receiptItems = Model?.Orders
+        .Where(o => !o.IsDraft && o.Status != OrderStatus.IptalEdildi)
+        .SelectMany(o => o.Items)
+        .Where(i => i.Status != OrderStatus.IptalEdildi)
+        .ToList() ?? new List<OrderItem>();
+}
+@if (Model != null)
+{
+    <div id="printReceipt" class="d-none">
+        <div class="receipt-header text-center">
+            <div class="receipt-name">@restaurantName</div>
+            @if (!string.IsNullOrWhiteSpace(restaurantAddress))
+            {
+                <div class="receipt-line">@restaurantAddress</div>
+            }
+            @if (!string.IsNullOrWhiteSpace(restaurantPhone))
+            {
+                <div class="receipt-line">Tel: @restaurantPhone</div>
+            }
+        </div>
+        <div class="receipt-sep"></div>
+        <div class="receipt-meta">
+            <div>Masa: @(Model.Table?.Name ?? "-")</div>
+            <div>Adisyon No: @Model.Id</div>
+            <div>Tarih: @Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</div>
+        </div>
+        <div class="receipt-sep"></div>
+        <table class="receipt-items">
+            <thead>
+                <tr>
+                    <th>Ürün</th>
+                    <th class="text-end">Ad.</th>
+                    <th class="text-end">Fiyat</th>
+                    <th class="text-end">Tutar</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in receiptItems)
+                {
+                    <tr>
+                        <td>
+                            @item.MenuItemName
+                            @if (item.Options.Any())
+                            {
+                                <div class="receipt-options">+ @string.Join(", ", item.Options.Select(o => o.Name))</div>
+                            }
+                        </td>
+                        <td class="text-end">@item.Quantity</td>
+                        <td class="text-end">@((item.UnitPrice + item.OptionsUnitPrice).ToString("0.00"))</td>
+                        <td class="text-end">@item.LineTotal.ToString("0.00")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div class="receipt-sep"></div>
+        <div class="receipt-totals">
+            <div class="d-flex justify-content-between">
+                <span>Ara Toplam</span><span>@Model.ItemsTotal.ToString("0.00") TL</span>
+            </div>
+            @if (Model.DiscountAmount > 0)
+            {
+                <div class="d-flex justify-content-between">
+                    <span>İndirim@(string.IsNullOrWhiteSpace(Model.DiscountReason) ? "" : $" ({Model.DiscountReason})")</span>
+                    <span>-@Model.DiscountAmount.ToString("0.00") TL</span>
+                </div>
+            }
+            <div class="d-flex justify-content-between receipt-grand">
+                <span>TOPLAM</span><span>@Model.GrandTotal.ToString("0.00") TL</span>
+            </div>
+            @if (Model.PaidTotal > 0)
+            {
+                <div class="d-flex justify-content-between">
+                    <span>Ödenen</span><span>@Model.PaidTotal.ToString("0.00") TL</span>
+                </div>
+                @if (Model.RemainingTotal > 0)
+                {
+                    <div class="d-flex justify-content-between">
+                        <span>Kalan</span><span>@Model.RemainingTotal.ToString("0.00") TL</span>
+                    </div>
+                }
+            }
+        </div>
+        <div class="receipt-sep"></div>
+        <div class="receipt-footer text-center">
+            <div class="receipt-thankyou">Afiyet olsun!</div>
+            <div class="receipt-thanks">Bizi tercih ettiğiniz için teşekkür ederiz.</div>
+        </div>
+    </div>
+
+    <style>
+        #printReceipt {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #000;
+            width: 78mm;
+            margin: 0 auto;
+        }
+        #printReceipt .receipt-name {
+            font-size: 16px;
+            font-weight: 700;
+        }
+        #printReceipt .receipt-line {
+            font-size: 11px;
+        }
+        #printReceipt .receipt-sep {
+            border-top: 1px dashed #000;
+            margin: 6px 0;
+        }
+        #printReceipt .receipt-meta div {
+            font-size: 11px;
+        }
+        #printReceipt .receipt-items {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        #printReceipt .receipt-items th {
+            text-align: left;
+            border-bottom: 1px solid #000;
+            padding-bottom: 3px;
+            font-weight: 700;
+        }
+        #printReceipt .receipt-items td {
+            padding: 3px 0;
+            vertical-align: top;
+        }
+        #printReceipt .receipt-options {
+            font-size: 10px;
+            color: #333;
+            padding-left: 4px;
+        }
+        #printReceipt .receipt-totals > div {
+            font-size: 11px;
+        }
+        #printReceipt .receipt-grand {
+            font-weight: 700;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        #printReceipt .receipt-footer {
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        #printReceipt .receipt-thankyou {
+            font-weight: 700;
+        }
+        #printReceipt .receipt-thanks {
+            font-size: 10px;
+            color: #333;
+        }
+
+        @@media print {
+            @@page {
+                size: 80mm auto;
+                margin: 4mm;
+            }
+
+            body * {
+                visibility: hidden !important;
+            }
+
+            #printReceipt, #printReceipt * {
+                visibility: visible !important;
+            }
+
+            #printReceipt {
+                display: block !important;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 78mm;
+                margin: 0;
+            }
+        }
+    </style>
+}

@@ -1,0 +1,63 @@
+@model Feedback
+@{
+    ViewData["Title"] = "Değerlendirme";
+    Layout = "_PublicLayout";
+}
+<style>
+    .py-fb-hero {
+        background: linear-gradient(135deg, var(--py-bg-soft), var(--py-bg));
+        color: #fff;
+        padding: 4.5rem 0 3rem;
+        text-align: center;
+    }
+    .py-fb-card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 2.4rem;
+        box-shadow: 0 25px 55px -28px rgba(30,20,10,.4);
+        border: 1px solid rgba(0,0,0,.05);
+    }
+    .py-star-input { font-size: 2rem; direction: rtl; unicode-bidi: bidi-override; display: inline-flex; }
+    .py-star-input input { display: none; }
+    .py-star-input label { color: #ddd; cursor: pointer; transition: color .15s ease; }
+    .py-star-input input:checked ~ label,
+    .py-star-input label:hover,
+    .py-star-input label:hover ~ label { color: var(--py-gold); }
+</style>
+
+<div class="py-fb-hero">
+    <div class="container">
+        <div class="py-eyebrow justify-content-center">Fikriniz Bizim İçin Değerli</div>
+        <h1 class="py-serif fw-bold">Değerlendirme</h1>
+    </div>
+</div>
+
+<div class="py-section">
+    <div class="container" style="max-width: 560px;">
+        <div class="py-fb-card py-reveal">
+            <form asp-action="Degerlendirme" method="post">
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                <input type="hidden" asp-for="TableId" />
+                <div class="mb-4 text-center">
+                    <label class="form-label d-block">Puanınız</label>
+                    <div class="py-star-input">
+                        @for (var i = 5; i >= 1; i--)
+                        {
+                            <input type="radio" id="star@(i)" name="Rating" value="@i" @(Model.Rating == i ? "checked" : "") />
+                            <label for="star@(i)"><i class="bi bi-star-fill"></i></label>
+                        }
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label">Ad (isteğe bağlı)</label>
+                    <input asp-for="Name" class="form-control" />
+                </div>
+                <div class="mb-4">
+                    <label asp-for="Comment" class="form-label">Yorumunuz</label>
+                    <textarea asp-for="Comment" class="form-control" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-py-gold w-100 btn-lg"><i class="bi bi-send-check me-2"></i>Gönder</button>
+            </form>
+        </div>
+    </div>
+</div>

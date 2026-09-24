@@ -1,0 +1,72 @@
+@model List<Campaign>
+@{
+    ViewData["Title"] = "Kampanyalar";
+    ViewBag.PazarlamaActive = "campaigns";
+}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-0">Kampanyalar</h2>
+        <p class="text-muted small mb-0">@Model.Count kampanya</p>
+    </div>
+    @if (User.HasClaim(Permissions.ClaimType, Permissions.Campaigns.Manage))
+    {
+        <a asp-action="Create" class="btn btn-primary">+ Yeni Kampanya</a>
+    }
+</div>
+
+@await Html.PartialAsync("_PazarlamaSubNav")
+
+<p class="text-muted small">
+    <i class="bi bi-info-circle"></i>
+    Kampanyalar aktif tarih aralığındaysa public sitede ana sayfada duyurulur. Siparişe
+    otomatik indirim uygulanması henüz yok — garson/kasiyer kampanyayı bilerek gerekirse
+    indirim talebi oluşturur.
+</p>
+<div class="table-responsive">
+<table class="table align-middle">
+    <thead><tr><th></th><th>Ad</th><th>Tür</th><th>Değer</th><th>Tarih Aralığı</th><th>Sıra</th><th>Durum</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var c in Model)
+    {
+        <tr>
+            <td>
+                @if (!string.IsNullOrEmpty(c.ImageUrl))
+                {
+                    <img src="@c.ImageUrl" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px;" />
+                }
+            </td>
+            <td>@c.Name</td>
+            <td>@(c.DiscountType == CampaignDiscountType.Yuzde ? "Yüzde" : "Sabit Tutar")</td>
+            <td>@(c.DiscountType == CampaignDiscountType.Yuzde ? $"%{c.Value:0.##}" : $"{c.Value:0.00} ₺")</td>
+            <td>@c.StartDate.ToString("dd.MM.yyyy") — @c.EndDate.ToString("dd.MM.yyyy")</td>
+            <td>@c.DisplayOrder</td>
+            <td>
+                @if (c.IsCurrentlyRunning)
+                {
+                    <span class="badge bg-success">Yayında</span>
+                }
+                else if (!c.IsActive)
+                {
+                    <span class="badge bg-secondary">Pasif</span>
+                }
+                else
+                {
+                    <span class="badge bg-light text-dark border">Tarih Dışı</span>
+                }
+            </td>
+            <td>
+                @if (User.HasClaim(Permissions.ClaimType, Permissions.Campaigns.Manage))
+                {
+                    <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-sm btn-outline-secondary">Düzenle</a>
+                    <a asp-action="Delete" asp-route-id="@c.Id" class="btn btn-sm btn-outline-danger">Sil</a>
+                }
+            </td>
+        </tr>
+    }
+    @if (!Model.Any())
+    {
+        <tr><td colspan="8" class="text-muted">Henüz kampanya eklenmemiş.</td></tr>
+    }
+    </tbody>
+</table>
+</div>

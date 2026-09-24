@@ -1,0 +1,63 @@
+@model List<GalleryImage>
+@{
+    ViewData["Title"] = "Galeri";
+    Layout = "_PublicLayout";
+}
+<style>
+    .py-gal-hero {
+        background: linear-gradient(135deg, var(--py-bg-soft), var(--py-bg));
+        color: #fff;
+        padding: 4.5rem 0 3rem;
+        text-align: center;
+    }
+    .py-gal-tile {
+        position: relative;
+        border-radius: 14px;
+        overflow: hidden;
+        aspect-ratio: 4/3;
+        box-shadow: 0 14px 30px -20px rgba(30,20,10,.4);
+    }
+    .py-gal-tile img { width: 100%; height: 100%; object-fit: cover; transition: transform .55s ease; }
+    .py-gal-tile:hover img { transform: scale(1.1); }
+    .py-gal-caption {
+        position: absolute; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(0deg, rgba(var(--py-bg-rgb),.85), transparent);
+        color: #fff;
+        padding: 1.6rem .9rem .7rem;
+        font-size: .85rem;
+        transform: translateY(8px);
+        opacity: 0;
+        transition: all .35s ease;
+    }
+    .py-gal-tile:hover .py-gal-caption { opacity: 1; transform: translateY(0); }
+</style>
+
+<div class="py-gal-hero">
+    <div class="container">
+        <div class="py-eyebrow justify-content-center">Bir Bakış</div>
+        <h1 class="py-serif fw-bold">Galeri</h1>
+    </div>
+</div>
+
+<div class="py-section">
+    <div class="container">
+        @if (!Model.Any())
+        {
+            <p class="text-muted text-center">Henüz galeri fotoğrafı eklenmedi.</p>
+        }
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
+            @foreach (var img in Model)
+            {
+                <div class="col py-reveal">
+                    <div class="py-gal-tile">
+                        <img src="@img.ImageUrl" alt="@img.Caption" loading="lazy" />
+                        @if (!string.IsNullOrEmpty(img.Caption))
+                        {
+                            <div class="py-gal-caption">@img.Caption</div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,76 @@
+@model List<Faq>
+@{
+    ViewData["Title"] = "Sıkça Sorulan Sorular";
+    Layout = "_PublicLayout";
+}
+<style>
+    .py-faq-hero {
+        background: linear-gradient(135deg, var(--py-bg-soft), var(--py-bg));
+        color: #fff;
+        padding: 4.5rem 0 3rem;
+        text-align: center;
+    }
+    .py-faq-category { margin-bottom: 2.2rem; }
+    .py-faq-category h2 { font-size: 1.3rem; margin-bottom: 1rem; }
+    .py-faq-item {
+        background: #fff;
+        border: 1px solid rgba(0,0,0,.06);
+        border-radius: 14px;
+        margin-bottom: .8rem;
+        overflow: hidden;
+        box-shadow: 0 10px 26px -20px rgba(30,20,10,.3);
+    }
+    .py-faq-item summary {
+        cursor: pointer;
+        list-style: none;
+        padding: 1.1rem 1.4rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+    .py-faq-item summary::-webkit-details-marker { display: none; }
+    .py-faq-item summary::after {
+        content: "\f282";
+        font-family: "bootstrap-icons";
+        font-weight: 400;
+        color: var(--py-gold);
+        transition: transform .25s ease;
+        flex: none;
+    }
+    .py-faq-item[open] summary::after { transform: rotate(180deg); }
+    .py-faq-item .py-faq-answer { padding: 0 1.4rem 1.2rem; color: #5a4f40; }
+</style>
+
+<div class="py-faq-hero">
+    <div class="container">
+        <div class="py-eyebrow justify-content-center">Yardım</div>
+        <h1 class="py-serif fw-bold">Sıkça Sorulan Sorular</h1>
+    </div>
+</div>
+
+<div class="py-section">
+    <div class="container" style="max-width:820px;">
+        @if (!Model.Any())
+        {
+            <p class="text-muted text-center">Şu anda yayında bir soru bulunmuyor.</p>
+        }
+        else
+        {
+            @foreach (var group in Model.GroupBy(f => string.IsNullOrWhiteSpace(f.Category) ? "Genel" : f.Category))
+            {
+                <div class="py-faq-category py-reveal">
+                    <h2 class="py-serif fw-bold">@group.Key</h2>
+                    @foreach (var faq in group.OrderBy(f => f.DisplayOrder))
+                    {
+                        <details class="py-faq-item">
+                            <summary>@faq.Question</summary>
+                            <div class="py-faq-answer">@faq.Answer</div>
+                        </details>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>

@@ -1,0 +1,55 @@
+@model List<WorkingHoursDay>
+@{
+    ViewData["Title"] = "Çalışma Saatleri";
+    ViewBag.SiteActive = "workinghours";
+
+    var weekOrder = new[]
+    {
+        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday,
+        DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday
+    };
+    var dayNames = new Dictionary<DayOfWeek, string>
+    {
+        [DayOfWeek.Monday] = "Pazartesi",
+        [DayOfWeek.Tuesday] = "Salı",
+        [DayOfWeek.Wednesday] = "Çarşamba",
+        [DayOfWeek.Thursday] = "Perşembe",
+        [DayOfWeek.Friday] = "Cuma",
+        [DayOfWeek.Saturday] = "Cumartesi",
+        [DayOfWeek.Sunday] = "Pazar"
+    };
+}
+<div class="mb-3">
+    <h2 class="mb-0">Çalışma Saatleri</h2>
+    <p class="text-muted small mb-0">Ana sayfadaki "şu an açığız/kapalıyız" rozeti ve İletişim sayfasındaki saatler buradan otomatik hesaplanır.</p>
+</div>
+
+@await Html.PartialAsync("_HomeLayoutSubNav")
+
+
+<form asp-action="WorkingHours" method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="table-responsive">
+    <table class="table align-middle">
+        <thead><tr><th>Gün</th><th>Kapalı</th><th>Açılış</th><th>Kapanış</th></tr></thead>
+        <tbody>
+        @{ var i = 0; }
+        @foreach (var day in weekOrder)
+        {
+            var row = Model.FirstOrDefault(d => d.DayOfWeek == day) ?? new WorkingHoursDay { DayOfWeek = day };
+            <tr>
+                <td class="fw-semibold">
+                    @dayNames[day]
+                    <input type="hidden" name="model[@i].DayOfWeek" value="@((int)day)" />
+                </td>
+                <td><input type="checkbox" name="model[@i].IsClosed" value="true" class="form-check-input" @(row.IsClosed ? "checked" : "") /></td>
+                <td><input type="time" name="model[@i].OpenTime" value="@row.OpenTime.ToString(@"hh\:mm")" class="form-control form-control-sm" style="width:120px;" /></td>
+                <td><input type="time" name="model[@i].CloseTime" value="@row.CloseTime.ToString(@"hh\:mm")" class="form-control form-control-sm" style="width:120px;" /></td>
+            </tr>
+            i++;
+        }
+        </tbody>
+    </table>
+    </div>
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+</form>

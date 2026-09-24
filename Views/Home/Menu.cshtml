@@ -1,0 +1,183 @@
+@model List<Category>
+@{
+    ViewData["Title"] = "Menü";
+    Layout = "_PublicLayout";
+    var visibleCategories = Model.Where(c => c.MenuItems.Any()).ToList();
+}
+<style>
+    .py-menu-hero {
+        background: linear-gradient(135deg, var(--py-bg-soft), var(--py-bg));
+        color: #fff;
+        padding: 4.5rem 0 3rem;
+        text-align: center;
+    }
+    .py-cat-nav {
+        position: sticky;
+        top: 70px;
+        z-index: 10;
+        background: rgba(250, 246, 239, .92);
+        backdrop-filter: blur(10px);
+        padding: .9rem 0;
+        border-bottom: 1px solid rgba(var(--py-gold-rgb),.2);
+    }
+    .py-cat-pill {
+        border: 1px solid rgba(42,33,23,.15);
+        color: var(--py-text);
+        border-radius: var(--py-btn-radius);
+        padding: .5rem 1.2rem;
+        font-size: .88rem;
+        font-weight: 500;
+        white-space: nowrap;
+        transition: all .25s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .py-cat-pill:hover, .py-cat-pill.active {
+        background: linear-gradient(135deg, var(--py-gold-light), var(--py-gold));
+        color: #241a0c;
+        border-color: transparent;
+        transform: translateY(-2px);
+    }
+    .py-menu-card {
+        background: #fff;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,.05);
+        box-shadow: 0 14px 32px -22px rgba(30,20,10,.35);
+        transition: transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s ease;
+        height: 100%;
+    }
+    .py-menu-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 22px 42px -22px rgba(var(--py-gold-rgb),.45);
+    }
+    .py-menu-card .py-menu-img-wrap {
+        height: 160px;
+        overflow: hidden;
+        position: relative;
+        background: linear-gradient(135deg, #f0e6d3, #e7d5ae);
+    }
+    .py-menu-card .py-menu-img-wrap img {
+        width: 100%; height: 100%; object-fit: cover;
+        transition: transform .5s ease;
+    }
+    .py-menu-card:hover .py-menu-img-wrap img { transform: scale(1.08); }
+    .py-menu-img-placeholder {
+        width: 100%; height: 100%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2.6rem; color: rgba(42,33,23,.28);
+    }
+    .py-menu-price {
+        position: absolute;
+        bottom: .6rem; right: .6rem;
+        background: rgba(var(--py-bg-rgb),.85);
+        color: var(--py-gold-light);
+        font-weight: 600;
+        font-size: .85rem;
+        padding: .3rem .75rem;
+        border-radius: var(--py-btn-radius);
+    }
+    .py-menu-card-body { padding: 1.1rem 1.2rem 1.3rem; }
+</style>
+
+<div class="py-menu-hero">
+    <div class="container">
+        <div class="py-eyebrow justify-content-center">Lezzet Durağımız</div>
+        <h1 class="py-serif fw-bold">Menümüz</h1>
+        <p class="text-white-50 mb-0">Sipariş vermek için lütfen masanızdaki QR kodu okutun.</p>
+    </div>
+</div>
+
+@if (visibleCategories.Any())
+{
+    <div class="py-cat-nav">
+        <div class="container">
+             <div class="d-flex gap-2 overflow-auto pb-1" style="scrollbar-width: thin;" id="menuCategoryNav">
+                @foreach (var category in visibleCategories)
+                {
+                     <a href="#cat-@category.Id" class="py-cat-pill" data-category-id="cat-@category.Id">@category.Name</a>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<div class="py-section">
+    <div class="container">
+        @if (!visibleCategories.Any())
+        {
+            <p class="text-muted text-center">Menü henüz hazırlanıyor.</p>
+        }
+        @foreach (var category in visibleCategories)
+        {
+             <div id="cat-@category.Id" class="menu-category mb-5" style="scroll-margin-top: 140px;">
+                <div class="d-flex align-items-center gap-3 mb-4 py-reveal">
+                    <h3 class="py-serif fw-bold mb-0">@category.Name</h3>
+                    <div class="flex-grow-1" style="height:1px; background:linear-gradient(90deg, rgba(var(--py-gold-rgb),.5), transparent);"></div>
+                </div>
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
+                    @foreach (var item in category.MenuItems)
+                    {
+                        <div class="col py-reveal">
+                            <div class="py-menu-card">
+                                <div class="py-menu-img-wrap">
+                                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                    {
+                                        <img src="@item.ImageUrl" alt="@item.Name" loading="lazy" />
+                                    }
+                                    else
+                                    {
+                                        <div class="py-menu-img-placeholder"><i class="bi bi-cup-hot"></i></div>
+                                    }
+                                    <span class="py-menu-price">@item.Price.ToString("0.00") ₺</span>
+                                </div>
+                                <div class="py-menu-card-body">
+                                    <h6 class="fw-semibold mb-1">@item.Name</h6>
+                                    @if (!string.IsNullOrEmpty(item.Description))
+                                    {
+                                        <p class="text-muted small mb-0">@item.Description</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var pills = document.querySelectorAll('.py-cat-pill');
+        var sections = document.querySelectorAll('.menu-category');
+
+        function setActive(id) {
+            pills.forEach(function (pill) {
+                pill.classList.toggle('active', pill.dataset.categoryId === id);
+            });
+            var activePill = document.querySelector('[data-category-id="' + id + '"]');
+            if (activePill) {
+                activePill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+        }
+
+        pills.forEach(function (pill) {
+            pill.addEventListener('click', function () {
+                setActive(pill.dataset.categoryId);
+            });
+        });
+
+        if (sections.length) {
+            var observer = new IntersectionObserver(function (entries) {
+                var visible = entries.filter(function (entry) { return entry.isIntersecting; })
+                    .sort(function (a, b) { return b.intersectionRatio - a.intersectionRatio; });
+                if (visible.length) setActive(visible[0].target.id);
+            }, { rootMargin: '-145px 0px -55% 0px', threshold: [0.1, 0.35, 0.6] });
+            sections.forEach(function (section) { observer.observe(section); });
+        }
+
+        var initial = window.location.hash.substring(1);
+        if (initial) setActive(initial);
+    </script>
+}

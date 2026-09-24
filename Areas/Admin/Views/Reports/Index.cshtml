@@ -1,0 +1,24 @@
+@{
+    ViewData["Title"] = "Raporlar";
+}
+<div class="mb-3">
+    <h2 class="mb-0">Raporlar</h2>
+    <p class="text-muted small mb-0">Tarih aralığı seçilebilir satış, ürün ve kasa raporları</p>
+</div>
+<div class="ry-cat-grid">
+    <a asp-action="Satis" class="ry-cat-card text-decoration-none text-reset">
+        <div class="ry-cat-card-icon"><i class="bi bi-graph-up"></i></div>
+        <div class="ry-cat-card-name">Satış Raporu</div>
+        <div class="ry-cat-card-meta">Ciro, günlük kırılım, ödeme yöntemi dağılımı</div>
+    </a>
+    <a asp-action="Urunler" class="ry-cat-card text-decoration-none text-reset">
+        <div class="ry-cat-card-icon"><i class="bi bi-basket"></i></div>
+        <div class="ry-cat-card-name">Ürün Satış Raporu</div>
+        <div class="ry-cat-card-meta">En çok/en az satan ürünler</div>
+    </a>
+    <a asp-action="Kasa" class="ry-cat-card text-decoration-none text-reset">
+        <div class="ry-cat-card-icon"><i class="bi bi-cash-coin"></i></div>
+        <div class="ry-cat-card-name">Kasa Raporu</div>
+        <div class="ry-cat-card-meta">Vardiya geçmişi, kasa farkları</div>
+    </a>
+</div>

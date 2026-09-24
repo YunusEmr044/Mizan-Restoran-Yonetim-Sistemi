@@ -1,0 +1,38 @@
+@model List<Purchase>
+@{
+    ViewData["Title"] = "Satın Almalar";
+    ViewBag.StokActive = "purchases";
+    var totalSpend = Model.Sum(p => p.Total);
+}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-0">Satın Almalar</h2>
+        <p class="text-muted small mb-0">@Model.Count kayıt · Toplam @totalSpend.ToString("0.00") ₺</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">+ Yeni Satın Alma</a>
+</div>
+
+@await Html.PartialAsync("_StokSubNav")
+
+<div class="table-responsive">
+    <table class="table align-middle">
+        <thead><tr><th>Tarih</th><th>Tedarikçi</th><th>Fatura No</th><th>Kalem Sayısı</th><th>Toplam</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var p in Model)
+        {
+            <tr>
+                <td>@p.PurchaseDate.ToString("dd.MM.yyyy")</td>
+                <td class="fw-semibold">@(p.Supplier?.Name ?? "—")</td>
+                <td>@(p.InvoiceNumber ?? "—")</td>
+                <td>@p.Items.Count</td>
+                <td class="fw-semibold">@p.Total.ToString("0.00") ₺</td>
+                <td class="text-end"><a asp-action="Detay" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">Detay</a></td>
+            </tr>
+        }
+        @if (!Model.Any())
+        {
+            <tr><td colspan="6" class="text-muted">Henüz satın alma kaydı yok.</td></tr>
+        }
+        </tbody>
+    </table>
+</div>

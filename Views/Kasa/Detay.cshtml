@@ -1,0 +1,147 @@
+@model Adisyon
+@{
+    ViewData["Title"] = "Adisyon Detayı";
+    var shiftOpen = (bool)ViewBag.OpenShift;
+}
+<h2 class="mb-1">@Model.Table?.Name — Adisyon</h2>
+<p class="text-muted">@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm") — Durum: <span class="badge bg-info text-dark">@Model.Status</span></p>
+
+
+<table class="table">
+    <thead><tr><th>Ürün</th><th>Adet</th><th>Fiyat</th><th>Tutar</th></tr></thead>
+    <tbody>
+    @foreach (var order in Model.Orders.Where(o => !o.IsDraft && o.Status != OrderStatus.IptalEdildi))
+    {
+        @foreach (var item in order.Items.Where(i => i.Status != OrderStatus.IptalEdildi))
+        {
+            <tr>
+                <td>
+                    @item.MenuItemName
+                    @if (item.Options.Any())
+                    {
+                        <div class="text-muted small">+ @string.Join(", ", item.Options.Select(o => o.Name))</div>
+                    }
+                </td>
+                <td>@item.Quantity</td>
+                <td>@item.UnitPrice.ToString("0.00") ₺</td>
+                <td>@item.LineTotal.ToString("0.00") ₺</td>
+            </tr>
+        }
+    }
+    </tbody>
+    <tfoot>
+        <tr><th colspan="3">Ara Toplam</th><th>@Model.ItemsTotal.ToString("0.00") ₺</th></tr>
+        @if (Model.DiscountAmount > 0)
+        {
+            <tr><th colspan="3">İndirim (@Model.DiscountReason)</th><th>-@Model.DiscountAmount.ToString("0.00") ₺</th></tr>
+        }
+        <tr><th colspan="3">Genel Toplam</th><th>@Model.GrandTotal.ToString("0.00") ₺</th></tr>
+        <tr><th colspan="3">Ödenen</th><th>@Model.PaidTotal.ToString("0.00") ₺</th></tr>
+        <tr class="table-warning"><th colspan="3">Kalan</th><th>@Model.RemainingTotal.ToString("0.00") ₺</th></tr>
+    </tfoot>
+</table>
+
+@if (Model.Payments.Any())
+{
+    <h6>Alınan Ödemeler</h6>
+    <ul class="list-group mb-4">
+        @foreach (var p in Model.Payments.OrderBy(p => p.CreatedAt))
+        {
+            <li class="list-group-item d-flex justify-content-between">
+                <span>@p.Method — @p.ReceivedByUserName — @p.CreatedAt.ToString("HH:mm")</span>
+                <span>@p.Amount.ToString("0.00") ₺</span>
+            </li>
+        }
+    </ul>
+}
+
+@if (Model.Status != AdisyonStatus.Odendi && Model.Status != AdisyonStatus.Iptal && Model.Status != AdisyonStatus.Iade)
+{
+    @if (!shiftOpen)
+    {
+        <div class="alert alert-danger">Ödeme alabilmek için önce kasa vardiyasını açmanız gerekiyor.</div>
+    }
+    else if (User.HasClaim(Permissions.ClaimType, Permissions.Cash.Operate))
+    {
+        <h6>Ödeme Al</h6>
+        <form asp-action="AddPayment" asp-route-id="@Model.Id" method="post" class="row g-2 align-items-end mb-4">
+            <div class="col-auto">
+                <label class="form-label small">Yöntem</label>
+                <select name="method" class="form-select">
+                    @foreach (var m in Enum.GetValues<PaymentMethod>())
+                    {
+                        <option value="@m">@m</option>
+                    }
+                </select>
+            </div>
+            <div class="col-auto">
+                <label class="form-label small">Tutar (₺)</label>
+                <input type="number" step="0.01" min="0" name="amount" class="form-control" value="@Model.RemainingTotal.ToString("0.00")" />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary">Ödeme Ekle</button>
+            </div>
+        </form>
+    }
+
+    @if (User.HasClaim(Permissions.ClaimType, Permissions.Cash.ApprovePayment))
+    {
+        <form asp-action="ConfirmPayment" asp-route-id="@Model.Id" method="post" class="row g-2 align-items-end"
+              data-confirm="Ödeme onaylanacak ve adisyon kapatılacak." data-confirm-title="Ödeme onaylansın mı?" data-confirm-ok="Ödemeyi Onayla">
+            <div class="col-auto">
+                <label class="form-label small">Müşteri Telefonu (isteğe bağlı - sadakat puanı için)</label>
+                <input type="text" name="customerPhone" class="form-control" placeholder="05xx xxx xx xx" />
+            </div>
+            <div class="col-auto">
+                <label class="form-label small">Müşteri Adı (isteğe bağlı)</label>
+                <input type="text" name="customerName" class="form-control" />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-success" @(Model.RemainingTotal > 0 ? "disabled" : "")>
+                    Ödemeyi Onayla / Masayı Kapat
+                </button>
+            </div>
+        </form>
+        @if (Model.RemainingTotal > 0)
+        {
+            <p class="text-muted small mt-2">Kalan tutar tamamen tahsil edilmeden adisyon kapatılamaz.</p>
+        }
+    }
+}
+
+<div class="card my-4" style="max-width: 420px;">
+    <div class="card-body">
+        <h6>Hesabı Böl (Eşit)</h6>
+        <p class="text-muted small mb-2">
+            Kişi sayısını girin, kişi başı düşen tutarı görün. Ürün bazlı bölme henüz
+            desteklenmiyor - bu sadece eşit bölme için bir hesap makinesi.
+        </p>
+        <div class="input-group">
+            <span class="input-group-text">Kişi Sayısı</span>
+            <input type="number" min="1" value="2" id="splitCount" class="form-control" />
+        </div>
+        <p class="mt-2 mb-0">Kişi Başı: <strong id="splitResult">@((Model.GrandTotal / 2).ToString("0.00")) ₺</strong></p>
+    </div>
+</div>
+
+<a asp-action="Index" class="btn btn-outline-secondary mt-3">← Kasaya Dön</a>
+<button type="button" class="btn btn-outline-dark mt-3" onclick="window.print()">🖨 Yazdır</button>
+
+@await Html.PartialAsync("_AdisyonReceipt", Model)
+
+@section Scripts {
+    <script>
+        (function () {
+            var grandTotal = @Model.GrandTotal.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            var countInput = document.getElementById('splitCount');
+            var result = document.getElementById('splitResult');
+            function recalc() {
+                var n = parseInt(countInput.value, 10) || 1;
+                if (n < 1) { n = 1; }
+                var perHead = grandTotal / n;
+                result.textContent = perHead.toFixed(2) + ' ₺';
+            }
+            countInput.addEventListener('input', recalc);
+        })();
+    </script>
+}

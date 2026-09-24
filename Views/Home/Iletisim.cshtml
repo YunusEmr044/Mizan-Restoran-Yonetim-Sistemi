@@ -1,0 +1,167 @@
+@using RestoranYonetim.Services
+@model SiteContent
+@{
+    ViewData["Title"] = "İletişim";
+    Layout = "_PublicLayout";
+    var workingHoursDays = (List<WorkingHoursDay>)ViewBag.WorkingHoursDays;
+    var hoursStatus = (WorkingHoursStatus.Result)ViewBag.WorkingHoursStatus;
+}
+<style>
+    .py-contact-hero {
+        background: linear-gradient(135deg, var(--py-bg-soft), var(--py-bg));
+        color: #fff;
+        padding: 4.5rem 0 3rem;
+        text-align: center;
+    }
+    .py-contact-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 1.6rem;
+        box-shadow: 0 16px 36px -24px rgba(30,20,10,.35);
+        border: 1px solid rgba(0,0,0,.05);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: transform .3s ease, box-shadow .3s ease;
+    }
+    .py-contact-card:hover { transform: translateY(-4px); box-shadow: 0 22px 42px -22px rgba(var(--py-gold-rgb),.4); }
+    .py-contact-icon {
+        width: 52px; height: 52px; flex: none;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        background: linear-gradient(135deg, var(--py-gold-light), var(--py-gold));
+        color: #241a0c; font-size: 1.3rem;
+    }
+    .py-map-frame {
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 20px 45px -25px rgba(30,20,10,.4);
+        border: 6px solid #fff;
+    }
+    .py-open-badge { display: inline-flex; align-items: center; gap: .5rem; padding: .5rem 1rem; border-radius: 999px; font-weight: 600; font-size: .9rem; }
+    .py-open-dot { width: 9px; height: 9px; border-radius: 50%; }
+    .py-open-yes { background: rgba(40,167,69,.12); color: #1e7e34; }
+    .py-open-yes .py-open-dot { background: #28a745; animation: pyDotPulse 1.8s ease-in-out infinite; }
+    .py-open-no { background: rgba(220,53,69,.1); color: #b02a37; }
+    .py-open-no .py-open-dot { background: #dc3545; }
+    @@keyframes pyDotPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(40,167,69,.5); } 50% { box-shadow: 0 0 0 6px rgba(40,167,69,0); } }
+    .py-hours-table td { padding: .35rem .5rem; }
+    .py-hours-table tr.py-hours-today td { font-weight: 700; color: var(--py-text); }
+</style>
+
+<div class="py-contact-hero">
+    <div class="container">
+        <div class="py-eyebrow justify-content-center">Bize Ulaşın</div>
+        <h1 class="py-serif fw-bold">İletişim</h1>
+    </div>
+</div>
+
+<div class="py-section">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="d-flex flex-column gap-3">
+                    @if (!string.IsNullOrEmpty(Model.ContactPhone))
+                    {
+                        <div class="py-contact-card py-reveal">
+                            <div class="py-contact-icon"><i class="bi bi-telephone-fill"></i></div>
+                            <div>
+                                <div class="text-muted small">Telefon</div>
+                                <div class="fw-semibold">@Model.ContactPhone</div>
+                            </div>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.ContactEmail))
+                    {
+                        <div class="py-contact-card py-reveal py-delay-1">
+                            <div class="py-contact-icon"><i class="bi bi-envelope-fill"></i></div>
+                            <div>
+                                <div class="text-muted small">E-posta</div>
+                                <div class="fw-semibold">@Model.ContactEmail</div>
+                            </div>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.ContactAddress))
+                    {
+                        <div class="py-contact-card py-reveal py-delay-2">
+                            <div class="py-contact-icon"><i class="bi bi-geo-alt-fill"></i></div>
+                            <div>
+                                <div class="text-muted small">Adres</div>
+                                <div class="fw-semibold">@Model.ContactAddress</div>
+                            </div>
+                        </div>
+                    }
+                    @* WorkingHoursDay boşsa (olağandışı durum) eski serbest metin alana (Model.WorkingHours) düşülür. *@
+                    @if (workingHoursDays.Any())
+                    {
+                        <div class="py-contact-card py-reveal py-delay-3 align-items-start">
+                            <div class="py-contact-icon"><i class="bi bi-clock-fill"></i></div>
+                            <div class="flex-fill">
+                                <div class="py-open-badge mb-2 @(hoursStatus.IsOpen ? "py-open-yes" : "py-open-no")">
+                                    <span class="py-open-dot"></span>
+                                    @hoursStatus.StatusText
+                                    @if (!string.IsNullOrEmpty(hoursStatus.ClosingOrOpeningText))
+                                    {
+                                        <span class="text-muted small ms-1">— @hoursStatus.ClosingOrOpeningText</span>
+                                    }
+                                </div>
+                                <table class="py-hours-table small mb-0">
+                                    <tbody>
+                                    @foreach (var day in new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday })
+                                    {
+                                        var row = workingHoursDays.FirstOrDefault(d => d.DayOfWeek == day);
+                                        <tr class="@(day == DateTime.Now.DayOfWeek ? "py-hours-today" : "")">
+                                            <td>@WorkingHoursStatus.TurkishDayName(day)</td>
+                                            <td>
+                                                @if (row == null || row.IsClosed)
+                                                {
+                                                    <span class="text-muted">Kapalı</span>
+                                                }
+                                                else
+                                                {
+                                                    @($"{row.OpenTime:hh\\:mm} - {row.CloseTime:hh\\:mm}")
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                    else if (!string.IsNullOrEmpty(Model.WorkingHours))
+                    {
+                        <div class="py-contact-card py-reveal py-delay-3">
+                            <div class="py-contact-icon"><i class="bi bi-clock-fill"></i></div>
+                            <div>
+                                <div class="text-muted small">Çalışma Saatleri</div>
+                                <div class="fw-semibold" style="white-space: pre-line;">@Model.WorkingHours</div>
+                            </div>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.FacebookUrl) || !string.IsNullOrEmpty(Model.InstagramUrl))
+                    {
+                        <div class="d-flex gap-2 mt-2 py-reveal py-delay-3">
+                            @if (!string.IsNullOrEmpty(Model.FacebookUrl))
+                            {
+                                <a href="@Model.FacebookUrl" target="_blank" rel="noopener" class="btn btn-py-dark"><i class="bi bi-facebook me-2"></i>Facebook</a>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.InstagramUrl))
+                            {
+                                <a href="@Model.InstagramUrl" target="_blank" rel="noopener" class="btn btn-py-dark"><i class="bi bi-instagram me-2"></i>Instagram</a>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-7 py-reveal py-delay-1">
+                @if (!string.IsNullOrEmpty(Model.MapEmbedUrl))
+                {
+                    <div class="py-map-frame ratio ratio-16x9">
+                        <iframe src="@Model.MapEmbedUrl" style="border:0;" allowfullscreen loading="lazy"></iframe>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,12 @@
+@{
+    var active = ViewBag.MenuYonetimiActive as string ?? "";
+}
+<div class="ry-cat-chips mb-4">
+    <a class="ry-cat-chip @(active == "restaurants" ? "active" : "")" asp-area="Admin" asp-controller="Restaurants" asp-action="Index"><i class="bi bi-shop"></i> Restoranlar</a>
+    <a class="ry-cat-chip @(active == "branches" ? "active" : "")" asp-area="Admin" asp-controller="Branches" asp-action="Index"><i class="bi bi-diagram-3"></i> Şubeler</a>
+    <a class="ry-cat-chip @(active == "areas" ? "active" : "")" asp-area="Admin" asp-controller="Areas" asp-action="Index"><i class="bi bi-bounding-box"></i> Alanlar</a>
+    <a class="ry-cat-chip @(active == "tables" ? "active" : "")" asp-area="Admin" asp-controller="Tables" asp-action="Index"><i class="bi bi-qr-code"></i> Masalar / QR</a>
+    <a class="ry-cat-chip @(active == "categories" ? "active" : "")" asp-area="Admin" asp-controller="Categories" asp-action="Index"><i class="bi bi-tags"></i> Kategoriler</a>
+    <a class="ry-cat-chip @(active == "menuitems" ? "active" : "")" asp-area="Admin" asp-controller="MenuItems" asp-action="Index"><i class="bi bi-journal-richtext"></i> Menü Ürünleri</a>
+    <a class="ry-cat-chip @(active == "orders" ? "active" : "")" asp-area="Admin" asp-controller="Orders" asp-action="Index"><i class="bi bi-receipt"></i> Tüm Siparişler</a>
+</div>

@@ -1,0 +1,36 @@
+@model List<Branch>
+@{
+    ViewData["Title"] = "Şubeler";
+    ViewBag.MenuYonetimiActive = "branches";
+    var revenueByBranch = (Dictionary<int, decimal>)ViewBag.RevenueByBranch;
+}
+<div class="d-flex justify-content-between mb-3">
+    <h2>Şubeler</h2>
+    <a asp-action="Create" class="btn btn-primary">+ Yeni Şube</a>
+</div>
+
+@await Html.PartialAsync("_MenuYonetimiSubNav")
+
+<div class="row g-3">
+    @foreach (var b in Model)
+    {
+        var tables = b.Areas.SelectMany(a => a.Tables).ToList();
+        <div class="col-12 col-xl-6">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div><h5 class="mb-1">@b.Name</h5><div class="text-muted small">@(b.Restaurant?.Name) · @b.Address</div></div>
+                        <span class="badge bg-primary">@b.Areas.Count alan</span>
+                    </div>
+                    <div class="row g-2 text-center mb-3">
+                        <div class="col-3"><div class="bg-light rounded p-2"><strong>@b.Areas.Count</strong><small class="d-block text-muted">Alan</small></div></div>
+                        <div class="col-3"><div class="bg-light rounded p-2"><strong>@tables.Count</strong><small class="d-block text-muted">Masa</small></div></div>
+                        <div class="col-3"><div class="bg-light rounded p-2"><strong>@tables.Count(t => t.Status != TableStatus.Bos)</strong><small class="d-block text-muted">Dolu</small></div></div>
+                        <div class="col-3"><div class="bg-light rounded p-2"><strong>@revenueByBranch.GetValueOrDefault(b.Id).ToString("0.00") ₺</strong><small class="d-block text-muted">Ciro</small></div></div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center"><span class="text-muted small">@b.Phone</span><span><a asp-action="Edit" asp-route-id="@b.Id" class="btn btn-sm btn-outline-secondary">Düzenle</a> <a asp-action="Delete" asp-route-id="@b.Id" class="btn btn-sm btn-outline-danger">Sil</a></span></div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

@@ -1,0 +1,41 @@
+@model InventoryItem
+@{
+    ViewData["Title"] = "Yeni Malzeme";
+    var suppliers = (SelectList)ViewBag.Suppliers;
+}
+<h2 class="mb-4">Yeni Malzeme</h2>
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label asp-for="Unit" class="form-label"></label>
+            <input asp-for="Unit" class="form-control" placeholder="kg, lt, adet, gr..." />
+        </div>
+        <div class="col-md mb-3">
+            <label asp-for="CurrentQuantity" class="form-label"></label>
+            <input asp-for="CurrentQuantity" class="form-control" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label asp-for="MinLevel" class="form-label"></label>
+            <input asp-for="MinLevel" class="form-control" />
+        </div>
+        <div class="col-md mb-3">
+            <label asp-for="UnitCost" class="form-label"></label>
+            <input asp-for="UnitCost" class="form-control" />
+        </div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="SupplierId" class="form-label">Tedarikçi</label>
+        <select asp-for="SupplierId" class="form-select" asp-items="suppliers">
+            <option value="">— Seçin (isteğe bağlı) —</option>
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>

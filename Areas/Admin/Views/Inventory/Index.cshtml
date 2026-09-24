@@ -1,0 +1,113 @@
+@model List<InventoryItem>
+@{
+    ViewData["Title"] = "Stok";
+    ViewBag.StokActive = "inventory";
+    var lowStockCount = Model.Count(i => i.IsLowStock);
+    var totalValue = Model.Sum(i => i.CurrentQuantity * i.UnitCost);
+}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-0">Stok</h2>
+        <p class="text-muted small mb-0">Malzeme stoku, tedarikçiler ve satın almalar tek bölümde</p>
+    </div>
+    @if (User.HasClaim(Permissions.ClaimType, Permissions.Inventory.Manage))
+    {
+        <a asp-action="Create" class="btn btn-primary">+ Yeni Malzeme</a>
+    }
+</div>
+
+@await Html.PartialAsync("_StokSubNav")
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="ry-kpi">
+            <div class="ry-kpi-label"><i class="bi bi-box-seam"></i> Malzeme</div>
+            <div class="ry-kpi-value">@Model.Count</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="ry-kpi">
+            <div class="ry-kpi-label"><i class="bi bi-exclamation-triangle"></i> Kritik Seviyede</div>
+            <div class="ry-kpi-value @(lowStockCount > 0 ? "text-danger" : "")">@lowStockCount</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="ry-kpi">
+            <div class="ry-kpi-label"><i class="bi bi-cash-stack"></i> Toplam Stok Değeri</div>
+            <div class="ry-kpi-value">@totalValue.ToString("0.00") ₺</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="ry-kpi">
+            <div class="ry-kpi-label"><i class="bi bi-clipboard-data"></i> Maliyet / Reçete</div>
+            <div class="ry-kpi-value" style="font-size:1rem;">
+                <a asp-area="Admin" asp-controller="MenuItems" asp-action="Index">Menü Ürünleri →</a>
+            </div>
+        </div>
+    </div>
+</div>
+<p class="text-muted small mb-3">
+    <i class="bi bi-info-circle"></i>
+    Bir malzemenin <strong>birim maliyeti</strong> aşağıdaki listede "Düzenle" ile girilir; bir ürünün
+    hangi malzemeleri ne kadar kullandığı ise <strong>Menü Ürünleri → Reçete</strong> ekranından tanımlanır
+    (oradan tahmini maliyet/kâr otomatik hesaplanır).
+</p>
+
+@if (Model.Count > 8)
+{
+    <div class="mb-3">
+        <div class="ry-search-box">
+            <i class="bi bi-search"></i>
+            <input type="search" id="inventorySearch" class="form-control" placeholder="Malzeme ara..." autocomplete="off" />
+        </div>
+    </div>
+}
+
+<div class="table-responsive">
+    <table class="table align-middle" id="inventoryTable">
+        <thead><tr><th>Ad</th><th>Mevcut Miktar</th><th>Kritik Seviye</th><th>Birim Maliyet</th><th>Tedarikçi</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var i in Model)
+        {
+            <tr class="@(i.IsLowStock ? "table-danger" : "")" data-name="@i.Name.ToLowerInvariant()">
+                <td class="fw-semibold">@i.Name @if (i.IsLowStock) { <span class="badge bg-danger ms-1">Kritik</span> }</td>
+                <td>@i.CurrentQuantity.ToString("0.###") @i.Unit</td>
+                <td>@i.MinLevel.ToString("0.###") @i.Unit</td>
+                <td>@i.UnitCost.ToString("0.00") ₺</td>
+                <td>@(i.Supplier?.Name ?? "—")</td>
+                <td class="text-end">
+                    <div class="btn-group btn-group-sm">
+                        <a asp-action="Hareketler" asp-route-id="@i.Id" class="btn btn-outline-dark">Hareketler</a>
+                        @if (User.HasClaim(Permissions.ClaimType, Permissions.Inventory.Manage))
+                        {
+                            <a asp-action="Edit" asp-route-id="@i.Id" class="btn btn-outline-secondary">Düzenle</a>
+                            <a asp-action="Delete" asp-route-id="@i.Id" class="btn btn-outline-danger">Sil</a>
+                        }
+                    </div>
+                </td>
+            </tr>
+        }
+        @if (!Model.Any())
+        {
+            <tr><td colspan="6" class="text-muted">Henüz stok kalemi eklenmemiş.</td></tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var searchInput = document.getElementById('inventorySearch');
+            if (!searchInput) { return; }
+            var rows = document.querySelectorAll('#inventoryTable tbody tr');
+            searchInput.addEventListener('input', function () {
+                var q = (searchInput.value || '').trim().toLowerCase();
+                rows.forEach(function (row) {
+                    var name = row.getAttribute('data-name') || '';
+                    row.style.display = (!q || name.indexOf(q) !== -1) ? '' : 'none';
+                });
+            });
+        })();
+    </script>
+}

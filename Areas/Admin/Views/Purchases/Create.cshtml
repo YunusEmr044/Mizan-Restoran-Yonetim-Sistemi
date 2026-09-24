@@ -1,0 +1,83 @@
+@{
+    ViewData["Title"] = "Yeni Satın Alma";
+    var suppliers = (SelectList)ViewBag.Suppliers;
+    var inventoryItems = (List<InventoryItem>)ViewBag.InventoryItems;
+}
+<h2 class="mb-4">Yeni Satın Alma</h2>
+
+
+@if (!inventoryItems.Any())
+{
+    <div class="alert alert-warning">
+        Henüz stok kalemi tanımlanmamış. Önce <a asp-controller="Inventory" asp-action="Create">Stok</a>
+        bölümünden malzeme ekleyin.
+    </div>
+}
+
+<form asp-action="Create" method="post">
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Tedarikçi</label>
+            <select name="supplierId" class="form-select" asp-items="suppliers" required>
+                <option value="">Seçin...</option>
+            </select>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Fatura No</label>
+            <input type="text" name="invoiceNumber" class="form-control" />
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Tarih</label>
+            <input type="date" name="purchaseDate" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+        </div>
+    </div>
+
+    <h5 class="mt-3">Malzemeler</h5>
+    <div id="purchaseRows"></div>
+    <button type="button" id="addRowBtn" class="btn btn-sm btn-outline-secondary mb-3">+ Satır Ekle</button>
+    <br />
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>
+
+<template id="rowTemplate">
+    <div class="row g-2 align-items-end mb-2 purchase-row">
+        <div class="col-md-5">
+            <select name="inventoryItemIds" class="form-select">
+                @foreach (var item in inventoryItems)
+                {
+                    <option value="@item.Id">@item.Name (@item.Unit)</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="number" step="0.001" min="0" name="quantities" class="form-control" placeholder="Miktar" />
+        </div>
+        <div class="col-md-3">
+            <input type="number" step="0.01" min="0" name="unitPrices" class="form-control" placeholder="Birim Fiyat" />
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-sm btn-outline-danger remove-row">×</button>
+        </div>
+    </div>
+</template>
+
+@section Scripts {
+    <script>
+        (function () {
+            var container = document.getElementById('purchaseRows');
+            var template = document.getElementById('rowTemplate');
+
+            function addRow() {
+                var clone = template.content.cloneNode(true);
+                clone.querySelector('.remove-row').addEventListener('click', function (e) {
+                    e.target.closest('.purchase-row').remove();
+                });
+                container.appendChild(clone);
+            }
+
+            document.getElementById('addRowBtn').addEventListener('click', addRow);
+            addRow();
+        })();
+    </script>
+}

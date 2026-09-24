@@ -1,0 +1,37 @@
+@model List<Restaurant>
+@{
+    ViewData["Title"] = "Restoranlar";
+    ViewBag.MenuYonetimiActive = "restaurants";
+    var revenueByRestaurant = (Dictionary<int, decimal>)ViewBag.RevenueByRestaurant;
+}
+<div class="d-flex justify-content-between mb-3">
+    <h2>Restoranlar</h2>
+    <a asp-action="Create" class="btn btn-primary">+ Yeni Restoran</a>
+</div>
+
+@await Html.PartialAsync("_MenuYonetimiSubNav")
+
+<div class="row g-3">
+    @foreach (var r in Model)
+    {
+        var areas = r.Branches.SelectMany(b => b.Areas).ToList();
+        var tables = areas.SelectMany(a => a.Tables).ToList();
+        <div class="col-12 col-xl-6">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div><h5 class="mb-1">@r.Name</h5><div class="text-muted small">@r.Address</div></div>
+                        <span class="badge bg-primary">@r.Branches.Count şube</span>
+                    </div>
+                    <div class="row g-2 text-center mb-3">
+                        <div class="col-3"><div class="bg-light rounded p-2"><strong>@areas.Count</strong><small class="d-block text-muted">Alan</small></div></div>
+                        <div class="col-3"><div class="bg-light rounded p-2"><strong>@tables.Count</strong><small class="d-block text-muted">Masa</small></div></div>
+                        <div class="col-3"><div class="bg-light rounded p-2"><strong>@tables.Count(t => t.Status != TableStatus.Bos)</strong><small class="d-block text-muted">Dolu</small></div></div>
+                        <div class="col-3"><div class="bg-light rounded p-2"><strong>@revenueByRestaurant.GetValueOrDefault(r.Id).ToString("0.00") ₺</strong><small class="d-block text-muted">Ciro</small></div></div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center"><span class="text-muted small">@r.Phone</span><span><a asp-action="Edit" asp-route-id="@r.Id" class="btn btn-sm btn-outline-secondary">Düzenle</a> <a asp-action="Delete" asp-route-id="@r.Id" class="btn btn-sm btn-outline-danger">Sil</a></span></div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

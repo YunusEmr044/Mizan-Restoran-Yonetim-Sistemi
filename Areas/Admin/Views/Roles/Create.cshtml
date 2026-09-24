@@ -1,0 +1,40 @@
+@using RestoranYonetim.Security
+@{
+    ViewData["Title"] = "Yeni Rol";
+    var enabledPermissions = (HashSet<string>)ViewBag.EnabledPermissions;
+    var allPermissions = (IReadOnlyList<string>)ViewBag.AllPermissions;
+}
+
+<h2 class="mb-4">Yeni Rol</h2>
+
+<div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+<form method="post">
+    <div class="mb-3" style="max-width: 360px;">
+        <label class="form-label">Rol Adı</label>
+        <input type="text" name="name" value="@ViewBag.Name" class="form-control" required maxlength="64" placeholder="Örn. Vale, Davetçi, Şef Yardımcısı" />
+        <div class="form-text">Bu isim personel listesinde ve giriş ekranında rolün adı olarak görünür.</div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><strong>İzinler</strong></div>
+        <div class="card-body">
+            <div class="row g-2">
+            @foreach (var permission in allPermissions)
+            {
+                <div class="col-md-4 col-lg-3">
+                    <label class="form-check">
+                        <input class="form-check-input" type="checkbox" name="selectedPermissions" value="@permission" checked="@enabledPermissions.Contains(permission)" />
+                        <span class="form-check-label small">@Permissions.DisplayName(permission)</span>
+                    </label>
+                </div>
+            }
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <button type="submit" class="btn btn-primary">Rolü Oluştur</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+    </div>
+</form>

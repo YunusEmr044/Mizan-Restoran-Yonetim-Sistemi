@@ -1,0 +1,49 @@
+@model List<RoleListItem>
+@using RestoranYonetim.Security
+@{
+    ViewData["Title"] = "Roller";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2>Roller</h2>
+        <p class="text-muted mb-0">Sistemin hazır rollerine ek olarak kendi rolünü oluşturup izinlerini seçebilirsin.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">+ Yeni Rol</a>
+</div>
+
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead><tr><th>Rol</th><th>İzin sayısı</th><th>Kullanıcı sayısı</th><th></th><th></th></tr></thead>
+            <tbody>
+            @foreach (var role in Model)
+            {
+                <tr>
+                    <td>
+                        @RolePermissions.DisplayName(role.Name)
+                        @if (role.IsBuiltIn)
+                        {
+                            <span class="badge bg-secondary ms-1">Sistem</span>
+                        }
+                    </td>
+                    <td>@role.PermissionCount</td>
+                    <td>@role.UserCount</td>
+                    <td>
+                        <a asp-area="Admin" asp-controller="Features" asp-action="Index" class="btn btn-sm btn-outline-primary">İzinleri Düzenle</a>
+                    </td>
+                    <td class="text-end">
+                        @if (!role.IsBuiltIn)
+                        {
+                            <form asp-action="Delete" asp-route-name="@role.Name" method="post" class="d-inline" data-confirm="&quot;@RolePermissions.DisplayName(role.Name)&quot; rolü kalıcı olarak silinecek." data-confirm-title="Rol silinsin mi?" data-confirm-ok="Rolü Sil" data-confirm-danger>
+                                <button type="submit" class="btn btn-sm btn-outline-danger" disabled="@(role.UserCount > 0)" title="@(role.UserCount > 0 ? "Bu role sahip kullanıcılar var - önce onları başka bir role taşı" : "")">Sil</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

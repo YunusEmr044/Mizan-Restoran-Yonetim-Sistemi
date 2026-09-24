@@ -1,0 +1,22 @@
+@model List<(string Name, string? Url)>
+@* BreadcrumbList JSON-LD ayrıca StructuredDataService.BuildBreadcrumbList'te üretiliyor; burası sadece görsel gösterim, veri burada tekrar eklenmiyor. *@
+@if (Model != null && Model.Count > 0)
+{
+    <nav aria-label="breadcrumb" class="py-breadcrumb-nav">
+        <div class="container">
+            <ol class="breadcrumb mb-0">
+                @foreach (var item in Model)
+                {
+                    if (!string.IsNullOrEmpty(item.Url))
+                    {
+                        <li class="breadcrumb-item"><a href="@item.Url">@item.Name</a></li>
+                    }
+                    else
+                    {
+                        <li class="breadcrumb-item active" aria-current="page">@item.Name</li>
+                    }
+                }
+            </ol>
+        </div>
+    </nav>
+}

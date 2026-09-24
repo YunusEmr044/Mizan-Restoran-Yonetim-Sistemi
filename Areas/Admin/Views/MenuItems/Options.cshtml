@@ -1,0 +1,54 @@
+@model List<MenuItemOption>
+@{
+    var menuItem = (MenuItem)ViewBag.MenuItem;
+    ViewData["Title"] = $"{menuItem.Name} - Seçenekler";
+}
+<div class="mb-3">
+    <h2>@menuItem.Name — Ekstra Seçenekler</h2>
+    <p class="text-muted small">
+        Bu seçenekler ürüne eklenebilecek ekstraları tanımlar (örn. "Ekstra Peynir").
+        Müşteri/garson sipariş ekranında bu seçenekleri işaretleyebiliyor, fiyata ve
+        sepete otomatik yansıyor.
+    </p>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">← Ürünlere Dön</a>
+</div>
+
+<table class="table">
+    <thead><tr><th>Ad</th><th>Ek Fiyat</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var o in Model)
+    {
+        <tr>
+            <td>@o.Name</td>
+            <td>@o.ExtraPrice.ToString("0.00") ₺</td>
+            <td>
+                <form asp-action="DeleteOption" method="post" class="d-inline">
+                    <input type="hidden" name="id" value="@o.Id" />
+                    <input type="hidden" name="menuItemId" value="@menuItem.Id" />
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                </form>
+            </td>
+        </tr>
+    }
+    @if (!Model.Any())
+    {
+        <tr><td colspan="3" class="text-muted">Henüz seçenek eklenmemiş.</td></tr>
+    }
+    </tbody>
+</table>
+
+<h5 class="mt-4">Yeni Seçenek Ekle</h5>
+<form asp-action="AddOption" method="post" class="row g-2 align-items-end">
+    <input type="hidden" name="menuItemId" value="@menuItem.Id" />
+    <div class="col-auto">
+        <label class="form-label">Ad</label>
+        <input type="text" name="name" class="form-control" placeholder="Örn: Ekstra Peynir" required />
+    </div>
+    <div class="col-auto">
+        <label class="form-label">Ek Fiyat</label>
+        <input type="number" step="0.01" min="0" name="extraPrice" class="form-control" value="0" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Ekle</button>
+    </div>
+</form>

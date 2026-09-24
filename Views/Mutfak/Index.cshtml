@@ -1,0 +1,7 @@
+@model List<OrderItem>
+@{
+    ViewData["Title"] = "Mutfak";
+    ViewBag.PrepEmoji = "🍳";
+    ViewBag.PrepTitle = "Mutfak Ekranı";
+}
+@await Html.PartialAsync("_PrepScreen", Model)

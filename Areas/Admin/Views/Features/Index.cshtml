@@ -1,0 +1,66 @@
+@model FeaturesViewModel
+@using RestoranYonetim.Security
+@{
+    ViewData["Title"] = "Özellikler ve İzinler";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2>Özellikler ve İzinler</h2>
+        <p class="text-muted mb-0">Modülleri açıp kapatın, rollerin erişebileceği izinleri yönetin.</p>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header"><strong>Modül Durumları</strong></div>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead><tr><th>Modül</th><th>İzin sayısı</th><th>Durum</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var feature in Model.Features)
+            {
+                <tr>
+                    <td>@feature.Setting.DisplayName</td>
+                    <td>@feature.PermissionCount</td>
+                    <td><span class="badge @(feature.Setting.IsEnabled ? "bg-success" : "bg-secondary")">@(feature.Setting.IsEnabled ? "Açık" : "Kapalı")</span></td>
+                    <td class="text-end">
+                        <form asp-action="Toggle" method="post">
+                            <input type="hidden" name="key" value="@feature.Setting.Key" />
+                            <button class="btn btn-sm @(feature.Setting.IsEnabled ? "btn-outline-danger" : "btn-outline-success")" type="submit">
+                                @(feature.Setting.IsEnabled ? "Kapat" : "Aç")
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><strong>Rol İzinleri</strong></div>
+    <div class="card-body">
+        @foreach (var role in Model.Roles)
+        {
+            <form asp-action="SaveRolePermissions" method="post" class="border rounded p-3 mb-3">
+                <input type="hidden" name="roleName" value="@role.RoleName" />
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">@RolePermissions.DisplayName(role.RoleName)</h5>
+                    <button class="btn btn-sm btn-primary" type="submit">İzinleri Kaydet</button>
+                </div>
+                <div class="row g-2">
+                @foreach (var permission in Model.AllPermissions)
+                {
+                    <div class="col-md-4 col-lg-3">
+                        <label class="form-check">
+                            <input class="form-check-input" type="checkbox" name="selectedPermissions" value="@permission" checked="@role.EnabledPermissions.Contains(permission)" />
+                            <span class="form-check-label small">@Permissions.DisplayName(permission)</span>
+                        </label>
+                    </div>
+                }
+                </div>
+            </form>
+        }
+    </div>
+</div>

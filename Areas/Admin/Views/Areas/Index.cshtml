@@ -1,0 +1,39 @@
+@model List<Area>
+@{
+    ViewData["Title"] = "Alanlar";
+    ViewBag.MenuYonetimiActive = "areas";
+}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-0">Alanlar</h2>
+        <p class="text-muted small mb-0">@Model.Count alan · Masa/QR ekranındaki gruplama buradaki alanlara göre yapılır</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Create" class="btn btn-primary">+ Yeni Alan</a>
+    </div>
+</div>
+
+@await Html.PartialAsync("_MenuYonetimiSubNav")
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Henüz alan eklenmemiş.</p>
+}
+
+<div class="ry-cat-grid">
+    @foreach (var a in Model)
+    {
+        <div class="ry-cat-card">
+            <div class="ry-cat-card-icon"><i class="bi bi-door-open-fill"></i></div>
+            <div class="ry-cat-card-name">@a.Name</div>
+            <div class="ry-cat-card-meta">
+                @(a.Branch?.Restaurant?.Name) · @(a.Branch?.Name)<br />
+                @a.Tables.Count masa
+            </div>
+            <div class="ry-cat-card-actions">
+                <a asp-action="Edit" asp-route-id="@a.Id" class="btn btn-sm btn-outline-secondary" title="Düzenle"><i class="bi bi-pencil"></i></a>
+                <a asp-action="Delete" asp-route-id="@a.Id" class="btn btn-sm btn-outline-danger" title="Sil"><i class="bi bi-trash"></i></a>
+            </div>
+        </div>
+    }
+</div>

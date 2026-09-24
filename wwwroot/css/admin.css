@@ -1,0 +1,729 @@
+/* =========================================================================
+   Yönetim paneli / operasyon ekranları tasarım sistemi ("ry-" ön eki):
+   gruplu, ikonlu kenar çubuğu (sidebar) + üst bar + kart temelli içerik alanı.
+   Marka rengi (altın/cd9f56) public site ile tutarlı.
+   ========================================================================= */
+
+:root {
+    --ry-sidebar-bg: #15120d;
+    --ry-sidebar-bg-soft: #1e1a14;
+    --ry-accent: #cd9f56;
+    --ry-accent-rgb: 205, 159, 86;
+    --ry-accent-light: #f0cf94;
+    --ry-bg: #f4f2ec;
+    --ry-card-bg: #ffffff;
+    --ry-text: #241f19;
+    --ry-muted: #8a8072;
+    --ry-border: #e9e3d6;
+    --ry-radius: 14px;
+    --ry-sidebar-width: 268px;
+}
+
+body.ry-admin {
+    background: var(--ry-bg);
+    color: var(--ry-text);
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+.ry-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ---------- Sidebar ---------- */
+.ry-sidebar {
+    width: var(--ry-sidebar-width);
+    flex-shrink: 0;
+    background: var(--ry-sidebar-bg);
+    color: #e6dfd0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    overflow-y: auto;
+    z-index: 1045;
+    transition: transform .3s ease;
+    /* Tarayıcının varsayılan açık renkli kaydırma çubuğu koyu sidebar'da göze batmasın diye
+       ince, marka rengiyle uyumlu bir çubuk (Firefox: scrollbar-color, Chrome/Edge: ::-webkit-scrollbar). */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--ry-accent-rgb), .5) var(--ry-sidebar-bg);
+}
+
+.ry-sidebar::-webkit-scrollbar {
+    width: 7px;
+}
+.ry-sidebar::-webkit-scrollbar-track {
+    background: var(--ry-sidebar-bg);
+}
+.ry-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(var(--ry-accent-rgb), .45);
+    border-radius: 8px;
+}
+.ry-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--ry-accent-rgb), .75);
+}
+
+.ry-sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: 1.25rem 1.3rem;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    text-decoration: none;
+}
+.ry-sidebar-brand:hover { text-decoration: none; }
+.ry-sidebar-brand .bi { color: var(--ry-accent); font-size: 1.5rem; }
+.ry-sidebar-logo { width: 42px; height: auto; flex-shrink: 0; }
+.ry-sidebar-brand span {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #fff;
+    line-height: 1.15;
+}
+.ry-sidebar-brand small { display: block; color: #9d9283; font-size: .68rem; font-weight: 400; letter-spacing: .04em; }
+
+.ry-nav-section {
+    padding: 1.15rem 1.25rem .4rem;
+    font-size: .68rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: #8c8275;
+    font-weight: 700;
+}
+
+.ry-nav-link {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .55rem 1rem;
+    margin: .12rem .65rem;
+    border-radius: 10px;
+    color: #d8d0c2;
+    text-decoration: none;
+    font-size: .89rem;
+    transition: background .16s ease, color .16s ease;
+}
+.ry-nav-link .bi { font-size: 1rem; width: 1.15rem; text-align: center; opacity: .8; flex-shrink: 0; }
+.ry-nav-link:hover { background: rgba(255,255,255,.07); color: #fff; text-decoration: none; }
+.ry-nav-link.active {
+    background: linear-gradient(135deg, rgba(var(--ry-accent-rgb),.24), rgba(var(--ry-accent-rgb),.09));
+    color: var(--ry-accent-light);
+    font-weight: 600;
+}
+.ry-nav-link.active .bi { opacity: 1; color: var(--ry-accent); }
+
+.ry-sidebar-footer {
+    padding: 1rem 1.3rem 1.4rem;
+    margin-top: .5rem;
+    border-top: 1px solid rgba(255,255,255,.08);
+    font-size: .8rem;
+}
+.ry-sidebar-footer .ry-user { color: #ece5d6; font-weight: 600; }
+.ry-sidebar-footer .btn { font-size: .78rem; }
+
+.ry-sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,8,5,.55);
+    z-index: 1040;
+}
+
+/* ---------- Main / topbar ---------- */
+.ry-main {
+    flex: 1;
+    margin-left: var(--ry-sidebar-width);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-width: 0;
+}
+
+.ry-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    background: rgba(255,255,255,.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--ry-border);
+    padding: .85rem 1.75rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    /* Altın vurgudan yumuşakça sönümlenen alt çizgi - sidebar/site genelindeki marka rengiyle bağ kurar. */
+    position: relative;
+}
+.ry-topbar::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -1px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--ry-accent) 0%, rgba(205,159,86,0) 60%);
+    opacity: .6;
+    pointer-events: none;
+}
+.ry-topbar-title {
+    flex: 1;
+    min-width: 0;
+}
+.ry-topbar-eyebrow {
+    display: block;
+    font-size: .66rem;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--ry-accent);
+    margin-bottom: .1rem;
+}
+.ry-topbar h1 {
+    font-size: 1.18rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--ry-text);
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ry-topbar-divider {
+    width: 1px;
+    height: 28px;
+    background: var(--ry-border);
+}
+.ry-toggle-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    border: 1px solid var(--ry-border);
+    background: #fff;
+    color: var(--ry-text);
+}
+.ry-topbar .ry-bell {
+    position: relative;
+    color: var(--ry-text);
+    font-size: 1.15rem;
+    width: 38px; height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    transition: background .15s ease;
+}
+.ry-topbar .ry-bell:hover { background: var(--ry-bg); }
+.ry-topbar .ry-user-chip {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    padding: .3rem .9rem .3rem .35rem;
+    border-radius: 999px;
+    background: var(--ry-bg);
+    border: 1px solid var(--ry-border);
+    font-size: .84rem;
+    font-weight: 600;
+    color: var(--ry-text);
+    transition: box-shadow .15s ease;
+}
+.ry-topbar .ry-user-chip:hover {
+    box-shadow: 0 4px 14px rgba(20,15,8,.08);
+}
+.ry-topbar .ry-user-chip .ry-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--ry-accent-light), var(--ry-accent));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #241a0c;
+    font-weight: 700;
+    font-size: .78rem;
+    /* İkinci bir ince halka: avatarı arka plandan (chip'ten) net bir şekilde ayırır,
+       düz/gömülü değil "rozet" gibi öne çıkan bir his verir. */
+    box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(205,159,86,.45);
+}
+
+.ry-content {
+    flex: 1;
+    padding: 1.6rem 1.75rem 3rem;
+}
+
+@media (max-width: 991.98px) {
+    .ry-sidebar { transform: translateX(-100%); }
+    .ry-sidebar.ry-open { transform: translateX(0); box-shadow: 0 0 50px rgba(0,0,0,.5); }
+    .ry-sidebar-backdrop.ry-open { display: block; }
+    .ry-main { margin-left: 0; }
+    .ry-toggle-btn { display: inline-flex; }
+    .ry-content { padding: 1.25rem 1rem 2.5rem; }
+}
+
+/* ---------- Content component polish (kart/tablo/buton/rozet/uyarı) ---------- */
+.ry-content .card {
+    border: 1px solid var(--ry-border);
+    border-radius: var(--ry-radius);
+    box-shadow: 0 2px 14px rgba(20,15,8,.045);
+}
+.ry-content .card-body { padding: 1.4rem; }
+
+.ry-content .table { --bs-table-bg: transparent; margin-bottom: 0; }
+.ry-content table thead th {
+    text-transform: uppercase;
+    font-size: .7rem;
+    letter-spacing: .06em;
+    color: var(--ry-muted);
+    font-weight: 700;
+    border-bottom-width: 1px;
+    white-space: nowrap;
+}
+.ry-content .table tbody tr { transition: background .12s ease; }
+.ry-content .table tbody tr:hover { background: rgba(var(--ry-accent-rgb),.07); }
+.ry-content .table-responsive { border-radius: var(--ry-radius); }
+
+.ry-content .btn {
+    border-radius: 10px;
+    font-weight: 500;
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+.ry-content .btn:not(.btn-link):hover { transform: translateY(-1px); }
+.ry-content .btn-sm { border-radius: 8px; }
+
+.ry-content .badge {
+    font-weight: 600;
+    letter-spacing: .02em;
+    border-radius: 8px;
+    padding: .42em .65em;
+}
+
+.ry-content .alert {
+    border: none;
+    border-left: 4px solid;
+    border-radius: 10px;
+}
+.ry-content .alert-danger { border-left-color: #dc3545; background: #fdecec; color: #7a2530; }
+.ry-content .alert-success { border-left-color: #198754; background: #eaf7ef; color: #12432c; }
+.ry-content .alert-warning { border-left-color: var(--ry-accent); background: #fbf3e4; color: #6b4d1e; }
+.ry-content .alert-info { border-left-color: #0dcaf0; background: #e7f9fc; color: #0b5768; }
+
+.ry-content .list-group-item {
+    border-radius: 10px !important;
+    border: 1px solid var(--ry-border) !important;
+}
+
+.ry-content .form-control, .ry-content .form-select {
+    border-radius: 9px;
+    border-color: var(--ry-border);
+}
+.ry-content .form-control:focus, .ry-content .form-select:focus {
+    border-color: var(--ry-accent);
+    box-shadow: 0 0 0 .2rem rgba(var(--ry-accent-rgb),.18);
+}
+
+.ry-content .nav-tabs .nav-link.active { color: var(--ry-text); font-weight: 600; border-bottom: 2px solid var(--ry-accent); }
+
+/* Basit KPI kartı yardımcı sınıfı (Dashboard ve benzeri özet ekranlarda) */
+.ry-kpi {
+    background: var(--ry-card-bg);
+    border: 1px solid var(--ry-border);
+    border-radius: var(--ry-radius);
+    padding: 1.15rem 1.3rem;
+    box-shadow: 0 2px 14px rgba(20,15,8,.045);
+}
+.ry-kpi .ry-kpi-label { font-size: .74rem; text-transform: uppercase; letter-spacing: .07em; color: var(--ry-muted); font-weight: 700; }
+.ry-kpi .ry-kpi-value { font-size: 1.7rem; font-weight: 700; color: var(--ry-text); margin-top: .15rem; }
+.ry-kpi .bi { color: var(--ry-accent); font-size: 1.3rem; }
+
+/* ---------- Mutfak / Bar hazırlık ekranı kartları ---------- */
+.ry-prep-summary { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 1.1rem; }
+.ry-prep-summary .badge { font-size: .78rem; padding: .5em .85em; font-weight: 600; }
+.ry-prep-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1rem; }
+.ry-prep-card {
+    background: var(--ry-card-bg);
+    border: 1px solid var(--ry-border);
+    border-radius: var(--ry-radius);
+    border-top: 4px solid var(--ry-muted);
+    box-shadow: 0 2px 14px rgba(20,15,8,.045);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.ry-prep-card.ry-prep-yeni { border-top-color: #8a8072; }
+.ry-prep-card.ry-prep-hazirlaniyor { border-top-color: var(--ry-accent); }
+.ry-prep-card.ry-prep-hazir { border-top-color: #198754; }
+.ry-prep-card.ry-prep-late { border-top-color: #dc3545; }
+.ry-prep-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .65rem 1rem;
+    border-bottom: 1px solid var(--ry-border);
+    background: rgba(var(--ry-accent-rgb),.04);
+}
+.ry-prep-table { font-weight: 700; }
+.ry-prep-time { font-size: .78rem; color: var(--ry-muted); font-weight: 700; }
+.ry-prep-time.ry-prep-time-warn { color: #b06a12; }
+.ry-prep-time.ry-prep-time-danger { color: #dc3545; }
+.ry-prep-body { padding: 1rem; flex: 1; }
+.ry-prep-name { font-weight: 700; font-size: 1rem; margin-bottom: .2rem; }
+.ry-prep-qty { color: var(--ry-accent); font-weight: 700; }
+.ry-prep-options, .ry-prep-note { font-size: .8rem; color: var(--ry-muted); margin-top: .2rem; }
+.ry-prep-status-badge { margin-top: .55rem; display: inline-block; }
+.ry-prep-footer { padding: .75rem 1rem; border-top: 1px solid var(--ry-border); }
+.ry-prep-footer .btn { width: 100%; font-weight: 600; }
+.ry-prep-done {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    color: #198754;
+    font-weight: 700;
+    font-size: .85rem;
+}
+
+/* ---------- Arama kutusu (Menü Ürünleri vb.) ---------- */
+.ry-search-box {
+    position: relative;
+    max-width: 480px;
+}
+.ry-search-box .bi {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ry-muted);
+    pointer-events: none;
+}
+.ry-search-box .form-control {
+    padding-left: 2.5rem;
+    border-radius: 999px;
+}
+
+/* ---------- Kategori kutuları (chip filtre + kategori kartları) ---------- */
+.ry-cat-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+.ry-cat-chip {
+    border: 1px solid var(--ry-border);
+    background: #fff;
+    color: var(--ry-text);
+    border-radius: 999px;
+    padding: .45rem .95rem;
+    font-size: .85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    text-decoration: none;
+}
+.ry-cat-chip:hover { border-color: var(--ry-accent); text-decoration: none; color: var(--ry-text); }
+.ry-cat-chip.active {
+    background: linear-gradient(135deg, var(--ry-accent), var(--ry-accent-light));
+    border-color: var(--ry-accent);
+    color: #241a0c;
+}
+.ry-cat-chip-count {
+    background: rgba(0,0,0,.08);
+    border-radius: 999px;
+    padding: .05rem .5rem;
+    font-size: .72rem;
+}
+.ry-cat-chip.active .ry-cat-chip-count { background: rgba(255,255,255,.4); }
+
+.ry-cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 1rem;
+}
+.ry-cat-card {
+    background: var(--ry-card-bg);
+    border: 1px solid var(--ry-border);
+    border-radius: var(--ry-radius);
+    box-shadow: 0 2px 14px rgba(20,15,8,.045);
+    padding: 1.15rem 1.1rem;
+    text-align: center;
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+.ry-cat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(20,15,8,.09); }
+.ry-cat-card-icon {
+    width: 46px; height: 46px;
+    margin: 0 auto .6rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(var(--ry-accent-rgb),.22), rgba(var(--ry-accent-rgb),.09));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ry-accent);
+    font-size: 1.25rem;
+}
+.ry-cat-card-name { font-weight: 700; font-size: 1rem; }
+.ry-cat-card-meta { color: var(--ry-muted); font-size: .78rem; margin: .2rem 0 .8rem; }
+.ry-cat-card-actions { display: flex; gap: .4rem; justify-content: center; }
+
+/* ---------- Masa / QR ekranı: alan bazlı gruplama + kompakt kartlar ---------- */
+.ry-area-group {
+    background: var(--ry-card-bg);
+    border: 1px solid var(--ry-border);
+    border-radius: var(--ry-radius);
+    box-shadow: 0 2px 14px rgba(20,15,8,.045);
+    overflow: hidden;
+}
+.ry-area-header {
+    width: 100%;
+    border: none;
+    background: rgba(var(--ry-accent-rgb),.06);
+    padding: .9rem 1.15rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .5rem;
+    cursor: pointer;
+    text-align: left;
+}
+.ry-area-header:hover { background: rgba(var(--ry-accent-rgb),.11); }
+.ry-area-header-title { font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: .5rem; color: var(--ry-text); }
+.ry-area-header-title .bi-geo-alt { color: var(--ry-accent); }
+.ry-area-header-meta { display: flex; gap: .4rem; align-items: center; }
+.ry-area-chevron { transition: transform .2s ease; }
+.ry-area-header.collapsed .ry-area-chevron { transform: rotate(-90deg); }
+
+.ry-table-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: .85rem;
+    padding: 1.1rem;
+}
+.ry-table-card {
+    border: 1px solid var(--ry-border);
+    border-radius: 12px;
+    padding: .75rem;
+    text-align: center;
+    background: var(--ry-bg);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+.ry-table-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(20,15,8,.08); }
+.ry-table-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; gap: .3rem; }
+.ry-table-card-name { font-weight: 700; font-size: .92rem; }
+.ry-table-status-badge { font-size: .65rem; padding: .32em .5em; }
+.ry-table-card-qr { width: 100%; max-width: 110px; height: auto; margin: 0 auto .55rem; display: block; border-radius: 8px; }
+.ry-table-card-actions { display: flex; flex-wrap: wrap; gap: .25rem; justify-content: center; }
+.ry-table-card-actions .btn { padding: .18rem .4rem; font-size: .78rem; }
+
+@media (max-width: 575.98px) {
+    .ry-table-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+}
+
+/* =========================================================================
+   Ayarlar ekranı (Görünüm/Tema editörü): iki ayrı temayı (site/panel) ayıran,
+   canlı önizlemeli editör - her renk seçimi anında mini önizlemelere yansır
+   (bkz. Areas/Admin/Views/Settings/Index.cshtml altındaki script).
+   ========================================================================= */
+.ry-theme-preview-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.1rem;
+    margin-bottom: 1.75rem;
+}
+@media (max-width: 767.98px) {
+    .ry-theme-preview-row { grid-template-columns: 1fr; }
+}
+
+.ry-theme-preview {
+    border-radius: var(--ry-radius);
+    overflow: hidden;
+    border: 1px solid var(--ry-border);
+    box-shadow: 0 2px 14px rgba(20,15,8,.045);
+}
+.ry-theme-preview-label {
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-weight: 700;
+    color: var(--ry-muted);
+    margin-bottom: .5rem;
+}
+
+/* Herkese açık site önizlemesi: küçük bir "hero" bandı - gerçek public site
+   ile aynı mantık (koyu zemin üstünde vurgu renkli başlık/buton). */
+.ry-theme-preview-public {
+    padding: 1.6rem 1.4rem;
+    background: var(--ry-tp-dark, #17130d);
+    color: var(--ry-tp-text, #fff);
+    font-family: var(--ry-tp-heading-font, 'Playfair Display', serif);
+}
+.ry-theme-preview-public .ry-tp-eyebrow {
+    font-family: var(--ry-tp-body-font, inherit);
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--ry-tp-primary, #cd9f56);
+    font-weight: 700;
+    margin-bottom: .35rem;
+}
+.ry-theme-preview-public .ry-tp-title { font-size: 1.35rem; font-weight: 700; margin-bottom: .6rem; }
+.ry-theme-preview-public .ry-tp-btn {
+    display: inline-block;
+    font-family: var(--ry-tp-body-font, inherit);
+    background: var(--ry-tp-primary, #cd9f56);
+    color: #241a0c;
+    padding: .45rem 1.1rem;
+    font-size: .82rem;
+    font-weight: 700;
+    border-radius: var(--ry-tp-corner, 8px);
+}
+.ry-theme-preview-public .ry-tp-card {
+    margin-top: 1rem;
+    background: var(--ry-tp-bg, #f4f2ec);
+    color: var(--ry-tp-text2, #241f19);
+    border-radius: var(--ry-tp-corner, 8px);
+    padding: .7rem .9rem;
+    font-family: var(--ry-tp-body-font, inherit);
+    font-size: .78rem;
+}
+
+/* Yönetim paneli önizlemesi: gerçek sidebar+içerik yapısının minyatürü. */
+.ry-theme-preview-admin { display: flex; min-height: 132px; }
+.ry-theme-preview-admin .ry-tp-sidebar {
+    width: 78px;
+    background: var(--ry-tp-sidebar, #15120d);
+    flex-shrink: 0;
+    padding: .7rem .5rem;
+}
+.ry-theme-preview-admin .ry-tp-sidebar-dot {
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.12);
+    margin-bottom: .4rem;
+}
+.ry-theme-preview-admin .ry-tp-sidebar-dot.active { background: var(--ry-tp-accent, #cd9f56); }
+.ry-theme-preview-admin .ry-tp-content {
+    flex: 1;
+    background: var(--ry-tp-adminbg, #f4f2ec);
+    padding: .85rem 1rem;
+}
+.ry-theme-preview-admin .ry-tp-content .ry-tp-btn {
+    display: inline-block;
+    background: var(--ry-tp-accent, #cd9f56);
+    color: #241a0c;
+    padding: .38rem .9rem;
+    font-size: .78rem;
+    font-weight: 700;
+    border-radius: 8px;
+    margin-bottom: .5rem;
+}
+.ry-theme-preview-admin .ry-tp-content .ry-tp-line {
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(20,15,8,.09);
+    margin-bottom: .4rem;
+}
+.ry-theme-preview-admin .ry-tp-content .ry-tp-line:nth-child(3) { width: 70%; }
+
+/* Renk seçici "swatch" kutucukları - çıplak <input type=color> yerine
+   etiket + büyük yuvarlak swatch + hex değeri birlikte gösteriliyor. */
+.ry-swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: .85rem;
+}
+.ry-swatch-tile {
+    border: 1px solid var(--ry-border);
+    border-radius: 12px;
+    padding: .7rem .8rem;
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    background: #fff;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.ry-swatch-tile:focus-within, .ry-swatch-tile:hover { border-color: var(--ry-accent); box-shadow: 0 2px 10px rgba(20,15,8,.06); }
+.ry-swatch-tile input[type="color"] {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 2px solid var(--ry-border);
+    border-radius: 50%;
+    flex-shrink: 0;
+    cursor: pointer;
+    background: none;
+}
+.ry-swatch-tile input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; border-radius: 50%; }
+.ry-swatch-tile input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+.ry-swatch-tile-text { min-width: 0; }
+.ry-swatch-tile-label { font-size: .78rem; font-weight: 600; color: var(--ry-text); display: block; }
+.ry-swatch-tile-hex { font-size: .72rem; color: var(--ry-muted); font-family: 'Courier New', monospace; text-transform: uppercase; }
+
+.ry-theme-section-title {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .82rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-weight: 700;
+    color: var(--ry-muted);
+    margin-bottom: .9rem;
+}
+
+/* ---------- Onay penceresi (tarayıcının confirm() kutusu yerine, bkz. js/ry-confirm.js) ---------- */
+.ry-confirm .modal-content {
+    border: 0;
+    border-radius: var(--ry-radius);
+    box-shadow: 0 24px 60px rgba(21, 18, 13, .28);
+    overflow: hidden;
+}
+.ry-confirm .modal-body {
+    padding: 2rem 1.75rem 1rem;
+    text-align: center;
+}
+.ry-confirm-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.9rem;
+    color: var(--ry-accent);
+    background: rgba(var(--ry-accent-rgb), .14);
+}
+.ry-confirm-danger .ry-confirm-icon {
+    color: #c0392b;
+    background: rgba(192, 57, 43, .12);
+}
+.ry-confirm-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 700;
+    color: var(--ry-text);
+    margin-bottom: .5rem;
+}
+.ry-confirm-message {
+    color: var(--ry-muted);
+    margin-bottom: 0;
+    white-space: pre-line;
+}
+.ry-confirm .modal-footer {
+    border-top: 0;
+    justify-content: center;
+    gap: .5rem;
+    padding: .5rem 1.75rem 1.75rem;
+}
+.ry-confirm .modal-footer .btn {
+    min-width: 130px;
+    border-radius: 10px;
+    font-weight: 500;
+}
+.ry-confirm .btn-primary {
+    background: var(--ry-accent);
+    border-color: var(--ry-accent);
+    color: #1b160f;
+}
+.ry-confirm .btn-primary:hover,
+.ry-confirm .btn-primary:focus {
+    background: var(--ry-accent-light);
+    border-color: var(--ry-accent-light);
+    color: #1b160f;
+}
+.modal-backdrop.show { opacity: .55; }

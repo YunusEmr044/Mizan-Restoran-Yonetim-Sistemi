@@ -1,0 +1,315 @@
+@model SiteContent
+@{
+    ViewData["Title"] = "Site İçeriği";
+    ViewBag.SiteActive = "sitecontent";
+}
+<h2 class="mb-1">Site İçeriği</h2>
+<p class="text-muted mb-4">Herkese açık restoran sitesinin ana sayfa, hakkımızda, iletişim ve rezervasyon ayarlarını buradan düzenleyebilirsiniz.</p>
+
+
+<form asp-action="Index" method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <h5 class="mt-3">Ana Sayfa</h5>
+    <div class="mb-3">
+        <label asp-for="HeroTitle" class="form-label"></label>
+        <input asp-for="HeroTitle" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="HeroSubtitle" class="form-label"></label>
+        <input asp-for="HeroSubtitle" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Kapak Görseli</label>
+        @if (!string.IsNullOrEmpty(Model.HeroImageUrl))
+        {
+            <div class="mb-2 d-flex align-items-center gap-3">
+                <img src="@Model.HeroImageUrl" style="max-height:120px;" class="img-thumbnail" />
+                <div class="form-check">
+                    <input type="checkbox" name="removeHeroImage" value="true" class="form-check-input" id="removeHeroImage" />
+                    <label class="form-check-label" for="removeHeroImage">Görseli kaldır</label>
+                </div>
+            </div>
+        }
+        <input type="file" name="heroImage" class="form-control" accept="image/*" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Ana Sayfa Birincil Butonu</label>
+        <div class="row g-2">
+            <div class="col-md-6"><input asp-for="HeroPrimaryButtonText" class="form-control" placeholder="Menümüzü İnceleyin" /></div>
+            <div class="col-md-6"><input asp-for="HeroPrimaryButtonUrl" class="form-control" placeholder="/menu" /></div>
+        </div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Ana Sayfa İkincil Butonu</label>
+        <div class="row g-2">
+            <div class="col-md-6"><input asp-for="HeroSecondaryButtonText" class="form-control" placeholder="Rezervasyon Yapın" /></div>
+            <div class="col-md-6"><input asp-for="HeroSecondaryButtonUrl" class="form-control" placeholder="/Home/Rezervasyon" /></div>
+        </div>
+    </div>
+
+    <h5 class="mt-4" id="hakkimizda">Hakkımızda</h5>
+    <div class="mb-3">
+        <label asp-for="AboutTitle" class="form-label"></label>
+        <input asp-for="AboutTitle" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="AboutText" class="form-label"></label>
+        <textarea asp-for="AboutText" class="form-control" rows="4"></textarea>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Hakkımızda Görseli</label>
+        @if (!string.IsNullOrEmpty(Model.AboutImageUrl))
+        {
+            <div class="mb-2 d-flex align-items-center gap-3">
+                <img src="@Model.AboutImageUrl" style="max-height:120px;" class="img-thumbnail" />
+                <div class="form-check">
+                    <input type="checkbox" name="removeAboutImage" value="true" class="form-check-input" id="removeAboutImage" />
+                    <label class="form-check-label" for="removeAboutImage">Görseli kaldır</label>
+                </div>
+            </div>
+        }
+        <input type="file" name="aboutImage" class="form-control" accept="image/*" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="AboutButtonText" class="form-label"></label>
+        <input asp-for="AboutButtonText" class="form-control" placeholder="Hikâyemizi Okuyun" />
+        <div class="form-text">Ana sayfadaki "Hikâyemiz" bölümünün butonu - Hakkımızda sayfasına götürür.</div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Logo</label>
+        @if (!string.IsNullOrEmpty(Model.LogoImageUrl))
+        {
+            <div class="mb-2 d-flex align-items-center gap-3">
+                <img src="@Model.LogoImageUrl" style="max-height:80px;" class="img-thumbnail" />
+                <div class="form-check">
+                    <input type="checkbox" name="removeLogoImage" value="true" class="form-check-input" id="removeLogoImage" />
+                    <label class="form-check-label" for="removeLogoImage">Görseli kaldır</label>
+                </div>
+            </div>
+        }
+        <input type="file" name="logoImage" class="form-control" accept="image/png,image/jpeg,image/webp" />
+        <div class="form-text">Güvenlik nedeniyle SVG desteklenmiyor - JPG, PNG veya WEBP kullanın.</div>
+    </div>
+
+    <h5 class="mt-4" id="iletisim">İletişim / Konum</h5>
+    <div class="mb-3">
+        <label asp-for="ContactPhone" class="form-label"></label>
+        <input asp-for="ContactPhone" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="ContactEmail" class="form-label"></label>
+        <input asp-for="ContactEmail" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="ContactAddress" class="form-label"></label>
+        <input asp-for="ContactAddress" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="MapEmbedUrl" class="form-label"></label>
+        <input asp-for="MapEmbedUrl" class="form-control" placeholder="https://www.google.com/maps/embed?..." />
+    </div>
+    <div class="mb-3">
+        <label asp-for="FacebookUrl" class="form-label"></label>
+        <input asp-for="FacebookUrl" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="InstagramUrl" class="form-label"></label>
+        <input asp-for="InstagramUrl" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="WhatsAppNumber" class="form-label"></label>
+        <input asp-for="WhatsAppNumber" class="form-control" placeholder="905xxxxxxxxx" />
+        <div class="form-text">Doldurulursa sitede sağ altta yüzen bir WhatsApp butonu görünür.</div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="WhatsAppDefaultMessage" class="form-label"></label>
+        <input asp-for="WhatsAppDefaultMessage" class="form-control" placeholder="Merhaba, bir rezervasyon/sipariş hakkında bilgi almak istiyorum." />
+    </div>
+    <div class="mb-3">
+        <label asp-for="WorkingHours" class="form-label"></label>
+        <textarea asp-for="WorkingHours" class="form-control" rows="2" placeholder="Her gün 10:00 - 23:00"></textarea>
+        <div class="form-text">Gün gün açılış/kapanış saatleri (ve otomatik "açık/kapalı" rozeti) için <a asp-area="Admin" asp-controller="HomePage" asp-action="WorkingHours">Çalışma Saatleri</a> ekranını kullanın - bu alan sadece serbest metin bir özet.</div>
+    </div>
+
+    <h5 class="mt-4">Ana Sayfa Bölüm Metinleri</h5>
+    <p class="text-muted small">Ana sayfadaki bölüm başlıkları/alt başlıkları - boş bırakılırsa makul bir Türkçe varsayılana düşülür, site asla "boş başlık" göstermez.</p>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="FeaturesSectionTitle" class="form-label"></label>
+            <input asp-for="FeaturesSectionTitle" class="form-control" placeholder="Neden Bizi Seçmelisiniz" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="FeaturesSectionSubtitle" class="form-label"></label>
+            <input asp-for="FeaturesSectionSubtitle" class="form-control" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="FeaturedMenuSectionTitle" class="form-label"></label>
+            <input asp-for="FeaturedMenuSectionTitle" class="form-control" placeholder="Öne Çıkan Lezzetler" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="FeaturedMenuSectionSubtitle" class="form-label"></label>
+            <input asp-for="FeaturedMenuSectionSubtitle" class="form-control" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="ChefSpecialSectionTitle" class="form-label"></label>
+            <input asp-for="ChefSpecialSectionTitle" class="form-control" placeholder="Şefin Önerisi" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="ChefSpecialSectionSubtitle" class="form-label"></label>
+            <input asp-for="ChefSpecialSectionSubtitle" class="form-control" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="CampaignsSectionTitle" class="form-label"></label>
+            <input asp-for="CampaignsSectionTitle" class="form-control" placeholder="Güncel Kampanyalar" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="TestimonialsSectionTitle" class="form-label"></label>
+            <input asp-for="TestimonialsSectionTitle" class="form-control" placeholder="Misafirlerimiz Ne Diyor" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="GallerySectionTitle" class="form-label"></label>
+            <input asp-for="GallerySectionTitle" class="form-control" placeholder="Mekanımızdan Kareler" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="InstagramSectionTitle" class="form-label"></label>
+            <input asp-for="InstagramSectionTitle" class="form-control" placeholder="Instagram'da Bizi Takip Edin" />
+        </div>
+    </div>
+    <h6 class="mt-3 mb-2 text-muted" id="qr">QR / Dijital Menü Bölümü</h6>
+    <p class="small text-muted mb-2">
+        Bu bölümde ana sayfada gerçek bir QR kod GÖSTERİLMEZ (her masanın kendi QR kodu vardır).
+        Bölüm; başlık, açıklama, 3 adımlı anlatım ve bir telefon mockup görseli ile dijital menü
+        deneyimini tanıtır.
+    </p>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="QrSectionTitle" class="form-label"></label>
+            <input asp-for="QrSectionTitle" class="form-control" placeholder="Masadan Menünüze, Bir Dokunuşla" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="QrSectionSubtitle" class="form-label"></label>
+            <input asp-for="QrSectionSubtitle" class="form-control" placeholder="Masanızdaki size özel QR kodu telefonunuzla okutun. Menümüzü keşfedin, lezzetlerimizi inceleyin ve siparişinizi doğrudan masanızdan kolayca oluşturun." />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="QrStep1Title" class="form-label"></label>
+            <input asp-for="QrStep1Title" class="form-control" placeholder="QR Kodunuzu Okutun" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="QrStep1Text" class="form-label"></label>
+            <input asp-for="QrStep1Text" class="form-control" placeholder="Masanızda bulunan size özel QR kodu telefonunuzla tarayın." />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="QrStep2Title" class="form-label"></label>
+            <input asp-for="QrStep2Title" class="form-control" placeholder="Menüyü Keşfedin" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="QrStep2Text" class="form-label"></label>
+            <input asp-for="QrStep2Text" class="form-control" placeholder="Güncel menümüzü, ürünleri, içerikleri ve fiyatları kolayca inceleyin." />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="QrStep3Title" class="form-label"></label>
+            <input asp-for="QrStep3Title" class="form-control" placeholder="Siparişinizi Oluşturun" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="QrStep3Text" class="form-label"></label>
+            <input asp-for="QrStep3Text" class="form-control" placeholder="Siparişinizi doğrudan masanızdan kolayca oluşturun ve süreci takip edin." />
+        </div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Telefon Mockup Görseli (örnek menü ekran görüntüsü)</label>
+        <div class="form-text mb-1">Gerçek bir QR kod DEĞİL — telefon ekranında görünecek örnek menü görüntüsü yükleyin.</div>
+        @if (!string.IsNullOrEmpty(Model.QrPhoneImageUrl))
+        {
+            <div class="mb-2 d-flex align-items-center gap-3">
+                <img src="@Model.QrPhoneImageUrl" style="max-height:160px;" class="img-thumbnail" />
+                <div class="form-check">
+                    <input type="checkbox" name="removeQrPhoneImage" value="true" class="form-check-input" id="removeQrPhoneImage" />
+                    <label class="form-check-label" for="removeQrPhoneImage">Görseli kaldır</label>
+                </div>
+            </div>
+        }
+        <input type="file" name="qrPhoneImage" class="form-control" accept="image/*" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="InstagramHandle" class="form-label"></label>
+        <input asp-for="InstagramHandle" class="form-control" placeholder="restoranadi" />
+    </div>
+    <div class="row" id="rezervasyon-cta">
+        <div class="col-md-6 mb-3">
+            <label asp-for="ReservationCtaTitle" class="form-label"></label>
+            <input asp-for="ReservationCtaTitle" class="form-control" placeholder="Bir Masa Ayırtın" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="ReservationCtaButtonText" class="form-label"></label>
+            <input asp-for="ReservationCtaButtonText" class="form-control" placeholder="Rezervasyon Yap" />
+        </div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="ReservationCtaText" class="form-label"></label>
+        <textarea asp-for="ReservationCtaText" class="form-control" rows="2"></textarea>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Rezervasyon Çağrısı Arka Plan Görseli</label>
+        @if (!string.IsNullOrEmpty(Model.ReservationCtaImageUrl))
+        {
+            <div class="mb-2 d-flex align-items-center gap-3">
+                <img src="@Model.ReservationCtaImageUrl" style="max-height:120px;" class="img-thumbnail" />
+                <div class="form-check">
+                    <input type="checkbox" name="removeReservationCtaImage" value="true" class="form-check-input" id="removeReservationCtaImage" />
+                    <label class="form-check-label" for="removeReservationCtaImage">Görseli kaldır</label>
+                </div>
+            </div>
+        }
+        <input type="file" name="reservationCtaImage" class="form-control" accept="image/*" />
+    </div>
+
+    <h5 class="mt-4">Arama Motoru ve Alt Bilgi</h5>
+    <div class="mb-3">
+        <label asp-for="SeoTitle" class="form-label"></label>
+        <input asp-for="SeoTitle" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="SeoDescription" class="form-label"></label>
+        <textarea asp-for="SeoDescription" class="form-control" rows="3"></textarea>
+    </div>
+    <div class="mb-3">
+        <label asp-for="FooterText" class="form-label"></label>
+        <textarea asp-for="FooterText" class="form-control" rows="2"></textarea>
+    </div>
+    <div class="mb-3">
+        <label asp-for="FooterTagline" class="form-label"></label>
+        <input asp-for="FooterTagline" class="form-control" placeholder="Şehrin kalbinde, 20 yıldır aynı özenle." />
+    </div>
+
+    <h5 class="mt-4">Rezervasyon</h5>
+    <div class="form-check mb-4">
+        <input asp-for="ReservationEnabled" class="form-check-input" />
+        <label asp-for="ReservationEnabled" class="form-check-label"></label>
+    </div>
+
+    <div class="alert alert-light border d-flex align-items-center justify-content-between mb-4">
+        <span><i class="bi bi-palette me-2"></i>Renk/font/köşe stili gibi görünüm (tema) ayarları artık <strong>Ayarlar</strong> ekranına taşındı.</span>
+        @if (User.IsInRole(RolePermissions.SuperAdmin))
+        {
+            <a asp-area="Admin" asp-controller="Settings" asp-action="Index" class="btn btn-sm btn-outline-secondary">Ayarlar'a git</a>
+        }
+    </div>
+
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+</form>

@@ -1,0 +1,45 @@
+@model List<HomeFeature>
+@{
+    ViewData["Title"] = "Öne Çıkan Özellikler";
+    ViewBag.SiteActive = "features";
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-0">Öne Çıkan Özellikler</h2>
+        <p class="text-muted small mb-0">Ör. "Taze Malzemeler", "Usta Dokunuşu" - restoranın farkını anlatan 3-4 küçük kart.</p>
+    </div>
+    <a asp-action="FeaturesCreate" class="btn btn-primary">+ Yeni Özellik</a>
+</div>
+
+@await Html.PartialAsync("_HomeLayoutSubNav")
+
+<div class="row row-cols-1 row-cols-md-3 g-3">
+    @foreach (var f in Model)
+    {
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="fs-3 text-warning mb-2">
+                            @if (!string.IsNullOrEmpty(f.Icon)) { <i class="bi @f.Icon"></i> }
+                        </div>
+                        <span class="badge @(f.IsActive ? "bg-success" : "bg-secondary")">@(f.IsActive ? "Aktif" : "Pasif")</span>
+                    </div>
+                    <h6>@f.Title</h6>
+                    <p class="text-muted small">@f.Description</p>
+                    <p class="text-muted small mb-2">Sıra: @f.DisplayOrder</p>
+                    <div class="d-flex gap-2">
+                        <a asp-action="FeaturesEdit" asp-route-id="@f.Id" class="btn btn-sm btn-outline-secondary flex-grow-1">Düzenle</a>
+                        <form asp-action="FeaturesDelete" asp-route-id="@f.Id" method="post" data-confirm="Bu özellik kartı kalıcı olarak silinecek." data-confirm-title="Silinsin mi?" data-confirm-ok="Sil" data-confirm-danger>
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+@if (!Model.Any())
+{
+    <p class="text-muted">Henüz özellik eklenmedi.</p>
+}

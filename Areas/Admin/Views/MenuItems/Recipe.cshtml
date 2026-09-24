@@ -1,0 +1,89 @@
+@model List<RecipeItem>
+@{
+    var menuItem = (MenuItem)ViewBag.MenuItem;
+    var inventoryItems = (SelectList)ViewBag.InventoryItems;
+    decimal cost = ViewBag.EstimatedCost;
+    decimal profit = ViewBag.EstimatedProfit;
+    ViewData["Title"] = $"{menuItem.Name} - Reçete";
+}
+<div class="mb-3">
+    <h2>@menuItem.Name — Reçete</h2>
+    <p class="text-muted small">
+        Bu ürünün hangi malzemelerden ne kadar kullandığını tanımlayın. Sipariş
+        mutfağa/bara gönderildiğinde buradaki miktarlar stoktan otomatik düşer.
+        Reçete tanımlamak zorunlu değildir.
+    </p>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">← Ürünlere Dön</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card"><div class="card-body">
+            <div class="text-muted small">Satış Fiyatı</div>
+            <div class="fs-4 fw-semibold">@menuItem.Price.ToString("0.00") ₺</div>
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card"><div class="card-body">
+            <div class="text-muted small">Tahmini Maliyet</div>
+            <div class="fs-4 fw-semibold">@cost.ToString("0.00") ₺</div>
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card"><div class="card-body">
+            <div class="text-muted small">Tahmini Kâr</div>
+            <div class="fs-4 fw-semibold @(profit >= 0 ? "text-success" : "text-danger")">@profit.ToString("0.00") ₺</div>
+        </div></div>
+    </div>
+</div>
+
+<table class="table">
+    <thead><tr><th>Malzeme</th><th>Miktar</th><th>Birim Maliyet</th><th>Satır Maliyeti</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var r in Model)
+    {
+        <tr>
+            <td>@r.InventoryItem?.Name</td>
+            <td>@r.Quantity.ToString("0.###") @r.InventoryItem?.Unit</td>
+            <td>@((r.InventoryItem?.UnitCost ?? 0).ToString("0.00")) ₺</td>
+            <td>@((r.Quantity * (r.InventoryItem?.UnitCost ?? 0)).ToString("0.00")) ₺</td>
+            <td>
+                <form asp-action="DeleteRecipeItem" method="post" class="d-inline">
+                    <input type="hidden" name="id" value="@r.Id" />
+                    <input type="hidden" name="menuItemId" value="@menuItem.Id" />
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                </form>
+            </td>
+        </tr>
+    }
+    @if (!Model.Any())
+    {
+        <tr><td colspan="5" class="text-muted">Henüz reçete tanımlanmamış.</td></tr>
+    }
+    </tbody>
+</table>
+
+<h5 class="mt-4">Malzeme Ekle</h5>
+<form asp-action="AddRecipeItem" method="post" class="row g-2 align-items-end">
+    <input type="hidden" name="menuItemId" value="@menuItem.Id" />
+    <div class="col-auto">
+        <label class="form-label">Malzeme</label>
+        <select name="inventoryItemId" class="form-select" asp-items="inventoryItems" required>
+            <option value="">Seçin...</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <label class="form-label">Miktar</label>
+        <input type="number" step="0.001" min="0" name="quantity" class="form-control" required />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Ekle</button>
+    </div>
+</form>
+@if (!inventoryItems.Any())
+{
+    <p class="text-muted small mt-2">
+        Henüz stok kalemi tanımlanmamış. Önce <a asp-controller="Inventory" asp-action="Create">Stok</a>
+        bölümünden malzeme ekleyin.
+    </p>
+}

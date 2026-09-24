@@ -1,0 +1,30 @@
+@model List<UserListItem>
+@{
+    ViewData["Title"] = "Kullanıcılar";
+}
+<div class="d-flex justify-content-between mb-3">
+    <h2>Kullanıcılar</h2>
+    <a asp-action="Create" class="btn btn-primary">+ Yeni Kullanıcı</a>
+</div>
+<table class="table">
+    <thead><tr><th>Ad</th><th>E-posta</th><th>Rol(ler)</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.User.FullName</td>
+            <td>@item.User.Email</td>
+            <td>@string.Join(", ", item.Roles)</td>
+            <td class="text-end">
+                <a asp-action="Edit" asp-route-id="@item.User.Id" class="btn btn-sm btn-outline-primary">Düzenle</a>
+                @if (User.HasClaim(Permissions.ClaimType, Permissions.Users.Delete))
+                {
+                    <form asp-action="Delete" asp-route-id="@item.User.Id" method="post" class="d-inline" data-confirm="@item.User.Email hesabı silinecek. Bu işlem geri alınamaz." data-confirm-title="Kullanıcı silinsin mi?" data-confirm-ok="Kullanıcıyı Sil" data-confirm-danger>
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                    </form>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

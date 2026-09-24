@@ -1,0 +1,8 @@
+@{
+    var active = ViewBag.StokActive as string ?? "";
+}
+<div class="ry-cat-chips mb-4">
+    <a class="ry-cat-chip @(active == "inventory" ? "active" : "")" asp-area="Admin" asp-controller="Inventory" asp-action="Index"><i class="bi bi-box-seam"></i> Stok Kalemleri</a>
+    <a class="ry-cat-chip @(active == "suppliers" ? "active" : "")" asp-area="Admin" asp-controller="Suppliers" asp-action="Index"><i class="bi bi-truck"></i> Tedarikçiler</a>
+    <a class="ry-cat-chip @(active == "purchases" ? "active" : "")" asp-area="Admin" asp-controller="Purchases" asp-action="Index"><i class="bi bi-cart-check"></i> Satın Almalar</a>
+</div>

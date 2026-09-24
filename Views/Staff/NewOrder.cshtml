@@ -1,0 +1,56 @@
+@{
+    ViewData["Title"] = "Yeni Sipariş";
+    var tables = (List<RestaurantTable>)ViewBag.Tables;
+    var menuItems = (List<MenuItem>)ViewBag.MenuItems;
+    var optionsByItem = ((List<MenuItemOption>)ViewBag.Options).ToLookup(o => o.MenuItemId);
+}
+<h2 class="mb-4">Yeni Sipariş Oluştur</h2>
+<p class="text-muted small">Sipariş taslak olarak kaydedilir; ekrandan kontrol edip "Gönder" demeniz gerekir.</p>
+
+<form asp-action="NewOrder" method="post">
+    <div class="mb-3">
+        <label class="form-label">Masa</label>
+        <select name="tableId" class="form-select" required>
+            @foreach (var t in tables)
+            {
+                <option value="@t.Id">@t.Name</option>
+            }
+        </select>
+    </div>
+
+    <table class="table">
+        <thead><tr><th>Ürün</th><th>Fiyat</th><th style="width:100px">Adet</th></tr></thead>
+        <tbody>
+        @foreach (var item in menuItems)
+        {
+            <tr>
+                <td>
+                    @item.Name <span class="text-muted small">(@item.Category?.Name)</span>
+                    @if (optionsByItem[item.Id].Any())
+                    {
+                        <div class="mt-1">
+                            @foreach (var opt in optionsByItem[item.Id])
+                            {
+                                <div class="form-check form-check-inline small">
+                                    <input class="form-check-input" type="checkbox" name="selectedOptions" value="@opt.Id" id="sopt@(opt.Id)" />
+                                    <label class="form-check-label" for="sopt@(opt.Id)">@opt.Name @(opt.ExtraPrice > 0 ? $"(+{opt.ExtraPrice:0.00} ₺)" : "")</label>
+                                </div>
+                            }
+                        </div>
+                    }
+                </td>
+                <td>@item.Price.ToString("0.00") ₺</td>
+                <td><input type="number" min="0" max="50" value="0" class="form-control" name="quantities[@item.Id]" /></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <div class="mb-3">
+        <label class="form-label">Not</label>
+        <textarea name="notes" class="form-control" rows="2"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Taslak Olarak Kaydet</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>

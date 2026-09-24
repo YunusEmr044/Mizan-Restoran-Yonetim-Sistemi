@@ -1,0 +1,46 @@
+@model List<HeroSlide>
+@{
+    ViewData["Title"] = "Hero Slaytları";
+    ViewBag.SiteActive = "hero";
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-0">Hero Slaytları</h2>
+        <p class="text-muted small mb-0">Ana sayfanın en üstündeki karşılama alanı - birden fazla slayt ekleyip sırayla gösterebilirsiniz.</p>
+    </div>
+    <a asp-action="HeroCreate" class="btn btn-primary">+ Yeni Slayt</a>
+</div>
+
+@await Html.PartialAsync("_HomeLayoutSubNav")
+
+<div class="row row-cols-1 row-cols-md-3 g-3">
+    @foreach (var slide in Model)
+    {
+        <div class="col">
+            <div class="card h-100">
+                @if (!string.IsNullOrEmpty(slide.ImageUrl))
+                {
+                    <img src="@slide.ImageUrl" class="card-img-top" style="height:150px;object-fit:cover;" alt="@slide.Title" />
+                }
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h6 class="mb-1">@slide.Title</h6>
+                        <span class="badge @(slide.IsActive ? "bg-success" : "bg-secondary")">@(slide.IsActive ? "Aktif" : "Pasif")</span>
+                    </div>
+                    <p class="text-muted small mb-2">@slide.Subtitle</p>
+                    <p class="text-muted small mb-2">Sıra: @slide.DisplayOrder</p>
+                    <div class="d-flex gap-2">
+                        <a asp-action="HeroEdit" asp-route-id="@slide.Id" class="btn btn-sm btn-outline-secondary flex-grow-1">Düzenle</a>
+                        <form asp-action="HeroDelete" asp-route-id="@slide.Id" method="post" data-confirm="Bu slayt kalıcı olarak silinecek." data-confirm-title="Slayt silinsin mi?" data-confirm-ok="Sil" data-confirm-danger>
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+@if (!Model.Any())
+{
+    <p class="text-muted">Henüz Hero slaytı eklenmedi. "Yeni Slayt" ile ekleyebilirsiniz. Hiç slayt yoksa ana sayfa "Site İçeriği"ndeki eski tekil Hero alanlarını kullanır.</p>
+}

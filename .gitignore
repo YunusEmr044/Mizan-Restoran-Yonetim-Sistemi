@@ -1,0 +1,32 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+TestResults/
+
+# GÜVENLİK: appsettings.Development.json yerel SQL Server bağlantı dizesini içeriyor.
+appsettings.Development.json
+# Canlı (.exe) kurulumun bağlantı dizesi/adresi - makineye özel, repoya girmez.
+appsettings.Production.json
+
+# GÜVENLİK: giriş bilgileri (kullanıcı adı/şifre) içeriyor - GitHub'a gitmemeli.
+ORNEK-KULLANICI-HESAPLARI.txt
+GIRIS-BILGILERI.txt
+
+# GÜVENLİK: yerel SSL sertifikası/anahtar dosyası yanlışlıkla proje klasörüne düşerse.
+*.pfx
+*.pem
+
+# Kullanıcının admin panelden yüklediği görseller - çalışma zamanında otomatik oluşturulur
+# (Directory.CreateDirectory), kaynak koda ait değil, git geçmişini şişirmemesi için hariç.
+wwwroot/uploads/
+
+# DatabaseBackup:Directory proje klasörüne işaret edecek olursa .bak dosyaları git'e düşmesin.
+*.bak
+
+# Tools/load-test.py çalıştırıldığında Python'ın ürettiği önbellek/derlenmiş bytecode.
+__pycache__/
+*.pyc

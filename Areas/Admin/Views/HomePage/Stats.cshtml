@@ -1,0 +1,42 @@
+@model List<HomeStat>
+@{
+    ViewData["Title"] = "İstatistikler";
+    ViewBag.SiteActive = "stats";
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-0">Güven / İstatistik Şeridi</h2>
+        <p class="text-muted small mb-0">Ör. "4.9 / 5 Müşteri Puanı", "50+ Özel Lezzet" - Hero'nun hemen altında gösterilir.</p>
+    </div>
+    <a asp-action="StatsCreate" class="btn btn-primary">+ Yeni İstatistik</a>
+</div>
+
+@await Html.PartialAsync("_HomeLayoutSubNav")
+
+<div class="table-responsive">
+<table class="table align-middle">
+    <thead><tr><th>İkon</th><th>Değer</th><th>Etiket</th><th>Sıra</th><th>Durum</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var s in Model)
+    {
+        <tr>
+            <td>@if (!string.IsNullOrEmpty(s.Icon)) { <i class="bi @s.Icon"></i> }</td>
+            <td class="fw-semibold">@s.Value</td>
+            <td>@s.Label</td>
+            <td>@s.DisplayOrder</td>
+            <td><span class="badge @(s.IsActive ? "bg-success" : "bg-secondary")">@(s.IsActive ? "Aktif" : "Pasif")</span></td>
+            <td class="text-end">
+                <a asp-action="StatsEdit" asp-route-id="@s.Id" class="btn btn-sm btn-outline-secondary">Düzenle</a>
+                <form asp-action="StatsDelete" asp-route-id="@s.Id" method="post" class="d-inline" data-confirm="Bu istatistik kalıcı olarak silinecek." data-confirm-title="Silinsin mi?" data-confirm-ok="Sil" data-confirm-danger>
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                </form>
+            </td>
+        </tr>
+    }
+    @if (!Model.Any())
+    {
+        <tr><td colspan="6" class="text-muted">Henüz istatistik eklenmedi.</td></tr>
+    }
+    </tbody>
+</table>
+</div>

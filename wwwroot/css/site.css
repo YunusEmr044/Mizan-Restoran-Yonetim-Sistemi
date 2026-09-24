@@ -1,0 +1,26 @@
+body {
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+.navbar-brand {
+    font-weight: 600;
+}
+
+.card {
+    border-radius: 10px;
+}
+
+.list-group-item {
+    border-radius: 8px !important;
+    margin-bottom: 4px;
+    border: 1px solid #eee !important;
+}
+
+@media print {
+    nav, form, .btn, a.btn, button {
+        display: none !important;
+    }
+    .card {
+        border: 1px solid #ccc !important;
+    }
+}

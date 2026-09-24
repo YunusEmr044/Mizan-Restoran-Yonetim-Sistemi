@@ -1,0 +1,189 @@
+@model List<Adisyon>
+@{
+    ViewData["Title"] = "Kasa";
+    var shift = (CashShift?)ViewBag.OpenShift;
+    var pendingDiscounts = (List<DiscountRequest>)ViewBag.PendingDiscounts;
+    var canOperate = User.HasClaim(Permissions.ClaimType, Permissions.Cash.Operate);
+
+    string StatusText(AdisyonStatus s) => s switch
+    {
+        AdisyonStatus.Kasada => "Ödeme Bekliyor",
+        AdisyonStatus.KismiOdendi => "Kısmi Ödendi",
+        _ => s.ToString()
+    };
+}
+<style>
+    .ry-shift-gate {
+        background: var(--ry-card-bg);
+        border: 1px solid var(--ry-border);
+        border-radius: var(--ry-radius);
+        box-shadow: 0 2px 14px rgba(20,15,8,.045);
+        padding: 2.2rem 1.5rem;
+        text-align: center;
+        max-width: 460px;
+        margin: 0 auto 2rem;
+    }
+    .ry-shift-gate-icon {
+        width: 64px; height: 64px;
+        border-radius: 50%;
+        margin: 0 auto 1rem;
+        display: flex; align-items: center; justify-content: center;
+        background: linear-gradient(135deg, rgba(220,53,69,.14), rgba(220,53,69,.06));
+        color: #dc3545;
+        font-size: 1.7rem;
+    }
+    .ry-shift-gate h3 { font-weight: 700; margin-bottom: .35rem; }
+    .ry-shift-gate p { color: var(--ry-muted); font-size: .88rem; margin-bottom: 1.3rem; }
+    .ry-shift-gate .input-group { max-width: 300px; margin: 0 auto; }
+
+    .ry-shift-bar {
+        background: linear-gradient(135deg, rgba(25,135,84,.08), rgba(25,135,84,.02));
+        border: 1px solid rgba(25,135,84,.25);
+        border-radius: var(--ry-radius);
+        padding: 1.1rem 1.4rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .ry-shift-bar-left { display: flex; align-items: center; gap: .9rem; }
+    .ry-shift-bar-icon {
+        width: 46px; height: 46px;
+        border-radius: 12px;
+        background: rgba(25,135,84,.16);
+        color: #198754;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    .ry-shift-bar-title { font-weight: 700; color: #12432c; }
+    .ry-shift-bar-meta { font-size: .82rem; color: var(--ry-muted); display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .15rem; }
+
+    .ry-adisyon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+    .ry-adisyon-card {
+        background: var(--ry-card-bg);
+        border: 1px solid var(--ry-border);
+        border-radius: var(--ry-radius);
+        box-shadow: 0 2px 14px rgba(20,15,8,.045);
+        overflow: hidden;
+        display: flex; flex-direction: column;
+    }
+    .ry-adisyon-card-body { padding: 1.1rem 1.2rem; flex: 1; }
+    .ry-adisyon-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: .5rem; margin-bottom: .5rem; }
+    .ry-adisyon-card-table { font-weight: 700; font-size: 1.05rem; }
+    .ry-adisyon-card-total { color: var(--ry-accent); font-weight: 700; font-size: 1.15rem; margin: .2rem 0; }
+    .ry-adisyon-card-footer { padding: .85rem 1.2rem; border-top: 1px solid var(--ry-border); }
+    .ry-adisyon-card-footer .btn { width: 100%; }
+</style>
+
+<div class="mb-4">
+    <h2 class="mb-0">💰 Kasa</h2>
+    <p class="text-muted small mb-0">Vardiya yönetimi, ödeme alma ve indirim onayları</p>
+</div>
+
+
+@if (shift == null)
+{
+    <div class="ry-shift-gate">
+        <div class="ry-shift-gate-icon"><i class="bi bi-lock-fill"></i></div>
+        <h3>Vardiya Kapalı</h3>
+        <p>Ödeme alabilmek ve adisyon kapatabilmek için önce kasa vardiyasını açmanız gerekiyor.</p>
+        @if (canOperate)
+        {
+            <form asp-action="OpenShift" method="post">
+                <div class="input-group">
+                    <span class="input-group-text">₺</span>
+                    <input type="number" step="0.01" min="0" name="openingAmount" class="form-control" placeholder="Başlangıç tutarı" required />
+                    <button type="submit" class="btn btn-success">Vardiya Aç</button>
+                </div>
+            </form>
+        }
+        else
+        {
+            <span class="text-muted small">Vardiya açma yetkiniz yok — yetkili bir kullanıcıdan rica edin.</span>
+        }
+    </div>
+}
+else
+{
+    <div class="ry-shift-bar">
+        <div class="ry-shift-bar-left">
+            <div class="ry-shift-bar-icon"><i class="bi bi-cash-coin"></i></div>
+            <div>
+                <div class="ry-shift-bar-title">Vardiya Açık</div>
+                <div class="ry-shift-bar-meta">
+                    <span>Başlangıç: <strong>@shift.OpeningAmount.ToString("0.00") ₺</strong></span>
+                    <span>Açılış: @shift.OpenedAt.ToString("HH:mm")</span>
+                    @if (!string.IsNullOrEmpty(shift.OpenedByUserName))
+                    {
+                        <span>Açan: @shift.OpenedByUserName</span>
+                    }
+                </div>
+            </div>
+        </div>
+        @if (canOperate)
+        {
+            <a asp-action="CloseShiftForm" class="btn btn-outline-danger btn-sm">Vardiyayı Kapat</a>
+        }
+    </div>
+}
+
+@if (pendingDiscounts.Any() && User.HasClaim(Permissions.ClaimType, Permissions.Cash.ApprovePayment))
+{
+    <h5 class="mb-2">Bekleyen İndirim Talepleri</h5>
+    <div class="mb-4 d-flex flex-column gap-2">
+        @foreach (var d in pendingDiscounts)
+        {
+            <div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2 mb-0">
+                <span>@d.Adisyon?.Table?.Name — @d.Amount.ToString("0.00") ₺ (@d.Reason) — talep eden: @d.RequestedByUserName</span>
+                <div class="d-flex gap-2">
+                    <form asp-action="ApproveDiscount" asp-route-id="@d.Id" method="post">
+                        <button type="submit" class="btn btn-sm btn-success">Onayla</button>
+                    </form>
+                    <form asp-action="RejectDiscount" asp-route-id="@d.Id" method="post">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Reddet</button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h5 class="mb-0">Ödeme Bekleyen Masalar</h5>
+    <span class="text-muted small">@Model.Count adisyon</span>
+</div>
+@if (!Model.Any())
+{
+    <p class="text-muted">Şu anda ödeme bekleyen masa yok.</p>
+}
+<div class="ry-adisyon-grid">
+    @foreach (var a in Model)
+    {
+        <div class="ry-adisyon-card">
+            <div class="ry-adisyon-card-body">
+                <div class="ry-adisyon-card-top">
+                    <span class="ry-adisyon-card-table"><i class="bi bi-receipt"></i> @a.Table?.Name</span>
+                    @if (a.Status == AdisyonStatus.KismiOdendi)
+                    {
+                        <span class="badge" style="background: var(--ry-accent); color:#241a0c;">@StatusText(a.Status)</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-info text-dark">@StatusText(a.Status)</span>
+                    }
+                </div>
+                <div class="ry-adisyon-card-total">@a.GrandTotal.ToString("0.00") ₺</div>
+                @if (a.PaidTotal > 0)
+                {
+                    <p class="text-muted small mb-0">Ödenen: @a.PaidTotal.ToString("0.00") ₺ · Kalan: @a.RemainingTotal.ToString("0.00") ₺</p>
+                }
+            </div>
+            <div class="ry-adisyon-card-footer">
+                <a asp-action="Detay" asp-route-id="@a.Id" class="btn btn-primary">Adisyonu Aç</a>
+            </div>
+        </div>
+    }
+</div>

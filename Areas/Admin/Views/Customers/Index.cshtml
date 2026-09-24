@@ -1,0 +1,67 @@
+@model List<Customer>
+@{
+    ViewData["Title"] = "Müşteriler";
+    ViewBag.PazarlamaActive = "customers";
+    string? q = ViewBag.Query;
+    int totalCount = ViewBag.TotalCount;
+    int pageNum = ViewBag.Page;
+    int totalPages = ViewBag.TotalPages;
+}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-0">Müşteriler</h2>
+        <p class="text-muted small mb-0">@totalCount kayıt (telefon bazlı, üyeliksiz sadakat sistemi)</p>
+    </div>
+    @if (User.HasClaim(Permissions.ClaimType, Permissions.Customers.Manage))
+    {
+        <a asp-action="Create" class="btn btn-primary">+ Yeni Müşteri</a>
+    }
+</div>
+
+@await Html.PartialAsync("_PazarlamaSubNav")
+
+<div class="mb-3">
+    <form method="get" class="ry-search-box">
+        <i class="bi bi-search"></i>
+        <input type="text" name="q" class="form-control" placeholder="Ad veya telefon ara..." value="@q" />
+    </form>
+</div>
+
+<div class="table-responsive">
+    <table class="table align-middle">
+        <thead><tr><th>Ad Soyad</th><th>Telefon</th><th>Seviye</th><th>Puan</th><th>Toplam Harcama</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var c in Model)
+        {
+            <tr>
+                <td class="fw-semibold">@c.Name</td>
+                <td>@c.Phone</td>
+                <td><span class="badge bg-dark">@c.Level</span></td>
+                <td>@c.Points</td>
+                <td>@c.TotalSpent.ToString("0.00") ₺</td>
+                <td class="text-end">
+                    @if (User.HasClaim(Permissions.ClaimType, Permissions.Customers.Manage))
+                    {
+                        <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-sm btn-outline-secondary">Düzenle</a>
+                    }
+                </td>
+            </tr>
+        }
+        @if (!Model.Any())
+        {
+            <tr><td colspan="6" class="text-muted">Müşteri bulunamadı.</td></tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+@if (totalPages > 1)
+{
+    <nav aria-label="Sayfalar" class="d-flex justify-content-between align-items-center">
+        <span class="text-muted small">Sayfa @pageNum / @totalPages</span>
+        <div class="btn-group">
+            <a class="btn btn-outline-secondary btn-sm @(pageNum <= 1 ? "disabled" : "")" asp-action="Index" asp-route-page="@(pageNum - 1)" asp-route-q="@q">&laquo; Önceki</a>
+            <a class="btn btn-outline-secondary btn-sm @(pageNum >= totalPages ? "disabled" : "")" asp-action="Index" asp-route-page="@(pageNum + 1)" asp-route-q="@q">Sonraki &raquo;</a>
+        </div>
+    </nav>
+}

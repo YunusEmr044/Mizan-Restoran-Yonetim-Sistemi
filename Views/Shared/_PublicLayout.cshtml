@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    @{
+        // Bu ViewBag değerleri HomeController.ApplySeoAsync tarafından önceden çözülüp yazıldı, burada tekrar hesaplanmıyor, sadece basılıyor.
+        var restaurantName = ViewBag.RestaurantName as string ?? "Restoran";
+        var pageTitle = ViewBag.SeoPageTitle as string;
+        if (string.IsNullOrWhiteSpace(pageTitle))
+        {
+            var viewTitle = ViewData["Title"] as string;
+            pageTitle = !string.IsNullOrWhiteSpace(viewTitle) ? $"{viewTitle} - {restaurantName}" : restaurantName;
+        }
+        var metaDescription = ViewBag.SeoMetaDescription as string ?? ViewBag.SeoDescription as string;
+        var canonicalUrl = ViewBag.SeoCanonicalUrl as string;
+        var noIndex = ViewBag.SeoNoIndex is true;
+        var noFollow = ViewBag.SeoNoFollow is true;
+        var ogTitle = ViewBag.SeoOgTitle as string ?? pageTitle;
+        var ogDescription = ViewBag.SeoOgDescription as string ?? metaDescription;
+        var ogImage = ViewBag.SeoOgImageUrl as string;
+        var faviconUrl = ViewBag.SeoFaviconUrl as string;
+        var googleVerification = ViewBag.SeoGoogleVerification as string;
+        var bingVerification = ViewBag.SeoBingVerification as string;
+        var twitterHandle = ViewBag.SeoTwitterHandle as string;
+        var structuredDataHtml = ViewBag.StructuredDataHtml as string;
+    }
+    <title>@pageTitle</title>
+    @if (!string.IsNullOrWhiteSpace(metaDescription))
+    {
+        <meta name="description" content="@metaDescription" />
+    }
+    <meta name="robots" content="@((noIndex ? "noindex" : "index") + "," + (noFollow ? "nofollow" : "follow"))" />
+    @if (!string.IsNullOrWhiteSpace(canonicalUrl))
+    {
+        <link rel="canonical" href="@canonicalUrl" />
+    }
+    @if (!string.IsNullOrWhiteSpace(faviconUrl))
+    {
+        <link rel="icon" href="@faviconUrl" />
+    }
+    else
+    {
+        <link rel="icon" href="~/favicon.ico" sizes="32x32" />
+        <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="~/apple-touch-icon.png" />
+    }
+    @if (!string.IsNullOrWhiteSpace(googleVerification))
+    {
+        <meta name="google-site-verification" content="@googleVerification" />
+    }
+    @if (!string.IsNullOrWhiteSpace(bingVerification))
+    {
+        <meta name="msvalidate.01" content="@bingVerification" />
+    }
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="@restaurantName" />
+    <meta property="og:title" content="@ogTitle" />
+    @if (!string.IsNullOrWhiteSpace(ogDescription))
+    {
+        <meta property="og:description" content="@ogDescription" />
+    }
+    @if (!string.IsNullOrWhiteSpace(canonicalUrl))
+    {
+        <meta property="og:url" content="@canonicalUrl" />
+    }
+    @if (!string.IsNullOrWhiteSpace(ogImage))
+    {
+        <meta property="og:image" content="@ogImage" />
+    }
+    <meta name="twitter:card" content="@(string.IsNullOrWhiteSpace(ogImage) ? "summary" : "summary_large_image")" />
+    @if (!string.IsNullOrWhiteSpace(twitterHandle))
+    {
+        <meta name="twitter:site" content="@("@" + twitterHandle)" />
+    }
+    @if (!string.IsNullOrWhiteSpace(structuredDataHtml))
+    {
+        @Html.Raw(structuredDataHtml)
+    }
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?@(ViewBag.ThemeGoogleFontsQuery ?? "family=Playfair+Display:wght@600;700;800&family=Poppins:wght@300;400;500;600;700")&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        :root {
+            --py-bg: @(ViewBag.ThemeDarkColor ?? "#100d0a");
+            --py-bg-rgb: @(ViewBag.ThemeDarkColorRgb ?? "16, 13, 10");
+            --py-bg-soft: var(--py-bg);
+            --py-gold: @(ViewBag.ThemePrimaryColor ?? "#cd9f56");
+            --py-gold-rgb: @(ViewBag.ThemePrimaryColorRgb ?? "205, 159, 86");
+            --py-gold-light: @(ViewBag.ThemePrimaryLightColor ?? "#f0cf94");
+            --py-cream: @(ViewBag.ThemeBackgroundColor ?? "#faf6ef");
+            --py-text: @(ViewBag.ThemeTextColor ?? "#2a2117");
+            --py-muted: #8c7f6d;
+            --py-radius: @(ViewBag.ThemeCardRadius ?? "18px");
+            --py-btn-radius: @(ViewBag.ThemeButtonRadius ?? "999px");
+            --py-heading-font: '@(ViewBag.ThemeHeadingFont ?? "Playfair Display")', serif;
+            --py-body-font: '@(ViewBag.ThemeBodyFont ?? "Poppins")', sans-serif;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body.py-body {
+            font-family: var(--py-body-font);
+            color: var(--py-text);
+            background: var(--py-cream);
+            overflow-x: hidden;
+        }
+
+        .py-body h1, .py-body h2, .py-body h3, .py-body h4,
+        .py-serif { font-family: var(--py-heading-font); }
+
+        /* ---------- Navbar ---------- */
+        .py-navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            background: rgba(var(--py-bg-rgb), 0.72);
+            backdrop-filter: blur(14px) saturate(140%);
+            -webkit-backdrop-filter: blur(14px) saturate(140%);
+            border-bottom: 1px solid rgba(var(--py-gold-rgb), 0.18);
+            transition: background .35s ease, padding .35s ease, box-shadow .35s ease;
+            padding: .9rem 0;
+        }
+        .py-navbar.py-scrolled {
+            background: rgba(var(--py-bg-rgb), 0.95);
+            padding: .45rem 0;
+            box-shadow: 0 10px 30px -12px rgba(0,0,0,.55);
+        }
+        .py-navbar .navbar-brand {
+            font-family: var(--py-heading-font);
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--py-gold-light) !important;
+            letter-spacing: .02em;
+            display: inline-flex;
+            align-items: center;
+        }
+        .py-brand-mark { height: 1.45em; width: auto; margin-right: .45rem; vertical-align: -.3em; }
+        .py-navbar .nav-link {
+            color: #f1e9db !important;
+            font-weight: 500;
+            font-size: .93rem;
+            letter-spacing: .03em;
+            margin: 0 .35rem;
+            position: relative;
+            padding: .5rem .2rem !important;
+        }
+        .py-navbar .nav-link::after {
+            content: "";
+            position: absolute;
+            left: 0; bottom: 0;
+            width: 0%;
+            height: 2px;
+            background: var(--py-gold);
+            transition: width .3s ease;
+        }
+        .py-navbar .nav-link:hover::after,
+        .py-navbar .nav-link.active::after { width: 100%; }
+        .py-navbar .nav-link.active { color: var(--py-gold-light) !important; }
+        .py-navbar .navbar-toggler { border-color: rgba(240,207,148,.4); }
+        .py-navbar .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(240, 207, 148, 0.9)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+
+        /* ---------- Breadcrumb (SEO/kullanıcı deneyimi - bkz. _Breadcrumbs.cshtml) ---------- */
+        .py-breadcrumb-nav { padding: .85rem 0; }
+        .py-breadcrumb-nav .breadcrumb { font-size: .82rem; letter-spacing: .01em; }
+        .py-breadcrumb-nav .breadcrumb-item a { color: var(--py-gold); text-decoration: none; }
+        .py-breadcrumb-nav .breadcrumb-item a:hover { text-decoration: underline; }
+        .py-breadcrumb-nav .breadcrumb-item.active { color: var(--py-muted); }
+        .py-breadcrumb-nav .breadcrumb-item + .breadcrumb-item::before { color: var(--py-muted); }
+
+        /* ---------- Buttons ---------- */
+        .btn-py-gold {
+            background: linear-gradient(135deg, var(--py-gold-light), var(--py-gold));
+            border: none;
+            color: #241a0c;
+            font-weight: 600;
+            letter-spacing: .02em;
+            padding: .75rem 1.9rem;
+            border-radius: var(--py-btn-radius);
+            box-shadow: 0 8px 22px -8px rgba(var(--py-gold-rgb),.75);
+            transition: transform .28s cubic-bezier(.2,.8,.2,1), box-shadow .28s ease, filter .2s ease;
+        }
+        .btn-py-gold:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 14px 28px -10px rgba(var(--py-gold-rgb),.9);
+            filter: brightness(1.05);
+            color: #241a0c;
+        }
+        .btn-py-outline {
+            border: 1.5px solid rgba(255,255,255,.75);
+            color: #fff;
+            font-weight: 500;
+            padding: .72rem 1.85rem;
+            border-radius: var(--py-btn-radius);
+            background: rgba(255,255,255,.05);
+            backdrop-filter: blur(4px);
+            transition: all .28s ease;
+        }
+        .btn-py-outline:hover {
+            background: #fff;
+            color: var(--py-bg);
+            transform: translateY(-3px);
+            border-color: #fff;
+        }
+        .btn-py-dark {
+            background: var(--py-bg);
+            color: var(--py-gold-light);
+            border-radius: var(--py-btn-radius);
+            font-weight: 500;
+            padding: .65rem 1.6rem;
+            transition: all .25s ease;
+            border: 1px solid var(--py-bg);
+        }
+        .btn-py-dark:hover { background: #262019; color: var(--py-gold-light); transform: translateY(-2px); }
+
+        /* ---------- Section helpers ---------- */
+        .py-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            color: var(--py-gold);
+            font-weight: 600;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            font-size: .78rem;
+            margin-bottom: .6rem;
+        }
+        .py-eyebrow::before, .py-eyebrow::after {
+            content: "";
+            width: 26px; height: 1px;
+            background: var(--py-gold);
+        }
+        .py-section { padding: 5.5rem 0; }
+        .py-section-alt { background: #fff; }
+
+        /* ---------- Scroll reveal ---------- */
+        .py-reveal {
+            opacity: 0;
+            transform: translateY(28px);
+            transition: opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1);
+        }
+        .py-reveal.py-in { opacity: 1; transform: translateY(0); }
+        .py-reveal.py-delay-1 { transition-delay: .1s; }
+        .py-reveal.py-delay-2 { transition-delay: .22s; }
+        .py-reveal.py-delay-3 { transition-delay: .34s; }
+        .py-reveal.py-delay-4 { transition-delay: .46s; }
+
+        /* ---------- Footer ---------- */
+        footer.py-footer {
+            background: var(--py-bg);
+            color: #cfc4b3;
+            padding: 3.5rem 0 1.5rem;
+            margin-top: 0;
+            position: relative;
+        }
+        footer.py-footer::before {
+            content: "";
+            display: block;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--py-gold), transparent);
+            margin-bottom: 3rem;
+        }
+        footer.py-footer h5 { color: var(--py-gold-light); font-family: var(--py-heading-font); }
+        footer.py-footer a { color: #cfc4b3; text-decoration: none; transition: color .2s ease; }
+        footer.py-footer a:hover { color: var(--py-gold-light); }
+        .py-powered { margin-top: .6rem; font-size: .72rem; letter-spacing: .03em; opacity: .6; }
+        .py-powered img { height: 13px; width: auto; margin-right: .35rem; vertical-align: -1px; }
+        .py-powered strong { color: var(--py-gold-light); font-weight: 600; }
+        .py-social-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            border: 1px solid rgba(var(--py-gold-rgb),.4);
+            color: var(--py-gold-light) !important;
+            transition: all .25s ease;
+        }
+        .py-social-icon:hover { background: var(--py-gold); color: var(--py-bg) !important; transform: translateY(-3px); }
+
+        /* ---------- Back to top ---------- */
+        #py-top-btn {
+            position: fixed;
+            right: 1.4rem; bottom: 1.4rem;
+            width: 46px; height: 46px;
+            border-radius: 50%;
+            background: var(--py-gold);
+            color: var(--py-bg);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden;
+            transform: translateY(12px);
+            transition: all .3s ease;
+            z-index: 1040;
+            box-shadow: 0 8px 20px -6px rgba(0,0,0,.4);
+            border: none;
+        }
+        #py-top-btn.py-show { opacity: 1; visibility: visible; transform: translateY(0); }
+        #py-top-btn:hover { filter: brightness(1.08); transform: translateY(-3px); }
+
+        /* ---------- Floating WhatsApp button (madde 12) ---------- */
+        #py-whatsapp-btn {
+            position: fixed;
+            left: 1.4rem; bottom: 1.4rem;
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            background: #25D366;
+            color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.7rem;
+            z-index: 1040;
+            box-shadow: 0 10px 26px -8px rgba(37,211,102,.65);
+            animation: pyWaPulse 2.8s ease-in-out infinite;
+            transition: transform .25s ease;
+        }
+        #py-whatsapp-btn:hover { color: #fff; transform: scale(1.08); animation-play-state: paused; }
+        @@keyframes pyWaPulse {
+            0%, 100% { box-shadow: 0 10px 26px -8px rgba(37,211,102,.65); }
+            50% { box-shadow: 0 10px 26px -4px rgba(37,211,102,.95); }
+        }
+
+        @@media (max-width: 991px) {
+            .py-section { padding: 3.5rem 0; }
+            #py-whatsapp-btn { width: 50px; height: 50px; font-size: 1.5rem; left: 1rem; bottom: 1rem; }
+            #py-top-btn { width: 42px; height: 42px; right: 1rem; bottom: 1rem; }
+        }
+    </style>
+</head>
+<body class="py-body">
+    <nav class="navbar navbar-expand-lg py-navbar" id="pyNavbar">
+        <div class="container">
+            <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+                @if (!string.IsNullOrEmpty(ViewBag.LogoImageUrl as string))
+                {
+                    <img src="@ViewBag.LogoImageUrl" alt="@(ViewBag.RestaurantName ?? "Restoran")" style="max-height:42px; max-width:150px; object-fit:contain;" />
+                }
+                else
+                {
+                    <img src="~/img/logo-mark.svg" alt="" class="py-brand-mark" />@(ViewBag.RestaurantName ?? "Restoranımız")
+                }
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#publicMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="publicMenu">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Ana Sayfa</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Menu">Menü</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Hakkimizda">Hakkımızda</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Galeri">Galeri</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Iletisim">İletişim</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Sss">SSS</a></li>
+                    <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
+                        <a class="btn btn-py-gold btn-sm" asp-controller="Home" asp-action="Rezervasyon">
+                            <i class="bi bi-calendar-check me-1"></i>Rezervasyon
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="container mt-3"><div class="alert alert-danger shadow-sm">@TempData["Error"]</div></div>
+    }
+    @if (TempData["Info"] != null)
+    {
+        <div class="container mt-3"><div class="alert alert-success shadow-sm">@TempData["Info"]</div></div>
+    }
+
+    <partial name="_Breadcrumbs" model="@(ViewBag.Breadcrumb as List<(string Name, string? Url)>)" />
+
+    @RenderBody()
+
+    <footer class="py-footer">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <h5 class="mb-3"><img src="~/img/logo-mark.svg" alt="" class="py-brand-mark" />@(ViewBag.RestaurantName ?? "Restoranımız")</h5>
+                    <p class="small text-white-50">@(string.IsNullOrWhiteSpace(ViewBag.FooterTagline as string) ? "Lezzet ve misafirperverliği bir araya getiriyoruz. Sizi ağırlamak için sabırsızlanıyoruz." : ViewBag.FooterTagline)</p>
+                    <div class="d-flex gap-2 mt-3">
+                        @if (!string.IsNullOrEmpty(ViewBag.FacebookUrl))
+                        {
+                            <a href="@ViewBag.FacebookUrl" target="_blank" rel="noopener" class="py-social-icon"><i class="bi bi-facebook"></i></a>
+                        }
+                        @if (!string.IsNullOrEmpty(ViewBag.InstagramUrl))
+                        {
+                            <a href="@ViewBag.InstagramUrl" target="_blank" rel="noopener" class="py-social-icon"><i class="bi bi-instagram"></i></a>
+                        }
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="mb-3">Hızlı Bağlantılar</h5>
+                    <ul class="list-unstyled small d-flex flex-column gap-2">
+                        <li><a asp-controller="Home" asp-action="Menu"><i class="bi bi-chevron-right small me-1"></i>Menü</a></li>
+                        <li><a asp-controller="Home" asp-action="Hakkimizda"><i class="bi bi-chevron-right small me-1"></i>Hakkımızda</a></li>
+                        <li><a asp-controller="Home" asp-action="Galeri"><i class="bi bi-chevron-right small me-1"></i>Galeri</a></li>
+                        <li><a asp-controller="Home" asp-action="Rezervasyon"><i class="bi bi-chevron-right small me-1"></i>Rezervasyon</a></li>
+                        <li><a asp-controller="Home" asp-action="Sss"><i class="bi bi-chevron-right small me-1"></i>Sıkça Sorulan Sorular</a></li>
+                        <li><a asp-controller="Home" asp-action="Degerlendirme"><i class="bi bi-chevron-right small me-1"></i>Değerlendirme</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="mb-3">İletişim</h5>
+                    <ul class="list-unstyled small d-flex flex-column gap-2">
+                        @if (!string.IsNullOrEmpty(ViewBag.ContactPhone))
+                        {
+                            <li><i class="bi bi-telephone me-2"></i>@ViewBag.ContactPhone</li>
+                        }
+                        @if (!string.IsNullOrEmpty(ViewBag.ContactAddress))
+                        {
+                            <li><i class="bi bi-geo-alt me-2"></i>@ViewBag.ContactAddress</li>
+                        }
+                        @if (!string.IsNullOrEmpty(ViewBag.ContactEmail))
+                        {
+                            <li><i class="bi bi-envelope me-2"></i>@ViewBag.ContactEmail</li>
+                        }
+                        @if (!string.IsNullOrEmpty(ViewBag.WorkingHours))
+                        {
+                            <li><i class="bi bi-clock me-2"></i>@ViewBag.WorkingHours</li>
+                        }
+                        @if (!string.IsNullOrEmpty(ViewBag.WhatsAppNumber))
+                        {
+                            <li><a href="https://wa.me/@(ViewBag.WhatsAppNumber)?text=@(Uri.EscapeDataString((string?)ViewBag.WhatsAppDefaultMessage ?? "Merhaba, bilgi almak istiyorum."))" target="_blank" rel="noopener"><i class="bi bi-whatsapp me-2"></i>WhatsApp</a></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+            <div class="text-center small text-white-50 mt-4 pt-4" style="border-top: 1px solid rgba(255,255,255,.08);">
+                &copy; @DateTime.Now.Year @(ViewBag.RestaurantName ?? "Restoranımız") — Tüm hakları saklıdır.
+                @if (!((ViewBag.RestaurantName as string)?.Contains("Mizan", StringComparison.OrdinalIgnoreCase) ?? false))
+                {
+                    <div class="py-powered">
+                        <img src="~/img/logo-mark.svg" alt="" />Altyapı: <strong>Mizan</strong> Restoran Yönetim Sistemi
+                    </div>
+                }
+            </div>
+        </div>
+    </footer>
+
+    @if (!string.IsNullOrEmpty(ViewBag.WhatsAppNumber))
+    {
+        <a id="py-whatsapp-btn" href="https://wa.me/@(ViewBag.WhatsAppNumber)?text=@(Uri.EscapeDataString((string?)ViewBag.WhatsAppDefaultMessage ?? "Merhaba, bilgi almak istiyorum."))" target="_blank" rel="noopener" aria-label="WhatsApp'tan yazın"><i class="bi bi-whatsapp"></i></a>
+    }
+    <button id="py-top-btn" aria-label="Yukarı çık"><i class="bi bi-arrow-up"></i></button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            var nav = document.getElementById('pyNavbar');
+            var topBtn = document.getElementById('py-top-btn');
+            function onScroll() {
+                var y = window.scrollY || document.documentElement.scrollTop;
+                if (nav) { nav.classList.toggle('py-scrolled', y > 40); }
+                if (topBtn) { topBtn.classList.toggle('py-show', y > 420); }
+            }
+            document.addEventListener('scroll', onScroll, { passive: true });
+            onScroll();
+            if (topBtn) {
+                topBtn.addEventListener('click', function () {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            }
+
+            // Scroll reveal animations
+            var revealEls = document.querySelectorAll('.py-reveal');
+            if ('IntersectionObserver' in window && revealEls.length) {
+                var io = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (entry) {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('py-in');
+                            io.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.15 });
+                revealEls.forEach(function (el) { io.observe(el); });
+            } else {
+                revealEls.forEach(function (el) { el.classList.add('py-in'); });
+            }
+
+            // Active nav link highlight
+            var path = window.location.pathname.toLowerCase();
+            document.querySelectorAll('.py-navbar .nav-link').forEach(function (a) {
+                try {
+                    var href = a.getAttribute('href') || '';
+                    if (href !== '/' && path.indexOf(href.toLowerCase()) === 0 && href.length > 1) {
+                        a.classList.add('active');
+                    } else if (href === '/' && (path === '/' || path === '')) {
+                        a.classList.add('active');
+                    }
+                } catch (e) { }
+            });
+        })();
+    </script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

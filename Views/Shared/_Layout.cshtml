@@ -1,0 +1,277 @@
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.Extensions.Caching.Memory
+@using RestoranYonetim.Services
+@inject RestoranYonetim.Data.ApplicationDbContext Db
+@inject IMemoryCache Cache
+@{
+    // SiteContent bu layout üzerinden her admin sayfa yüklemesinde okunduğu için SiteContentCache ile önbelleğe alınıyor.
+    var ryThemeContent = await SiteContentCache.GetAsync(Db, Cache);
+    var ryAdminAccent = RestoranYonetim.Models.ThemeCatalog.SafeColor(ryThemeContent?.AdminAccentColor, RestoranYonetim.Models.ThemeCatalog.DefaultAdminAccent);
+    var ryAdminSidebar = RestoranYonetim.Models.ThemeCatalog.SafeColor(ryThemeContent?.AdminSidebarColor, RestoranYonetim.Models.ThemeCatalog.DefaultAdminSidebar);
+    var ryAdminBg = RestoranYonetim.Models.ThemeCatalog.SafeColor(ryThemeContent?.AdminBackgroundColor, RestoranYonetim.Models.ThemeCatalog.DefaultAdminBackground);
+    var ryAdminAccentRgb = RestoranYonetim.Models.ThemeCatalog.HexToRgbTriplet(ryAdminAccent);
+    var ryAdminAccentLight = RestoranYonetim.Models.ThemeCatalog.Lighten(ryAdminAccent, 0.4);
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Mizan</title>
+    <link rel="icon" href="~/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="~/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+    <style>
+        /* admin.css varsayılanlarını burada geçersiz kılar (kaynak sırası nedeniyle bu blok kazanır). */
+        :root {
+            --ry-accent: @ryAdminAccent;
+            --ry-accent-rgb: @ryAdminAccentRgb;
+            --ry-accent-light: @ryAdminAccentLight;
+            --ry-sidebar-bg: @ryAdminSidebar;
+            --ry-bg: @ryAdminBg;
+        }
+    </style>
+    @* Bu yardımcılar @{ } yerine @functions'ta tanımlı: @{ } içindeki yerel fonksiyon sadece o bloğa özel kalır, view genelinde kullanılamaz. *@
+    @functions {
+        string RyActive(string controller, string area = "")
+        {
+            var cc = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+            var ca = ViewContext.RouteData.Values["area"]?.ToString() ?? "";
+            return (string.Equals(cc, controller, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(ca, area, StringComparison.OrdinalIgnoreCase)) ? "active" : "";
+        }
+
+        string RyUserInitial()
+        {
+            var name = User.Identity?.Name?.Trim();
+            return !string.IsNullOrEmpty(name) ? name[0].ToString().ToUpperInvariant() : "?";
+        }
+    }
+</head>
+@{
+    // Girişli her sayfa otomatik "notifications" grubuna katılır; sayfa ViewBag.RealtimeGroups ile ek grup isteyebilir (bkz. wwwroot/js/realtime.js).
+    var ryIsAuthed = User.Identity != null && User.Identity.IsAuthenticated;
+    var ryExtraGroups = ViewBag.RealtimeGroups as string;
+    var ryRealtimeGroups = ryIsAuthed ? ("notifications " + (ryExtraGroups ?? "")).Trim() : "";
+}
+<body class="ry-admin" data-ry-realtime="@ryRealtimeGroups">
+    <div class="ry-shell">
+        <div class="ry-sidebar-backdrop" id="rySidebarBackdrop"></div>
+        <aside class="ry-sidebar" id="rySidebar">
+            <a class="ry-sidebar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                <img src="~/img/logo-mark.svg" alt="" class="ry-sidebar-logo" />
+                <span>Mizan<small>Restoran Yönetim Sistemi</small></span>
+            </a>
+
+            @if (User.HasClaim(Permissions.ClaimType, Permissions.Reports.View) || User.IsOperational())
+            {
+                <div class="ry-nav-section">Operasyon</div>
+                @if (User.HasClaim(Permissions.ClaimType, Permissions.Reports.View))
+                {
+                    <a class="ry-nav-link @RyActive("Dashboard", "Admin")" asp-area="Admin" asp-controller="Dashboard" asp-action="Index"><i class="bi bi-speedometer2"></i>Dashboard</a>
+                }
+                @if (User.IsOperational())
+                {
+                    <a class="ry-nav-link @RyActive("Staff")" asp-area="" asp-controller="Staff" asp-action="Index"><i class="bi bi-clipboard-check"></i>Sipariş Ekranı</a>
+                }
+                @if (User.HasClaim(Permissions.ClaimType, Permissions.Orders.View))
+                {
+                    <a class="ry-nav-link @RyActive("Mutfak")" asp-area="" asp-controller="Mutfak" asp-action="Index"><i class="bi bi-egg-fried"></i>Mutfak</a>
+                    <a class="ry-nav-link @RyActive("Bar")" asp-area="" asp-controller="Bar" asp-action="Index"><i class="bi bi-cup-straw"></i>Bar</a>
+                }
+                @if (User.HasClaim(Permissions.ClaimType, Permissions.Cash.View))
+                {
+                    <a class="ry-nav-link @RyActive("Kasa")" asp-area="" asp-controller="Kasa" asp-action="Index"><i class="bi bi-cash-coin"></i>Kasa</a>
+                }
+            }
+
+            @if (User.IsManagement())
+            {
+                <div class="ry-nav-section">Menü Yönetimi</div>
+                <a class="ry-nav-link @RyActive("Restaurants", "Admin")" asp-area="Admin" asp-controller="Restaurants" asp-action="Index"><i class="bi bi-shop"></i>Restoranlar</a>
+                <a class="ry-nav-link @RyActive("Branches", "Admin")" asp-area="Admin" asp-controller="Branches" asp-action="Index"><i class="bi bi-diagram-3"></i>Şubeler</a>
+                <a class="ry-nav-link @RyActive("Areas", "Admin")" asp-area="Admin" asp-controller="Areas" asp-action="Index"><i class="bi bi-bounding-box"></i>Alanlar</a>
+                <a class="ry-nav-link @RyActive("Tables", "Admin")" asp-area="Admin" asp-controller="Tables" asp-action="Index"><i class="bi bi-qr-code"></i>Masalar / QR</a>
+                <a class="ry-nav-link @RyActive("Categories", "Admin")" asp-area="Admin" asp-controller="Categories" asp-action="Index"><i class="bi bi-tags"></i>Kategoriler</a>
+                <a class="ry-nav-link @RyActive("MenuItems", "Admin")" asp-area="Admin" asp-controller="MenuItems" asp-action="Index"><i class="bi bi-journal-richtext"></i>Menü Ürünleri</a>
+                <a class="ry-nav-link @RyActive("Orders", "Admin")" asp-area="Admin" asp-controller="Orders" asp-action="Index"><i class="bi bi-receipt"></i>Tüm Siparişler</a>
+
+                <div class="ry-nav-section">Stok</div>
+                <a class="ry-nav-link @RyActive("Inventory", "Admin")" asp-area="Admin" asp-controller="Inventory" asp-action="Index"><i class="bi bi-box-seam"></i>Stok Kalemleri</a>
+                <a class="ry-nav-link @RyActive("Suppliers", "Admin")" asp-area="Admin" asp-controller="Suppliers" asp-action="Index"><i class="bi bi-truck"></i>Tedarikçiler</a>
+                <a class="ry-nav-link @RyActive("Purchases", "Admin")" asp-area="Admin" asp-controller="Purchases" asp-action="Index"><i class="bi bi-cart-check"></i>Satın Almalar</a>
+
+                <div class="ry-nav-section">Pazarlama</div>
+                <a class="ry-nav-link @RyActive("Campaigns", "Admin")" asp-area="Admin" asp-controller="Campaigns" asp-action="Index"><i class="bi bi-megaphone"></i>Kampanyalar</a>
+                <a class="ry-nav-link @RyActive("Customers", "Admin")" asp-area="Admin" asp-controller="Customers" asp-action="Index"><i class="bi bi-people"></i>Müşteriler</a>
+                <a class="ry-nav-link @RyActive("Reservations", "Admin")" asp-area="Admin" asp-controller="Reservations" asp-action="Index"><i class="bi bi-calendar-check"></i>Rezervasyonlar</a>
+                <a class="ry-nav-link @RyActive("Feedback", "Admin")" asp-area="Admin" asp-controller="Feedback" asp-action="Index"><i class="bi bi-star"></i>Geri Bildirimler</a>
+
+                <div class="ry-nav-section">Site</div>
+                <a class="ry-nav-link @RyActive("SiteContent", "Admin")" asp-area="Admin" asp-controller="SiteContent" asp-action="Index"><i class="bi bi-window"></i>Site İçeriği</a>
+                <a class="ry-nav-link @RyActive("Gallery", "Admin")" asp-area="Admin" asp-controller="Gallery" asp-action="Index"><i class="bi bi-images"></i>Galeri</a>
+                <a class="ry-nav-link @(RyActive("HomePage", "Admin") + RyActive("ChefSpecial", "Admin"))" asp-area="Admin" asp-controller="HomePage" asp-action="Sections"><i class="bi bi-layout-text-window"></i>Ana Sayfa Düzeni</a>
+                <a class="ry-nav-link @(RyActive("SeoSettings", "Admin") + RyActive("Faq", "Admin"))" asp-area="Admin" asp-controller="SeoSettings" asp-action="Index"><i class="bi bi-graph-up-arrow"></i>SEO Ayarları</a>
+
+                <div class="ry-nav-section">Sistem</div>
+                <a class="ry-nav-link @RyActive("Reports", "Admin")" asp-area="Admin" asp-controller="Reports" asp-action="Index"><i class="bi bi-bar-chart-line"></i>Raporlar</a>
+                <a class="ry-nav-link @RyActive("Users", "Admin")" asp-area="Admin" asp-controller="Users" asp-action="Index"><i class="bi bi-person-gear"></i>Kullanıcılar</a>
+                @if (User.IsInRole(RolePermissions.SuperAdmin))
+                {
+                    <a class="ry-nav-link @RyActive("Roles", "Admin")" asp-area="Admin" asp-controller="Roles" asp-action="Index"><i class="bi bi-person-badge"></i>Roller</a>
+                    <a class="ry-nav-link @RyActive("Features", "Admin")" asp-area="Admin" asp-controller="Features" asp-action="Index"><i class="bi bi-toggles"></i>Özellikler ve İzinler</a>
+
+                    <div class="ry-nav-section">Ayarlar</div>
+                    <a class="ry-nav-link @RyActive("Settings", "Admin")" asp-area="Admin" asp-controller="Settings" asp-action="Index"><i class="bi bi-gear"></i>Ayarlar</a>
+                    <a class="ry-nav-link @RyActive("Logs", "Admin")" asp-area="Admin" asp-controller="Logs" asp-action="Index"><i class="bi bi-clock-history"></i>Loglar</a>
+                }
+            }
+
+            @if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                <div class="ry-sidebar-footer">
+                    <div class="ry-user mb-2"><i class="bi bi-person-circle me-1"></i>@User.Identity.Name</div>
+                    <div class="d-flex gap-1">
+                        <form asp-area="" asp-controller="Account" asp-action="Lock" method="post" class="flex-fill">
+                            <input type="hidden" name="returnUrl" value="@(Context.Request.Path)@(Context.Request.QueryString)" />
+                            <button type="submit" class="btn btn-outline-warning btn-sm w-100" title="Ekrandan uzaklaşırken oturumu kilitle - tekrar açmak için sadece şifre gerekir"><i class="bi bi-lock me-1"></i>Kilitle</button>
+                        </form>
+                        <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="flex-fill">
+                            <button type="submit" class="btn btn-outline-light btn-sm w-100"><i class="bi bi-box-arrow-right me-1"></i>Çıkış</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </aside>
+
+        <div class="ry-main">
+            <header class="ry-topbar">
+                <button type="button" class="ry-toggle-btn" id="rySidebarToggle" aria-label="Menüyü aç/kapat">
+                    <i class="bi bi-list fs-5"></i>
+                </button>
+                <div class="ry-topbar-title">
+                    <span class="ry-topbar-eyebrow">Yönetim Paneli</span>
+                    <h1>@ViewData["Title"]</h1>
+                </div>
+
+                @if (User.Identity != null && User.Identity.IsAuthenticated)
+                {
+                    <a class="ry-bell" asp-area="" asp-controller="Notifications" asp-action="Index" title="Bildirimler">
+                        <i class="bi bi-bell"></i>
+                        <span id="notifBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" hidden>0</span>
+                    </a>
+                    <span class="ry-topbar-divider d-none d-sm-inline-flex"></span>
+                    <span class="ry-user-chip d-none d-sm-inline-flex">
+                        <span class="ry-avatar">@RyUserInitial()</span>
+                        @User.Identity.Name
+                    </span>
+                }
+                else
+                {
+                    <a class="btn btn-sm btn-outline-dark" asp-area="" asp-controller="Account" asp-action="Login">Giriş</a>
+                }
+            </header>
+
+            <main class="ry-content">
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger">@TempData["Error"]</div>
+                }
+                @if (TempData["Info"] != null)
+                {
+                    <div class="alert alert-success">@TempData["Info"]</div>
+                }
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/ry-confirm.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            var sidebar = document.getElementById('rySidebar');
+            var backdrop = document.getElementById('rySidebarBackdrop');
+            var toggle = document.getElementById('rySidebarToggle');
+            function closeSidebar() {
+                if (sidebar) { sidebar.classList.remove('ry-open'); }
+                if (backdrop) { backdrop.classList.remove('ry-open'); }
+            }
+            function openSidebar() {
+                if (sidebar) { sidebar.classList.add('ry-open'); }
+                if (backdrop) { backdrop.classList.add('ry-open'); }
+            }
+            if (toggle) {
+                toggle.addEventListener('click', function () {
+                    if (sidebar && sidebar.classList.contains('ry-open')) { closeSidebar(); } else { openSidebar(); }
+                });
+            }
+            if (backdrop) { backdrop.addEventListener('click', closeSidebar); }
+
+            // Tam sayfa yenilemede sidebar scroll konumu sıfırlanmasın diye sessionStorage'da tutup geri yüklüyoruz.
+            if (sidebar) {
+                var scrollKey = 'rySidebarScrollTop';
+                var saveTimer = null;
+                sidebar.addEventListener('scroll', function () {
+                    if (saveTimer) { clearTimeout(saveTimer); }
+                    saveTimer = setTimeout(function () {
+                        try { sessionStorage.setItem(scrollKey, String(sidebar.scrollTop)); } catch (e) { }
+                    }, 80);
+                }, { passive: true });
+
+                var restored = false;
+                try {
+                    var saved = sessionStorage.getItem(scrollKey);
+                    if (saved !== null) {
+                        sidebar.scrollTop = parseInt(saved, 10) || 0;
+                        restored = true;
+                    }
+                } catch (e) { }
+
+                if (!restored) {
+                    var active = sidebar.querySelector('.ry-nav-link.active');
+                    if (active) { active.scrollIntoView({ block: 'center' }); }
+                }
+            }
+        })();
+    </script>
+    @if (User.Identity != null && User.Identity.IsAuthenticated)
+    {
+        <script>
+            (function () {
+                var badge = document.getElementById('notifBadge');
+                if (!badge) { return; }
+                function refresh() {
+                    fetch('/bildirimler/sayac', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                        .then(function (r) { return r.ok ? r.json() : null; })
+                        .then(function (data) {
+                            if (!data) { return; }
+                            if (data.count > 0) {
+                                badge.textContent = data.count > 99 ? '99+' : data.count;
+                                badge.hidden = false;
+                            } else {
+                                badge.hidden = true;
+                            }
+                        })
+                        .catch(function () { });
+                }
+                refresh();
+                setInterval(refresh, 20000);
+                document.addEventListener('ry:realtime', function (e) {
+                    if (e.detail && e.detail.group === 'notifications') { refresh(); }
+                });
+            })();
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@@8/dist/browser/signalr.min.js"></script>
+        <script src="~/js/realtime.js" asp-append-version="true"></script>
+    }
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

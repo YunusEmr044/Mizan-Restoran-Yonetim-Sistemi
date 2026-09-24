@@ -1,0 +1,159 @@
+@model List<Order>
+@{
+    ViewData["Title"] = "Sipariş Ekranı";
+    var waiterCalls = (List<WaiterCall>)ViewBag.WaiterCalls;
+    var drafts = (List<Order>)ViewBag.Drafts;
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Sipariş Ekranı</h2>
+    @if (User.HasClaim(Permissions.ClaimType, Permissions.Orders.Create))
+    {
+        <a class="btn btn-primary" asp-action="NewOrder">+ Yeni Sipariş</a>
+    }
+</div>
+
+
+@{
+    var readyOrders = Model.Where(o => o.Items.Any(i => i.Status == OrderStatus.Hazir)).ToList();
+}
+@if (readyOrders.Any())
+{
+    <div class="alert alert-success">
+        <h5 class="mb-2">✅ Hazır Ürünler — Servise Götürün</h5>
+        @foreach (var order in readyOrders)
+        {
+            <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
+                <span>
+                    <strong>@order.Table?.Name</strong> —
+                    @string.Join(", ", order.Items.Where(i => i.Status == OrderStatus.Hazir).Select(i => $"{i.MenuItemName} x{i.Quantity}"))
+                </span>
+                <form asp-action="MarkServed" method="post">
+                    <input type="hidden" name="id" value="@order.Id" />
+                    <button type="submit" class="btn btn-sm btn-success">Servis Edildi</button>
+                </form>
+            </div>
+        }
+    </div>
+}
+
+@if (waiterCalls.Any())
+{
+    <div class="alert alert-warning">
+        <h5 class="mb-2">🔔 Garson Çağrıları</h5>
+        @foreach (var call in waiterCalls)
+        {
+            <form asp-action="ResolveWaiterCall" method="post" class="d-flex justify-content-between align-items-center mb-1">
+                <input type="hidden" name="id" value="@call.Id" />
+                <span>@call.Table?.Name - @call.CreatedAt.ToString("HH:mm")</span>
+                <button type="submit" class="btn btn-sm btn-warning">Tamamlandı</button>
+            </form>
+        }
+    </div>
+}
+
+@if (drafts.Any())
+{
+    <h5 class="mt-4 mb-2">📝 Taslak Siparişlerim</h5>
+    <div class="row row-cols-1 row-cols-md-2 g-3 mb-4">
+        @foreach (var order in drafts)
+        {
+            <div class="col">
+                <div class="card border-secondary">
+                    <div class="card-header d-flex justify-content-between">
+                        <span class="fw-semibold">@order.Table?.Name (Taslak)</span>
+                        <span class="text-muted">@order.CreatedAt.ToString("HH:mm")</span>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        @foreach (var item in order.Items)
+                        {
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>@item.MenuItemName x @item.Quantity</span>
+                                <span>@item.LineTotal.ToString("0.00") ₺</span>
+                            </li>
+                        }
+                    </ul>
+                    <div class="card-footer d-flex justify-content-between align-items-center">
+                        <strong>@order.Total.ToString("0.00") ₺</strong>
+                        <div class="d-flex gap-2">
+                            <form asp-action="SendDraft" method="post">
+                                <input type="hidden" name="id" value="@order.Id" />
+                                <button type="submit" class="btn btn-sm btn-success">Gönder</button>
+                            </form>
+                            <form asp-action="DiscardDraft" method="post" data-confirm="Bu taslak kalıcı olarak silinecek." data-confirm-title="Taslak silinsin mi?" data-confirm-ok="Taslağı Sil" data-confirm-danger>
+                                <input type="hidden" name="id" value="@order.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<h5 class="mt-2 mb-2">Aktif Siparişler</h5>
+@if (!Model.Any())
+{
+    <p class="text-muted">Şu anda aktif sipariş yok.</p>
+}
+
+<div class="row row-cols-1 row-cols-md-2 g-3">
+    @foreach (var order in Model)
+    {
+        <div class="col">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    <span class="fw-semibold">@order.Table?.Name</span>
+                    <span class="text-muted">@(order.SentAt?.ToString("HH:mm"))</span>
+                </div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var item in order.Items)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>@item.MenuItemName x @item.Quantity</span>
+                            <span class="d-flex align-items-center gap-2">
+                                <span class="badge @(item.Status switch {
+                                    OrderStatus.Yeni => "bg-secondary",
+                                    OrderStatus.Hazirlaniyor => "bg-warning text-dark",
+                                    OrderStatus.Hazir => "bg-success",
+                                    OrderStatus.ServisEdildi => "bg-primary",
+                                    _ => "bg-dark"
+                                })">@item.Status</span>
+                                @((item.UnitPrice * item.Quantity).ToString("0.00")) ₺
+                            </span>
+                        </li>
+                    }
+                </ul>
+                @if (!string.IsNullOrEmpty(order.Notes))
+                {
+                    <div class="card-body py-2"><small class="text-muted">Not: @order.Notes</small></div>
+                }
+                <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <strong>@order.Total.ToString("0.00") ₺</strong>
+                    <div class="d-flex gap-2">
+                        @if (order.Items.Any(i => i.Status == OrderStatus.Hazir))
+                        {
+                            <form asp-action="MarkServed" method="post">
+                                <input type="hidden" name="id" value="@order.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-primary">Servis Edildi</button>
+                            </form>
+                        }
+                        <a asp-action="Adisyon" asp-route-tableId="@order.TableId" class="btn btn-sm btn-outline-dark">Adisyon</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@* Bip sesi _Layout.cshtml'deki realtime.js'ten geliyor; burada "staff" olayında listeyi tazeliyoruz. *@
+<script>
+    (function () {
+        document.addEventListener('ry:realtime', function (e) {
+            var group = e.detail && e.detail.group;
+            if (group === 'staff') {
+                setTimeout(function () { location.reload(); }, 600);
+            }
+        });
+    })();
+</script>

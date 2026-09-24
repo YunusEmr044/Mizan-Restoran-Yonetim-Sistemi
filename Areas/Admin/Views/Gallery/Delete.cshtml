@@ -1,0 +1,11 @@
+@model GalleryImage
+@{
+    ViewData["Title"] = "Fotoğraf Sil";
+}
+<h2 class="mb-4">Fotoğrafı Sil</h2>
+<img src="@Model.ImageUrl" style="max-height:200px;" class="img-thumbnail mb-3" />
+<p>Bu fotoğrafı silmek istediğinize emin misiniz?</p>
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+    <button type="submit" class="btn btn-danger">Evet, Sil</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>

@@ -1,0 +1,10 @@
+@model Branch
+@{
+    ViewData["Title"] = "Şube Sil";
+}
+<h2 class="mb-4">Şubeyi Sil</h2>
+<p>"<strong>@Model.Name</strong>" (@(Model.Restaurant?.Name)) şubesini silmek istediğinize emin misiniz? Bağlı alanlar varsa silme işlemi başarısız olabilir.</p>
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+    <button type="submit" class="btn btn-danger">Evet, Sil</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>

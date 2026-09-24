@@ -1,0 +1,27 @@
+@model GalleryImage
+@{
+    ViewData["Title"] = "Fotoğraf Yükle";
+}
+<h2 class="mb-4">Galeriye Fotoğraf Yükle</h2>
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="mb-3">
+        <label class="form-label">Görsel Dosyası</label>
+        <input type="file" name="imageFile" class="form-control" accept="image/*" required />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Caption" class="form-label"></label>
+        <input asp-for="Caption" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="DisplayOrder" class="form-label"></label>
+        <input asp-for="DisplayOrder" class="form-control" />
+    </div>
+    <div class="form-check mb-3">
+        <input asp-for="ShowOnHomepage" class="form-check-input" />
+        <label asp-for="ShowOnHomepage" class="form-check-label"></label>
+        <div class="form-text">Ana sayfadaki galeri/Instagram bölümünde gösterilir.</div>
+    </div>
+    <button type="submit" class="btn btn-primary">Yükle</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>

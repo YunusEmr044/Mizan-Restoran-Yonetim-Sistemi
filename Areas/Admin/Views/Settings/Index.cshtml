@@ -1,0 +1,262 @@
+@model SiteContent
+@using RestoranYonetim.Services
+@{
+    ViewData["Title"] = "Ayarlar";
+    string? publicUrlCurrent = ViewBag.PublicUrlCurrent;
+    object? publicUrlSourceValue = ViewBag.PublicUrlSource;
+    var publicUrlSource = publicUrlSourceValue is PublicUrlSource source ? source : PublicUrlSource.Request;
+    object? publicUrlSuggestionsValue = ViewBag.PublicUrlSuggestions;
+    var publicUrlSuggestions = publicUrlSuggestionsValue as List<(string Url, string InterfaceName, bool HasGateway)> ?? new();
+}
+<div class="d-flex align-items-center justify-content-between mb-1">
+    <h2 class="mb-1"><i class="bi bi-palette me-2"></i>Ayarlar</h2>
+</div>
+<p class="text-muted mb-4">Bu ekran sadece Süper Admin'e görünür. Site adresi ve görünüm (renk, yazı tipi, köşe stili) buradan ayarlanır.</p>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="ry-theme-section-title"><i class="bi bi-qr-code"></i>Site Adresi</div>
+        <p class="text-muted small mb-3">
+            Masalardaki QR kodları, müşteri telefonlarını bu adrese yönlendirir; site haritası ve paylaşım linkleri de bu adresi kullanır.
+            Sadece restoranın Wi-Fi'ında çalışıyorsanız bu bilgisayarın yerel adresini (ör. <code>http://192.168.1.50:5080</code>),
+            domain aldıysanız domain adresini (ör. <code>https://restoraniniz.com</code>) girin.
+        </p>
+
+        <div class="small mb-3">
+            Şu an kullanılan adres: <strong>@publicUrlCurrent</strong>
+            @if (publicUrlSource == PublicUrlSource.Panel)
+            {
+                <span class="badge bg-success ms-1">Bu ekrandan ayarlandı</span>
+            }
+            else if (publicUrlSource == PublicUrlSource.Config)
+            {
+                <span class="badge bg-secondary ms-1">Ayar dosyasından</span>
+            }
+            else
+            {
+                <span class="badge bg-warning text-dark ms-1">Ayarlanmamış - tarayıcıdaki adres kullanılıyor</span>
+            }
+        </div>
+
+        <form asp-action="SavePublicBaseUrl" method="post">
+            <div class="input-group mb-2" style="max-width: 560px;">
+                <input type="url" name="publicBaseUrl" id="ryPublicUrlInput" class="form-control" maxlength="200" value="@Model.PublicBaseUrl" placeholder="http://192.168.1.50:5080" />
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Kaydet</button>
+            </div>
+            <div class="form-text mb-2">Boş bırakıp kaydederseniz ayar dosyasındaki (<code>appsettings.Production.json</code>) adres kullanılır.</div>
+
+            @if (publicUrlSuggestions.Count > 0)
+            {
+                <div class="small text-muted mb-1">Bu bilgisayarın yerel ağ adresleri (seçmek için tıklayın):</div>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    @foreach (var suggestion in publicUrlSuggestions)
+                    {
+                        <button type="button" class="btn btn-sm @(suggestion.HasGateway ? "btn-outline-primary" : "btn-outline-secondary")" data-ry-fill-url="@suggestion.Url" title="@suggestion.InterfaceName">
+                            @suggestion.Url
+                            @if (suggestion.HasGateway)
+                            {
+                                <span class="badge bg-primary ms-1">Önerilen</span>
+                            }
+                        </button>
+                    }
+                </div>
+            }
+        </form>
+
+        <div class="alert alert-warning small mb-0 mt-2">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            Adres değişirse daha önce basılıp masalara konmuş QR kodları eski adrese gider. Değiştirdikten sonra
+            <a asp-controller="Tables" asp-action="Index">Masalar</a> ekranından QR kodlarını yeniden indirip basın.
+            Yerel adres kullanıyorsanız bilgisayarın IP'si değişmesin diye modemden bu bilgisayara sabit IP verin.
+        </div>
+
+        <div class="alert alert-light border small mb-0 mt-2">
+            <i class="bi bi-globe2 me-1"></i>
+            <strong>Domain kullanacaksanız:</strong> buraya yazmadan önce domain'in DNS kaydıyla bu sunucuya yönlendirilmiş ve
+            HTTPS sertifikasının kurulmuş olması gerekir; bu kutu sadece QR kodlarının hangi adrese gideceğini belirler.
+            Kurulum adımları proje dokümanında: <code>docs/YAYINA-ALMA.md</code> → "VPS üzerinde domain + HTTPS ile yayın".
+        </div>
+    </div>
+</div>
+
+<form asp-action="Index" method="post" id="ryThemeForm">
+    <div class="ry-theme-preview-row">
+        <div>
+            <div class="ry-theme-preview-label"><i class="bi bi-eye me-1"></i>Önizleme — Herkese Açık Site</div>
+            <div class="ry-theme-preview ry-theme-preview-public" id="ryPreviewPublic">
+                <div class="ry-tp-eyebrow">Örnek Restoran</div>
+                <div class="ry-tp-title">Lezzetin Adresi</div>
+                <span class="ry-tp-btn">Menüyü Gör</span>
+                <div class="ry-tp-card">Kampanyalar, galeri ve rezervasyon kartları da bu temayı kullanır.</div>
+            </div>
+        </div>
+        <div>
+            <div class="ry-theme-preview-label"><i class="bi bi-eye me-1"></i>Önizleme — Yönetim Paneli</div>
+            <div class="ry-theme-preview ry-theme-preview-admin" id="ryPreviewAdmin">
+                <div class="ry-tp-sidebar">
+                    <div class="ry-tp-sidebar-dot active"></div>
+                    <div class="ry-tp-sidebar-dot"></div>
+                    <div class="ry-tp-sidebar-dot"></div>
+                    <div class="ry-tp-sidebar-dot"></div>
+                </div>
+                <div class="ry-tp-content">
+                    <span class="ry-tp-btn">+ Yeni</span>
+                    <div class="ry-tp-line"></div>
+                    <div class="ry-tp-line"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="ry-theme-section-title"><i class="bi bi-shop"></i>Herkese Açık Site</div>
+            <div class="ry-swatch-grid mb-3">
+                <label class="ry-swatch-tile">
+                    <input name="ThemePrimaryColor" type="color" value="@Model.ThemePrimaryColor" class="ry-theme-input" data-preview-var="--ry-tp-primary" title="Butonlar, ikonlar, çizgiler" />
+                    <span class="ry-swatch-tile-text"><span class="ry-swatch-tile-label">Ana Vurgu Rengi</span><span class="ry-swatch-tile-hex">@Model.ThemePrimaryColor</span></span>
+                </label>
+                <label class="ry-swatch-tile">
+                    <input name="ThemeDarkColor" type="color" value="@Model.ThemeDarkColor" class="ry-theme-input" data-preview-var="--ry-tp-dark" title="Hero, navigasyon, footer zemini" />
+                    <span class="ry-swatch-tile-text"><span class="ry-swatch-tile-label">Koyu Zemin Rengi</span><span class="ry-swatch-tile-hex">@Model.ThemeDarkColor</span></span>
+                </label>
+                <label class="ry-swatch-tile">
+                    <input name="ThemeBackgroundColor" type="color" value="@Model.ThemeBackgroundColor" class="ry-theme-input" data-preview-var="--ry-tp-bg" title="Sitenin genel arka planı" />
+                    <span class="ry-swatch-tile-text"><span class="ry-swatch-tile-label">Sayfa Zemin Rengi</span><span class="ry-swatch-tile-hex">@Model.ThemeBackgroundColor</span></span>
+                </label>
+                <label class="ry-swatch-tile">
+                    <input name="ThemeTextColor" type="color" value="@Model.ThemeTextColor" class="ry-theme-input" data-preview-var="--ry-tp-text2" title="Gövde yazı rengi" />
+                    <span class="ry-swatch-tile-text"><span class="ry-swatch-tile-label">Yazı Rengi</span><span class="ry-swatch-tile-hex">@Model.ThemeTextColor</span></span>
+                </label>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Başlık Fontu</label>
+                    <select name="ThemeHeadingFont" class="form-select">
+                        @foreach (var font in ThemeCatalog.HeadingFonts.Keys)
+                        {
+                            @if (Model.ThemeHeadingFont == font)
+                            {
+                                <option value="@font" selected>@font</option>
+                            }
+                            else
+                            {
+                                <option value="@font">@font</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Metin Fontu</label>
+                    <select name="ThemeBodyFont" class="form-select">
+                        @foreach (var font in ThemeCatalog.BodyFonts.Keys)
+                        {
+                            @if (Model.ThemeBodyFont == font)
+                            {
+                                <option value="@font" selected>@font</option>
+                            }
+                            else
+                            {
+                                <option value="@font">@font</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Köşe Stili</label>
+                    <select name="ThemeCornerStyle" class="form-select" id="ryCornerSelect">
+                        @foreach (var style in ThemeCatalog.CornerStyles)
+                        {
+                            @if (Model.ThemeCornerStyle == style.Key)
+                            {
+                                <option value="@style.Key" selected>@style.Value</option>
+                            }
+                            else
+                            {
+                                <option value="@style.Key">@style.Value</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="ry-theme-section-title"><i class="bi bi-layout-sidebar"></i>Yönetim Paneli</div>
+            <p class="text-muted small mb-3">Bu panelin (sol menü dahil) rengi — siteden bağımsız ayarlanır.</p>
+            <div class="ry-swatch-grid">
+                <label class="ry-swatch-tile">
+                    <input name="AdminAccentColor" type="color" value="@Model.AdminAccentColor" class="ry-theme-input" data-preview-var="--ry-tp-accent" title="Aktif menü, butonlar" />
+                    <span class="ry-swatch-tile-text"><span class="ry-swatch-tile-label">Panel Vurgu Rengi</span><span class="ry-swatch-tile-hex">@Model.AdminAccentColor</span></span>
+                </label>
+                <label class="ry-swatch-tile">
+                    <input name="AdminSidebarColor" type="color" value="@Model.AdminSidebarColor" class="ry-theme-input" data-preview-var="--ry-tp-sidebar" title="Sidebar zemini" />
+                    <span class="ry-swatch-tile-text"><span class="ry-swatch-tile-label">Sol Menü Rengi</span><span class="ry-swatch-tile-hex">@Model.AdminSidebarColor</span></span>
+                </label>
+                <label class="ry-swatch-tile">
+                    <input name="AdminBackgroundColor" type="color" value="@Model.AdminBackgroundColor" class="ry-theme-input" data-preview-var="--ry-tp-adminbg" title="Panelin genel arka planı" />
+                    <span class="ry-swatch-tile-text"><span class="ry-swatch-tile-label">Panel Zemin Rengi</span><span class="ry-swatch-tile-hex">@Model.AdminBackgroundColor</span></span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Kaydet</button>
+    </div>
+</form>
+<form asp-action="Reset" method="post" class="d-inline" data-confirm="Tüm görünüm ayarları (renkler, yazı tipleri vb.) varsayılana dönecek." data-confirm-title="Ayarlar sıfırlansın mı?" data-confirm-ok="Varsayılana Dön" data-confirm-danger>
+    <button type="submit" class="btn btn-outline-secondary mt-2"><i class="bi bi-arrow-counterclockwise me-1"></i>Varsayılana Döndür</button>
+</form>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <div class="ry-theme-section-title"><i class="bi bi-info-circle"></i>Diğer içerik ayarları</div>
+        <p class="text-muted mb-2">Metin, görsel, iletişim bilgisi gibi site içeriği ayarları <strong>Site İçeriği</strong> ekranında; modül aç/kapa ve rol izinleri <strong>Özellikler ve İzinler</strong> ekranındadır.</p>
+        <a asp-controller="SiteContent" asp-action="Index" class="btn btn-sm btn-outline-secondary me-2">Site İçeriği</a>
+        <a asp-controller="Features" asp-action="Index" class="btn btn-sm btn-outline-secondary">Özellikler ve İzinler</a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var publicUrlInput = document.getElementById('ryPublicUrlInput');
+            document.querySelectorAll('[data-ry-fill-url]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    publicUrlInput.value = button.getAttribute('data-ry-fill-url');
+                    publicUrlInput.focus();
+                });
+            });
+        })();
+
+        (function () {
+            var previewPublic = document.getElementById('ryPreviewPublic');
+            var previewAdmin = document.getElementById('ryPreviewAdmin');
+
+            document.querySelectorAll('.ry-theme-input').forEach(function (input) {
+                input.addEventListener('input', function () {
+                    var vars = (input.dataset.previewVar || '').split(',').filter(Boolean);
+                    vars.forEach(function (varName) {
+                        previewPublic.style.setProperty(varName, input.value);
+                        previewAdmin.style.setProperty(varName, input.value);
+                    });
+                    var hexEl = input.closest('.ry-swatch-tile').querySelector('.ry-swatch-tile-hex');
+                    if (hexEl) { hexEl.textContent = input.value; }
+                });
+            });
+
+            var cornerSelect = document.getElementById('ryCornerSelect');
+            if (cornerSelect) {
+                var applyCorner = function () {
+                    var sharp = cornerSelect.value === 'sharp';
+                    previewPublic.style.setProperty('--ry-tp-corner', sharp ? '6px' : '18px');
+                };
+                cornerSelect.addEventListener('change', applyCorner);
+                applyCorner();
+            }
+        })();
+    </script>
+}
