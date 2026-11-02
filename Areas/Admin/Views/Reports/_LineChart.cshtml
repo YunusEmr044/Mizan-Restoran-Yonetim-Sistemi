@@ -1,0 +1,49 @@
+@model LineChartModel
+@using System.Globalization
+@{
+    const double W = 800, H = 280, Left = 64, Right = 16, Top = 16, Bottom = 36;
+    var tr = CultureInfo.GetCultureInfo("tr-TR");
+    var n = Model.Days.Count;
+    var max = Model.Current.Concat(Model.Previous).DefaultIfEmpty(0m).Max();
+    // Y ekseni üst sınırı 1-2-5 × 10^k basamağına yuvarlanır; veri yoksa 100 kullanılır.
+    double niceMax = 100;
+    if (max > 0)
+    {
+        var magnitude = Math.Pow(10, Math.Floor(Math.Log10((double)max)));
+        niceMax = new[] { 1, 2, 2.5, 5, 10 }.Select(f => f * magnitude).First(v => v >= (double)max);
+    }
+    double X(int i) => n <= 1 ? Left + (W - Left - Right) / 2 : Left + i * (W - Left - Right) / (n - 1);
+    double Y(decimal v) => Top + (H - Top - Bottom) * (1 - (double)v / niceMax);
+    string Points(IReadOnlyList<decimal> values) => string.Join(" ", values.Select((v, i) => $"{X(i).ToString("0.#", CultureInfo.InvariantCulture)},{Y(v).ToString("0.#", CultureInfo.InvariantCulture)}"));
+    var labelStep = Math.Max(1, (int)Math.Ceiling(n / 8.0));
+    string F(double v) => v.ToString("0.#", CultureInfo.InvariantCulture);
+}
+<figure class="ry-linechart mb-0">
+    <svg viewBox="0 0 @F(W) @F(H)" role="img" aria-label="Günlük ciro: @Model.CurrentLabel ve @Model.PreviousLabel">
+        @for (var g = 0; g <= 4; g++)
+        {
+            var value = niceMax * g / 4;
+            var y = Top + (H - Top - Bottom) * (1 - g / 4.0);
+            <line x1="@F(Left)" x2="@F(W - Right)" y1="@F(y)" y2="@F(y)" class="ry-linechart-grid" />
+            @:<text x="@F(Left - 8)" y="@F(y + 4)" text-anchor="end" class="ry-linechart-axis">@value.ToString("N0", tr)</text>
+        }
+        @for (var i = 0; i < n; i += labelStep)
+        {
+            @:<text x="@F(X(i))" y="@F(H - 12)" text-anchor="middle" class="ry-linechart-axis">@Model.Days[i].ToString("dd.MM")</text>
+        }
+        @if (n > 1)
+        {
+            <polyline points="@Points(Model.Previous)" class="ry-linechart-prev" />
+            <polyline points="@Points(Model.Current)" class="ry-linechart-cur" />
+        }
+        @for (var i = 0; i < n; i++)
+        {
+            <circle cx="@F(X(i))" cy="@F(Y(Model.Previous[i]))" r="3" class="ry-linechart-prev-dot"><title>@Model.PreviousLabel · @(Model.Days[i].AddDays(-n).ToString("dd.MM")) · @Model.Previous[i].ToString("N2", tr) ₺</title></circle>
+            <circle cx="@F(X(i))" cy="@F(Y(Model.Current[i]))" r="4" class="ry-linechart-cur-dot"><title>@Model.CurrentLabel · @Model.Days[i].ToString("dd.MM") · @Model.Current[i].ToString("N2", tr) ₺</title></circle>
+        }
+    </svg>
+    <figcaption class="d-flex gap-3 small text-muted mt-1">
+        <span><span class="ry-linechart-key ry-linechart-key-cur"></span>@Model.CurrentLabel</span>
+        <span><span class="ry-linechart-key ry-linechart-key-prev"></span>@Model.PreviousLabel</span>
+    </figcaption>
+</figure>

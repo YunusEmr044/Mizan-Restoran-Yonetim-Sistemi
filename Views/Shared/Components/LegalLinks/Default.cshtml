@@ -1,0 +1,14 @@
+@model RestoranYonetim.ViewComponents.LegalLinksViewModel
+@if (Model.Links.Count > 0 || Model.ShowCookieSettings)
+{
+    <nav class="py-legal-links" aria-label="@T["Yasal bilgiler"]">
+        @foreach (var link in Model.Links)
+        {
+            <a href="@Url.Content("~/" + link.Slug)">@link.Title</a>
+        }
+        @if (Model.ShowCookieSettings)
+        {
+            <a href="#" data-cookie-settings>@T["Çerez tercihleri"]</a>
+        }
+    </nav>
+}

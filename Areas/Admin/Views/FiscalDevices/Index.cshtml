@@ -1,0 +1,84 @@
+@model FiscalDevicesView
+@{
+    ViewData["Title"] = "Yazar Kasa";
+}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-0">Yazar Kasa (ÖKC)</h2>
+        <p class="text-muted small mb-0">Adisyon kapanınca mali fiş şubenin cihazından kesilir; kartla ödeme cihaz destekliyorsa aynı cihazdan alınır.</p>
+    </div>
+    <a asp-action="Edit" class="btn btn-primary">+ Yeni Cihaz</a>
+</div>
+
+@if (!Model.ModuleEnabled)
+{
+    <div class="alert alert-info"><i class="bi bi-info-circle me-1"></i>Yazar Kasa (ÖKC) modülü kapalı; mali fiş kesilmez. Açmak için <a asp-controller="Features" asp-action="Index">Özellikler ve İzinler</a> sayfasını kullanın.</div>
+}
+
+<div class="table-responsive mb-4">
+    <table class="table align-middle">
+        <thead><tr><th>Şube</th><th>Ad</th><th>Bağdaştırıcı</th><th>Yetenekler</th><th>Durum</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var d in Model.Devices)
+        {
+            var adapter = Model.Registry.Get(d.AdapterKey);
+            <tr class="@(d.IsActive ? "" : "text-muted")">
+                <td>@d.Branch?.Name</td>
+                <td class="fw-semibold">@d.Name</td>
+                <td>@(adapter?.DisplayName ?? $"Bilinmeyen ({d.AdapterKey})")</td>
+                <td class="small">
+                    @if (adapter != null)
+                    {
+                        @(adapter.Capabilities.AutomaticReceipt ? "Otomatik fiş" : "Elle fiş no")
+                        @(adapter.Capabilities.CardPayment ? " · Kart" : "")
+                        @(adapter.Capabilities.VoidReceipt ? " · Fiş iptali" : "")
+                    }
+                </td>
+                <td><span class="badge @(d.IsActive ? "bg-success" : "bg-secondary")">@(d.IsActive ? "Aktif" : "Pasif")</span></td>
+                <td class="text-end">
+                    <div class="d-inline-flex gap-1">
+                        <form asp-action="Test" asp-route-id="@d.Id" method="post"><button class="btn btn-sm btn-outline-dark"><i class="bi bi-plug me-1"></i>Bağlantıyı test et</button></form>
+                        <a asp-action="Edit" asp-route-id="@d.Id" class="btn btn-sm btn-outline-secondary">Düzenle</a>
+                    </div>
+                </td>
+            </tr>
+        }
+        @if (!Model.Devices.Any())
+        {
+            <tr><td colspan="6"><partial name="_EmptyState" model='new EmptyStateModel("bi-receipt-cutoff", "Henüz yazar kasa tanımlanmadı.", "Yeni ekle", Url.Action("Edit"))' /></td></tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+<h5>Son mali fişler</h5>
+<div class="table-responsive">
+    <table class="table table-sm align-middle">
+        <thead><tr><th>Tarih</th><th>Adisyon</th><th class="text-end">Tutar</th><th>Durum</th><th>Fiş no</th><th>Z no</th><th>Son hata</th></tr></thead>
+        <tbody>
+        @foreach (var r in Model.Recent)
+        {
+            <tr>
+                <td class="small">@r.CreatedAt.ToString("dd.MM HH:mm")</td>
+                <td class="small">@(r.Adisyon == null ? $"#{r.AdisyonId}" : $"{AdisyonLabel.For(r.Adisyon)} #{r.AdisyonId}")</td>
+                <td class="text-end">@r.Total.ToString("0.00") ₺</td>
+                <td><span class="badge @(r.Status == FiscalReceiptStatus.Kesildi ? "bg-success" : r.Status is FiscalReceiptStatus.Hata or FiscalReceiptStatus.Belirsiz ? "bg-danger" : "bg-secondary")">@r.Status.Label()</span>
+                    @if (r.IsSimulated) { <span class="badge bg-info text-dark">SİMÜLATÖR</span> }</td>
+                <td>@r.ReceiptNo</td>
+                <td>@r.ZNo</td>
+                <td class="small text-muted">@r.LastError</td>
+            </tr>
+        }
+        @if (!Model.Recent.Any())
+        {
+            <tr><td colspan="7" class="text-muted">Henüz mali fiş yok.</td></tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+<div class="card mt-4"><div class="card-body small">
+    <h6 class="card-title">Bilgi</h6>
+    <p class="mb-1"><strong>Simülatör</strong> cihaz olmadan uçtan uca deneme içindir; canlıda kullanmayın. <strong>Elle</strong> modda kasiyer fişi cihazdan keser, numarasını kasada girer.</p>
+    <p class="mb-0">Marka bağdaştırıcıları (Ingenico, Hugin, Beko, Pavo, Token…) üreticinin dokümanıyla eklenir; README'de "Yazar kasa bağdaştırıcısı ekleme" bölümüne bakın. KDV oranlarını ve fiş sürecini mali müşavirinizle teyit edin.</p>
+</div></div>

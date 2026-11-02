@@ -1,0 +1,48 @@
+@model RestoranYonetim.ViewComponents.KitchenPrintStatusModel
+@if (Model.Failures.Count > 0)
+{
+    <div class="alert alert-danger" id="ryPrintFailures" role="alert" hidden>
+        <div class="d-flex justify-content-between align-items-start gap-2">
+            <div>
+                <strong><i class="bi bi-printer me-1"></i>Yazıcı: <span data-count></span> fiş basılamadı</strong>
+                <ul class="small mb-0 mt-1 ps-3">
+                    @foreach (var f in Model.Failures)
+                    {
+                        <li data-failure="@f.Id">@f.Label · @f.At.ToString("HH:mm") · @f.PrinterName — @f.Error</li>
+                    }
+                </ul>
+            </div>
+            <button type="button" class="btn-close" aria-label="Uyarıyı kapat" data-dismiss-failures></button>
+        </div>
+    </div>
+    <script>
+        (function () {
+            var box = document.getElementById('ryPrintFailures');
+            var key = 'ry-print-failures-seen';
+            var seen;
+            try { seen = JSON.parse(localStorage.getItem(key) || '[]') || []; } catch (e) { seen = []; }
+            var items = Array.prototype.slice.call(box.querySelectorAll('[data-failure]'));
+            var fresh = items.filter(function (li) { return seen.indexOf(li.dataset.failure) === -1; });
+            items.forEach(function (li) { li.hidden = fresh.indexOf(li) === -1; });
+            if (!fresh.length) { return; }
+            box.querySelector('[data-count]').textContent = fresh.length;
+            box.hidden = false;
+            box.querySelector('[data-dismiss-failures]').addEventListener('click', function () {
+                var ids = seen.concat(fresh.map(function (li) { return li.dataset.failure; })).slice(-100);
+                try { localStorage.setItem(key, JSON.stringify(ids)); } catch (e) { }
+                box.hidden = true;
+            });
+        })();
+    </script>
+}
+@if (Model.Stations.Count > 0)
+{
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        @foreach (var p in Model.Stations)
+        {
+            <a class="btn btn-sm btn-outline-secondary" asp-controller="Yazici" asp-action="Istasyon" asp-route-id="@p.Id" target="_blank" rel="noopener">
+                <i class="bi bi-printer me-1"></i>Yazıcı istasyonunu aç · @p.Name (@p.Branch?.Name)
+            </a>
+        }
+    </div>
+}

@@ -1,0 +1,46 @@
+@model InventoryItem
+@{
+    ViewData["Title"] = "Malzeme Düzenle";
+    var suppliers = (SelectList)ViewBag.Suppliers;
+}
+<h2 class="mb-4">Malzeme Düzenle</h2>
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label asp-for="Unit" class="form-label"></label>
+            <input asp-for="Unit" class="form-control" />
+        </div>
+        <div class="col-md mb-3">
+            <label asp-for="CurrentQuantity" class="form-label"></label>
+            @* Bilinçli olarak disabled: miktar sadece "Hareketler > Düzelt" ile değiştirilmeli (loglanır); controller da bu alanı yok sayıyor (bkz. InventoryController.Edit). *@
+            <input asp-for="CurrentQuantity" class="form-control" disabled />
+            <div class="form-text">
+                Miktarı değiştirmek için <a asp-action="Hareketler" asp-route-id="@Model.Id">Hareketler ekranındaki "Düzelt"</a> aksiyonunu kullanın - bu sayede değişiklik stok geçmişine loglanır.
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label asp-for="MinLevel" class="form-label"></label>
+            <input asp-for="MinLevel" class="form-control" />
+        </div>
+        <div class="col-md mb-3">
+            <label asp-for="UnitCost" class="form-label"></label>
+            <input asp-for="UnitCost" class="form-control" />
+        </div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="SupplierId" class="form-label">Tedarikçi</label>
+        <select asp-for="SupplierId" class="form-select" asp-items="suppliers">
+            <option value="">— Seçin (isteğe bağlı) —</option>
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>

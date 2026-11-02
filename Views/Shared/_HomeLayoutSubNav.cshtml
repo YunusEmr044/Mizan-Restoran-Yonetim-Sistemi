@@ -1,0 +1,11 @@
+@{
+    var active = ViewBag.SiteActive as string ?? "";
+}
+<div class="ry-cat-chips mb-4">
+    <a class="ry-cat-chip @(active == "sections" ? "active" : "")" asp-area="Admin" asp-controller="HomePage" asp-action="Sections"><i class="bi bi-layout-text-window"></i> Bölümler</a>
+    <a class="ry-cat-chip @(active == "hero" ? "active" : "")" asp-area="Admin" asp-controller="HomePage" asp-action="Hero"><i class="bi bi-image"></i> Hero Slaytları</a>
+    <a class="ry-cat-chip @(active == "stats" ? "active" : "")" asp-area="Admin" asp-controller="HomePage" asp-action="Stats"><i class="bi bi-graph-up"></i> İstatistikler</a>
+    <a class="ry-cat-chip @(active == "features" ? "active" : "")" asp-area="Admin" asp-controller="HomePage" asp-action="Features"><i class="bi bi-stars"></i> Öne Çıkan Özellikler</a>
+    <a class="ry-cat-chip @(active == "chefspecial" ? "active" : "")" asp-area="Admin" asp-controller="ChefSpecial" asp-action="Index"><i class="bi bi-egg-fried"></i> Şefin Önerisi</a>
+    <a class="ry-cat-chip @(active == "workinghours" ? "active" : "")" asp-area="Admin" asp-controller="HomePage" asp-action="WorkingHours"><i class="bi bi-clock"></i> Çalışma Saatleri</a>
+</div>

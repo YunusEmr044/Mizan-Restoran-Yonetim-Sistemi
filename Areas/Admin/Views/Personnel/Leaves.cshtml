@@ -1,0 +1,42 @@
+@model IReadOnlyList<LeaveRequest>
+@{
+    ViewData["Title"] = "İzinler";
+}
+<div class="mb-3">
+    <h2 class="mb-0">İzinler</h2>
+    <p class="text-muted small mb-0">Personel izin talebini kendi "Mesaim" sayfasından gönderir; onaylanan izinler vardiya planında görünür.</p>
+</div>
+<div class="table-responsive">
+    <table class="table align-middle">
+        <thead><tr><th>Personel</th><th>Tarih</th><th>Gün</th><th>Tür</th><th>Gerekçe</th><th>Durum</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var l in Model)
+        {
+            <tr>
+                <td class="fw-semibold">@l.UserName</td>
+                <td>@l.StartDate.ToString("dd.MM.yyyy")@(l.EndDate != l.StartDate ? " – " + l.EndDate.ToString("dd.MM.yyyy") : "")</td>
+                <td>@((l.EndDate - l.StartDate).Days + 1)</td>
+                <td>@l.Type.Label()</td>
+                <td class="small">@l.Reason</td>
+                <td>
+                    <span class="badge @(l.Status switch { LeaveStatus.Onaylandi => "bg-success", LeaveStatus.Reddedildi => "bg-danger", LeaveStatus.Beklemede => "bg-warning text-dark", _ => "bg-secondary" })">@l.Status.Label()</span>
+                    @if (l.DecidedByUserName != null) { <div class="small text-muted">@l.DecidedByUserName · @l.DecidedAt?.ToString("dd.MM HH:mm")</div> }
+                </td>
+                <td class="text-end">
+                    @if (l.Status == LeaveStatus.Beklemede)
+                    {
+                        <div class="d-inline-flex gap-1">
+                            <form asp-action="DecideLeave" asp-route-id="@l.Id" method="post"><input type="hidden" name="approve" value="true" /><button class="btn btn-sm btn-success">Onayla</button></form>
+                            <form asp-action="DecideLeave" asp-route-id="@l.Id" method="post" data-confirm="İzin talebi reddedilsin mi?" data-confirm-ok="Reddet" data-confirm-danger><input type="hidden" name="approve" value="false" /><button class="btn btn-sm btn-outline-danger">Reddet</button></form>
+                        </div>
+                    }
+                </td>
+            </tr>
+        }
+        @if (!Model.Any())
+        {
+            <tr><td colspan="7"><partial name="_EmptyState" model='new EmptyStateModel("bi-calendar-x", "Henüz izin talebi yok.", null, null)' /></td></tr>
+        }
+        </tbody>
+    </table>
+</div>

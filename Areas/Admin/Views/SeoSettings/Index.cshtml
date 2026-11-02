@@ -1,0 +1,110 @@
+@model SeoSettings
+@{
+    ViewData["Title"] = "SEO Ayarları";
+    var businessTypes = (IReadOnlyList<(string Value, string Label)>)ViewBag.LocalBusinessTypes;
+}
+<h2 class="mb-1">SEO Ayarları</h2>
+<p class="text-muted small mb-3">
+    Site genelinde geçerli SEO + AEO (yapay zekâ destekli arama/cevap sistemleri için) +
+    GEO ayarları. Sayfa bazlı başlık/açıklama override'ları için <a asp-action="Pages">Sayfa SEO</a> ekranını kullanın.
+</p>
+
+@await Html.PartialAsync("_SeoSubNav")
+
+
+<form asp-action="Index" method="post" enctype="multipart/form-data">
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <h5 class="mt-2">Genel</h5>
+    <div class="mb-3">
+        <label asp-for="DefaultMetaDescription" class="form-label"></label>
+        <textarea asp-for="DefaultMetaDescription" class="form-control" rows="2"></textarea>
+        <div class="form-text">Sayfa özel bir açıklama girilmemişse bu kullanılır (bkz. Sayfa SEO).</div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Favicon</label>
+            @if (!string.IsNullOrEmpty(Model.FaviconUrl))
+            {
+                <div class="mb-2 d-flex align-items-center gap-3">
+                    <img src="@Model.FaviconUrl" style="max-height:40px;" class="img-thumbnail" />
+                    <div class="form-check">
+                        <input type="checkbox" name="removeFaviconImage" value="true" class="form-check-input" id="removeFaviconImage" />
+                        <label class="form-check-label" for="removeFaviconImage">Görseli kaldır</label>
+                    </div>
+                </div>
+            }
+            <input type="file" name="faviconImage" class="form-control" accept="image/*" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Varsayılan Paylaşım Görseli (Open Graph)</label>
+            @if (!string.IsNullOrEmpty(Model.DefaultOgImageUrl))
+            {
+                <div class="mb-2 d-flex align-items-center gap-3">
+                    <img src="@Model.DefaultOgImageUrl" style="max-height:80px;" class="img-thumbnail" />
+                    <div class="form-check">
+                        <input type="checkbox" name="removeOgImage" value="true" class="form-check-input" id="removeOgImage" />
+                        <label class="form-check-label" for="removeOgImage">Görseli kaldır</label>
+                    </div>
+                </div>
+            }
+            <input type="file" name="ogImage" class="form-control" accept="image/*" />
+            <div class="form-text">Sayfa özel bir görsel girilmemişse (ör. sosyal medyada paylaşılırken) bu kullanılır.</div>
+        </div>
+    </div>
+
+    <h5 class="mt-4">İşletme Bilgisi (Yapılandırılmış Veri)</h5>
+    <p class="text-muted small">Restoran adı/adres/telefon zaten <a asp-controller="SiteContent" asp-action="Index">Site İçeriği</a>'nden yönetiliyor - burada sadece yapılandırılmış veriye özgü ek bilgiler var.</p>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="LocalBusinessType" class="form-label"></label>
+            <select asp-for="LocalBusinessType" class="form-select">
+                @foreach (var type in businessTypes)
+                {
+                    <option value="@type.Value">@type.Label</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="PriceRange" class="form-label"></label>
+            <input asp-for="PriceRange" class="form-control" placeholder="₺₺" />
+        </div>
+    </div>
+
+    <h5 class="mt-4">Arama Motorları</h5>
+    <div class="row">
+        <div class="col-md-6 mb-3 d-flex align-items-center">
+            <div class="form-check">
+                <input asp-for="IndexingEnabled" class="form-check-input" />
+                <label asp-for="IndexingEnabled" class="form-check-label"></label>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3 d-flex align-items-center">
+            <div class="form-check">
+                <input asp-for="SitemapEnabled" class="form-check-input" />
+                <label asp-for="SitemapEnabled" class="form-check-label"></label>
+            </div>
+        </div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="RobotsExtraRules" class="form-label"></label>
+        <textarea asp-for="RobotsExtraRules" class="form-control" rows="3" placeholder="Disallow: /ozel-klasor/"></textarea>
+        <div class="form-text">robots.txt'ye olduğu gibi eklenir - temel kurallar (yönetim paneli, girişsiz-olmayan ekranlar) zaten otomatik ekleniyor.</div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="GoogleSiteVerification" class="form-label"></label>
+            <input asp-for="GoogleSiteVerification" class="form-control" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="BingSiteVerification" class="form-label"></label>
+            <input asp-for="BingSiteVerification" class="form-control" />
+        </div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="TwitterHandle" class="form-label"></label>
+        <input asp-for="TwitterHandle" class="form-control" placeholder="restoranadi" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+</form>

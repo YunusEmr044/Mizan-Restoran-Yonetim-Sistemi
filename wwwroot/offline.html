@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#15120d" />
+    <title>Bağlantı yok - Mizan</title>
+    <style>
+        html, body { height: 100%; margin: 0; }
+        body { display: flex; align-items: center; justify-content: center; background: #15120d; color: #f3e9dc; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 16px; box-sizing: border-box; }
+        .box { max-width: 420px; }
+        img { width: 72px; height: 72px; }
+        h1 { font-size: 1.5rem; margin: 16px 0 8px; }
+        p { color: #c9bba8; line-height: 1.5; margin: 0 0 20px; }
+        button { background: #c9a063; color: #1b160f; border: 0; border-radius: 10px; padding: 10px 20px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+        .status { margin-top: 14px; font-size: .85rem; color: #8c8275; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <img src="/img/logo-mark.svg" alt="" />
+        <h1>Sunucuya ulaşılamıyor</h1>
+        <p>İnternet ya da restoran ağı bağlantısını kontrol edin. Bağlantı yokken sipariş gönderilemez ve ödeme alınamaz.</p>
+        <button type="button" id="retry">Tekrar dene</button>
+        <div class="status" id="status">Bağlantı her 5 saniyede bir yeniden denenir.</div>
+    </div>
+    <script>
+        (function () {
+            var status = document.getElementById('status');
+            function check() {
+                fetch('/health', { cache: 'no-store' })
+                    .then(function (r) { if (r.ok) { location.reload(); } })
+                    .catch(function () { status.textContent = 'Hâlâ bağlantı yok · ' + new Date().toLocaleTimeString('tr-TR'); });
+            }
+            document.getElementById('retry').addEventListener('click', check);
+            setInterval(check, 5000);
+        })();
+    </script>
+</body>
+</html>

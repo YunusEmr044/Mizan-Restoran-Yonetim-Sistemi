@@ -1,0 +1,101 @@
+@model StaffReportView
+@using RestoranYonetim.Services.Reports
+@{
+    ViewData["Title"] = "Personel Performansı";
+    ViewBag.ReportsActive = "personel";
+    var totalRevenue = Model.Waiters.Sum(w => w.Revenue);
+}
+<div class="mb-3">
+    <h2 class="mb-0">Raporlar</h2>
+    <p class="text-muted small mb-0">Personel Performansı</p>
+</div>
+
+@await Html.PartialAsync("_ReportsSubNav")
+
+<form method="get" class="row g-2 align-items-end mb-4">
+    <div class="col-auto">
+        <label class="form-label small">Başlangıç</label>
+        <input type="date" name="start" class="form-control" value="@Model.Start.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-auto">
+        <label class="form-label small">Bitiş</label>
+        <input type="date" name="end" class="form-control" value="@Model.End.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Filtrele</button>
+    </div>
+    <div class="col-auto">
+        <a asp-action="PersonelExport" asp-route-start="@Model.Start.ToString("yyyy-MM-dd")" asp-route-end="@Model.End.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary"><i class="bi bi-download"></i> CSV İndir</a>
+    </div>
+</form>
+
+<h5>Garsonlar</h5>
+<p class="text-muted small">Garson cirosu, girilen siparişlerin (iptal edilen kalemler hariç) tutarıdır; indirim ve ödemeler düşülmez. Bu yüzden Satış Raporu'ndaki ciroyla birebir tutmayabilir. Siparişler gönderildiği güne göre sayılır.</p>
+<div class="table-responsive mb-4">
+    <table class="table align-middle">
+        <thead>
+            <tr><th>Garson</th><th class="text-end">Adisyon</th><th class="text-end">Sipariş</th><th class="text-end">Kalem cirosu</th><th class="text-end">Ortalama fiş</th><th class="text-end">İptal</th><th class="text-end">İndirim</th></tr>
+        </thead>
+        <tbody>
+        @foreach (var w in Model.Waiters)
+        {
+            <tr>
+                <td class="fw-semibold">@(w.Name == StaffReport.QrLabel ? Html.Raw("<i class=\"bi bi-qr-code me-1\"></i>") : null)@w.Name</td>
+                <td class="text-end">@w.Adisyons</td>
+                <td class="text-end">@w.Orders</td>
+                <td class="text-end">@w.Revenue.ToString("0.00") ₺</td>
+                <td class="text-end">@w.AvgTicket.ToString("0.00") ₺</td>
+                <td class="text-end">@(w.CancelledQty == 0 ? "—" : $"{w.CancelledQty} adet · {w.CancelledTotal:0.00} ₺")</td>
+                <td class="text-end">@(w.Discounts == 0 ? "—" : $"{w.Discounts} · {w.DiscountTotal:0.00} ₺")</td>
+            </tr>
+        }
+        @if (!Model.Waiters.Any())
+        {
+            <tr><td colspan="7" class="text-muted">Bu tarih aralığında gönderilmiş sipariş yok.</td></tr>
+        }
+        </tbody>
+        @if (Model.Waiters.Any())
+        {
+            <tfoot>
+                <tr class="fw-semibold">
+                    <td>Toplam</td>
+                    <td class="text-end">@Model.Waiters.Sum(w => w.Adisyons)</td>
+                    <td class="text-end">@Model.Waiters.Sum(w => w.Orders)</td>
+                    <td class="text-end">@totalRevenue.ToString("0.00") ₺</td>
+                    <td></td>
+                    <td class="text-end">@Model.Waiters.Sum(w => w.CancelledTotal).ToString("0.00") ₺</td>
+                    <td class="text-end">@Model.Waiters.Sum(w => w.DiscountTotal).ToString("0.00") ₺</td>
+                </tr>
+            </tfoot>
+        }
+    </table>
+</div>
+
+@if (Model.Cashiers != null)
+{
+    <h5>Kasiyerler</h5>
+    <p class="text-muted small">Tahsilat, ödeme kaydının alındığı güne göre; iade ve ödeme iptalleri ayrı sütunda.</p>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr><th>Kasiyer</th><th class="text-end">Tahsilat</th><th>Yöntem dağılımı</th><th class="text-end">İade / iptal</th><th class="text-end">Onayladığı talep</th></tr>
+            </thead>
+            <tbody>
+            @foreach (var c in Model.Cashiers)
+            {
+                <tr>
+                    <td class="fw-semibold">@c.Name</td>
+                    <td class="text-end">@c.Collected.ToString("0.00") ₺</td>
+                    <td class="small">@(c.ByMethod.Count == 0 ? "—" : string.Join(" · ", c.ByMethod.Select(m => $"{m.Method.Label()} {m.Total:0.00} ₺")))</td>
+                    <td class="text-end">@(c.Reversed == 0 ? "—" : $"{c.Reversed:0.00} ₺")</td>
+                    <td class="text-end">@c.Decisions</td>
+                </tr>
+            }
+            @if (!Model.Cashiers.Any())
+            {
+                <tr><td colspan="5" class="text-muted">Bu tarih aralığında tahsilat ya da onay yok.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

@@ -1,0 +1,76 @@
+@model Campaign
+@{
+    ViewData["Title"] = "Kampanya Düzenle";
+}
+<h2 class="mb-4">Kampanya Düzenle</h2>
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Görsel</label>
+        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+        {
+            <div class="mb-2 d-flex align-items-center gap-3">
+                <img src="@Model.ImageUrl" alt="" style="width:90px;height:90px;object-fit:cover;border-radius:12px;border:1px solid var(--ry-border);" />
+                <div class="form-check">
+                    <input type="checkbox" name="removeImage" value="true" class="form-check-input" id="removeImage" />
+                    <label class="form-check-label" for="removeImage">Görseli kaldır</label>
+                </div>
+            </div>
+        }
+        <input type="file" name="imageFile" class="form-control" accept="image/*" />
+        <div class="form-text">Yeni bir dosya seçersen mevcut görselin yerine geçer.</div>
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label asp-for="ButtonText" class="form-label"></label>
+            <input asp-for="ButtonText" class="form-control" placeholder="Detayları Gör" />
+        </div>
+        <div class="col-md mb-3">
+            <label asp-for="ButtonUrl" class="form-label"></label>
+            <input asp-for="ButtonUrl" class="form-control" placeholder="/menu" />
+        </div>
+    </div>
+    <div class="mb-3" style="max-width:160px;">
+        <label asp-for="DisplayOrder" class="form-label"></label>
+        <input asp-for="DisplayOrder" class="form-control" />
+        <div class="form-text">En küçük sıra "büyük" kampanya olarak gösterilir.</div>
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label asp-for="DiscountType" class="form-label"></label>
+            <select asp-for="DiscountType" class="form-select">
+                <option value="0">Yüzde</option>
+                <option value="1">Sabit Tutar</option>
+            </select>
+        </div>
+        <div class="col-md mb-3">
+            <label asp-for="Value" class="form-label"></label>
+            <input asp-for="Value" class="form-control" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label asp-for="StartDate" class="form-label"></label>
+            <input asp-for="StartDate" class="form-control" type="date" value="@Model.StartDate.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md mb-3">
+            <label asp-for="EndDate" class="form-label"></label>
+            <input asp-for="EndDate" class="form-control" type="date" value="@Model.EndDate.ToString("yyyy-MM-dd")" />
+        </div>
+    </div>
+    <div class="form-check mb-3">
+        <input asp-for="IsActive" class="form-check-input" />
+        <label asp-for="IsActive" class="form-check-label"></label>
+    </div>
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>

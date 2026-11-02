@@ -1,0 +1,503 @@
+@model SiteContent
+@using RestoranYonetim.Services
+@{
+    ViewData["Title"] = "Ayarlar";
+    string? publicUrlCurrent = ViewBag.PublicUrlCurrent;
+    object? publicUrlSourceValue = ViewBag.PublicUrlSource;
+    var publicUrlSource = publicUrlSourceValue is PublicUrlSource source ? source : PublicUrlSource.Request;
+    object? publicUrlSuggestionsValue = ViewBag.PublicUrlSuggestions;
+    var publicUrlSuggestions = publicUrlSuggestionsValue as List<(string Url, string InterfaceName, bool HasGateway)> ?? new();
+}
+<div class="d-flex align-items-center justify-content-between mb-1">
+    <h2 class="mb-1"><i class="bi bi-palette me-2"></i>Ayarlar</h2>
+</div>
+<p class="text-muted mb-4">Bu ekran sadece Süper Admin'e görünür. Site adresi ve görünüm (renk, yazı tipi, köşe stili) buradan ayarlanır.</p>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="ry-theme-section-title"><i class="bi bi-qr-code"></i>Site Adresi</div>
+        <p class="text-muted small mb-3">
+            Masalardaki QR kodları, müşteri telefonlarını bu adrese yönlendirir; site haritası ve paylaşım linkleri de bu adresi kullanır.
+            Sadece restoranın Wi-Fi'ında çalışıyorsanız bu bilgisayarın yerel adresini (ör. <code>http://192.168.1.50:5080</code>),
+            domain aldıysanız domain adresini (ör. <code>https://restoraniniz.com</code>) girin.
+        </p>
+
+        <div class="small mb-3">
+            Şu an kullanılan adres: <strong>@publicUrlCurrent</strong>
+            @if (publicUrlSource == PublicUrlSource.Panel)
+            {
+                <span class="badge bg-success ms-1">Bu ekrandan ayarlandı</span>
+            }
+            else if (publicUrlSource == PublicUrlSource.Config)
+            {
+                <span class="badge bg-secondary ms-1">Ayar dosyasından</span>
+            }
+            else
+            {
+                <span class="badge bg-warning text-dark ms-1">Ayarlanmamış - tarayıcıdaki adres kullanılıyor</span>
+            }
+        </div>
+
+        <form asp-action="SavePublicBaseUrl" method="post">
+            <div class="input-group mb-2" style="max-width: 560px;">
+                <input type="url" name="publicBaseUrl" id="ryPublicUrlInput" class="form-control" maxlength="200" value="@Model.PublicBaseUrl" placeholder="http://192.168.1.50:5080" />
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Kaydet</button>
+            </div>
+            <div class="form-text mb-2">Boş bırakıp kaydederseniz ayar dosyasındaki (<code>appsettings.Production.json</code>) adres kullanılır.</div>
+
+            @if (publicUrlSuggestions.Count > 0)
+            {
+                <div class="small text-muted mb-1">Bu bilgisayarın yerel ağ adresleri (seçmek için tıklayın):</div>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    @foreach (var suggestion in publicUrlSuggestions)
+                    {
+                        <button type="button" class="btn btn-sm @(suggestion.HasGateway ? "btn-outline-primary" : "btn-outline-secondary")" data-ry-fill-url="@suggestion.Url" title="@suggestion.InterfaceName">
+                            @suggestion.Url
+                            @if (suggestion.HasGateway)
+                            {
+                                <span class="badge bg-primary ms-1">Önerilen</span>
+                            }
+                        </button>
+                    }
+                </div>
+            }
+        </form>
+
+        <div class="alert alert-warning small mb-0 mt-2">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            Adres değişirse daha önce basılıp masalara konmuş QR kodları eski adrese gider. Değiştirdikten sonra
+            <a asp-controller="Tables" asp-action="Index">Masalar</a> ekranından QR kodlarını yeniden indirip basın.
+            Yerel adres kullanıyorsanız bilgisayarın IP'si değişmesin diye modemden bu bilgisayara sabit IP verin.
+        </div>
+
+        <div class="alert alert-light border small mb-0 mt-2">
+            <i class="bi bi-globe2 me-1"></i>
+            <strong>Domain kullanacaksanız:</strong> buraya yazmadan önce domain'in DNS kaydıyla bu sunucuya yönlendirilmiş ve
+            HTTPS sertifikasının kurulmuş olması gerekir; bu kutu sadece QR kodlarının hangi adrese gideceğini belirler.
+            Kurulum adımları proje dokümanında: <code>docs/YAYINA-ALMA.md</code> → "VPS üzerinde domain + HTTPS ile yayın".
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4" id="eposta">
+    <div class="card-body">
+        <div class="ry-theme-section-title"><i class="bi bi-envelope"></i>E-posta (SMTP)</div>
+        <p class="text-muted small mb-3">
+            Rezervasyon onay/red e-postaları ve personelin "şifremi unuttum" bağlantısı bu ayarla gönderilir. Bilgileri e-posta sağlayıcınızdan alın
+            (Gmail/Google Workspace için uygulama şifresi gerekir). Sunucu boş bırakılırsa e-posta gönderilmez.
+        </p>
+        <form asp-action="SaveEmail" method="post" class="row g-3">
+            <div class="col-md-5">
+                <label class="form-label" for="smtpHost">SMTP sunucusu</label>
+                <input class="form-control" id="smtpHost" name="smtpHost" value="@Model.SmtpHost" maxlength="200" placeholder="Örn. smtp.gmail.com" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="smtpPort">Port</label>
+                <input class="form-control" id="smtpPort" name="smtpPort" type="number" min="1" max="65535" value="@Model.SmtpPort" />
+            </div>
+            <div class="col-md-5 d-flex align-items-end">
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="smtpUseSsl" name="smtpUseSsl" value="true" @(Model.SmtpUseSsl ? "checked" : "") />
+                    <label class="form-check-label" for="smtpUseSsl">Şifreli bağlantı (SSL/TLS)</label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="smtpUserName">Kullanıcı adı</label>
+                <input class="form-control" id="smtpUserName" name="smtpUserName" value="@Model.SmtpUserName" maxlength="200" autocomplete="off" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="smtpPassword">Şifre</label>
+                <input class="form-control" id="smtpPassword" name="smtpPassword" type="password" autocomplete="new-password"
+                       placeholder="@(Model.SmtpPasswordProtected != null ? "Kayıtlı — değiştirmek için yeni şifre girin" : "")" />
+                @if (Model.SmtpPasswordProtected != null)
+                {
+                    <div class="form-check mt-1">
+                        <input class="form-check-input" type="checkbox" id="clearPassword" name="clearPassword" value="true" />
+                        <label class="form-check-label small" for="clearPassword">Kayıtlı şifreyi sil</label>
+                    </div>
+                }
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="mailFromAddress">Gönderen adresi</label>
+                <input class="form-control" id="mailFromAddress" name="mailFromAddress" type="email" value="@Model.MailFromAddress" maxlength="200" placeholder="Örn. rezervasyon@restoraniniz.com" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="mailFromName">Gönderen adı</label>
+                <input class="form-control" id="mailFromName" name="mailFromName" value="@Model.MailFromName" maxlength="100" placeholder="Örn. @Model.HeroTitle" />
+            </div>
+            <div class="col-12"><button type="submit" class="btn btn-primary">Kaydet</button></div>
+        </form>
+        @if (!string.IsNullOrWhiteSpace(Model.SmtpHost))
+        {
+            <hr />
+            <form asp-action="SendTestEmail" method="post" class="row g-2 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label" for="testTo">Deneme e-postası gönder</label>
+                    <input class="form-control" id="testTo" name="testTo" type="email" placeholder="Boş bırakılırsa kendi adresinize gider" />
+                </div>
+                <div class="col-md-3"><button type="submit" class="btn btn-outline-dark w-100"><i class="bi bi-send me-1"></i>Gönder</button></div>
+            </form>
+        }
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="ry-theme-section-title"><i class="bi bi-bar-chart-line"></i>Analytics</div>
+        <p class="text-muted small mb-3">
+            Ziyaretçi istatistiği için bir servis seçin. Google Analytics 4 çerez kullandığı için yalnızca ziyaretçi onay verirse yüklenir
+            (sitede çerez onay şeridi otomatik çıkar). Plausible ve Umami çerezsizdir, onay şeridi gerekmez. Panel ve personel ekranlarına analytics eklenmez.
+        </p>
+        <form asp-action="SaveAnalytics" method="post" class="row g-3 align-items-end" id="ryAnalyticsForm">
+            <div class="col-md-3">
+                <label class="form-label" for="analyticsProvider">Servis</label>
+                <select class="form-select" id="analyticsProvider" name="analyticsProvider">
+                    <option value="Yok" selected="@(Model.AnalyticsProvider == AnalyticsProvider.Yok)">Kapalı</option>
+                    <option value="GoogleAnalytics4" selected="@(Model.AnalyticsProvider == AnalyticsProvider.GoogleAnalytics4)">Google Analytics 4</option>
+                    <option value="Plausible" selected="@(Model.AnalyticsProvider == AnalyticsProvider.Plausible)">Plausible</option>
+                    <option value="Umami" selected="@(Model.AnalyticsProvider == AnalyticsProvider.Umami)">Umami</option>
+                </select>
+            </div>
+            <div class="col-md-4" data-analytics-field="id">
+                <label class="form-label" for="analyticsId" data-analytics-label>Kimlik</label>
+                <input class="form-control" id="analyticsId" name="analyticsId" value="@Model.AnalyticsId" maxlength="200" />
+            </div>
+            <div class="col-md-5" data-analytics-field="url">
+                <label class="form-label" for="analyticsScriptUrl">Umami script adresi</label>
+                <input class="form-control" id="analyticsScriptUrl" name="analyticsScriptUrl" value="@Model.AnalyticsScriptUrl" maxlength="500" placeholder="https://analytics.restoraniniz.com/script.js" />
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Kaydet</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="ry-theme-section-title"><i class="bi bi-printer"></i>Adisyon ve Yazıcı</div>
+        <p class="text-muted small mb-3">
+            Kasa ve garson ekranındaki "Yazdır" düğmesinin çıktısı. Termal rulo kağıtta çıktı uzunluğu içeriğe göre ayarlanır.
+            Yazıcı ayarlarında kenar boşluğunu "Yok", ölçeği "%100" seçin. Çıktıda "bilgi fişidir, mali değeri yoktur" ibaresi her zaman yer alır.
+        </p>
+        <form asp-action="SaveReceipt" method="post" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label" for="receiptPaper">Kağıt</label>
+                <select class="form-select" id="receiptPaper" name="ReceiptPaperSize">
+                    @foreach (var p in ReceiptLayout.PaperOptions)
+                    {
+                        <option value="@p.Key" selected="@(ReceiptLayout.SafePaper(Model.ReceiptPaperSize) == p.Key)">@p.Label</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="receiptFont">Yazı boyutu</label>
+                <select class="form-select" id="receiptFont" name="ReceiptFontSize">
+                    @foreach (var (key, label) in ReceiptLayout.FontSizeOptions)
+                    {
+                        <option value="@key" selected="@(ReceiptLayout.SafeFontSize(Model.ReceiptFontSize) == key)">@label</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label d-block">Gösterilecek bilgiler</label>
+                <div class="form-check"><input class="form-check-input" type="checkbox" id="rShowAddress" name="ReceiptShowAddress" value="true" checked="@Model.ReceiptShowAddress" /><label class="form-check-label" for="rShowAddress">Adres</label></div>
+                <div class="form-check"><input class="form-check-input" type="checkbox" id="rShowPhone" name="ReceiptShowPhone" value="true" checked="@Model.ReceiptShowPhone" /><label class="form-check-label" for="rShowPhone">Telefon</label></div>
+                <div class="form-check"><input class="form-check-input" type="checkbox" id="rShowWaiter" name="ReceiptShowWaiter" value="true" checked="@Model.ReceiptShowWaiter" /><label class="form-check-label" for="rShowWaiter">Garson adı</label></div>
+                <div class="form-check"><input class="form-check-input" type="checkbox" id="rShowPayments" name="ReceiptShowPayments" value="true" checked="@Model.ReceiptShowPayments" /><label class="form-check-label" for="rShowPayments">Ödeme dökümü (nakit / kart)</label></div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="receiptTax">Vergi bilgisi <span class="text-muted small">(isteğe bağlı)</span></label>
+                <input class="form-control" id="receiptTax" name="ReceiptTaxInfo" maxlength="200" value="@Model.ReceiptTaxInfo" placeholder="Örn. Kadıköy V.D. 1234567890" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="receiptFooter">Alt bilgi metni</label>
+                <input class="form-control" id="receiptFooter" name="ReceiptFooterText" maxlength="300" value="@Model.ReceiptFooterText" placeholder="Afiyet olsun! Bizi tercih ettiğiniz için teşekkür ederiz." />
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Kaydet</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    (function () {
+        const select = document.getElementById('analyticsProvider');
+        const idField = document.querySelector('[data-analytics-field="id"]');
+        const urlField = document.querySelector('[data-analytics-field="url"]');
+        const label = idField.querySelector('[data-analytics-label]');
+        const input = document.getElementById('analyticsId');
+        const meta = {
+            GoogleAnalytics4: ['Ölçüm kimliği', 'G-ABC123XYZ9'],
+            Plausible: ['Alan adı', 'restoraniniz.com'],
+            Umami: ['Website ID', '3f2b9c1e-7a4d-4e8b-9c2f-1a2b3c4d5e6f']
+        };
+        function sync() {
+            const m = meta[select.value];
+            idField.hidden = !m;
+            urlField.hidden = select.value !== 'Umami';
+            if (m) { label.textContent = m[0]; input.placeholder = m[1]; }
+        }
+        select.addEventListener('change', sync);
+        sync();
+    })();
+</script>
+
+<form asp-action="Index" method="post" id="ryThemeForm">
+    <div class="ry-theme-section-title"><i class="bi bi-palette"></i>Hazır Temalar</div>
+    <p class="text-muted small mb-2">Bir tema seçince aşağıdaki alanlar doldurulur; değişiklik <strong>Kaydet</strong>'e basınca uygulanır. Ardından renkleri tek tek değiştirebilirsiniz.</p>
+    <div class="ry-preset-grid mb-4" role="group" aria-label="Hazır temalar">
+        @foreach (var preset in ThemeCatalog.Presets)
+        {
+            <button type="button" class="ry-preset" aria-pressed="false" data-preset="@System.Text.Json.JsonSerializer.Serialize(preset)">
+                <span class="ry-preset-strip">
+                    <span style="background:@preset.Dark"></span><span style="background:@preset.Primary"></span><span style="background:@preset.Background"></span><span style="background:@preset.Text"></span>
+                </span>
+                <span class="ry-preset-name">@preset.Name<span class="badge ry-preset-badge">Seçili</span></span>
+                <span class="ry-preset-desc">@preset.Description</span>
+            </button>
+        }
+    </div>
+    <p class="small text-muted mb-4" id="ryPresetCustom" hidden><i class="bi bi-sliders me-1"></i>Özel: mevcut ayarlar hazır temalardan biriyle birebir eşleşmiyor.</p>
+    <div class="ry-theme-preview-row">
+        <div>
+            <div class="ry-theme-preview-label"><i class="bi bi-eye me-1"></i>Önizleme — Herkese Açık Site</div>
+            <div class="ry-theme-preview ry-theme-preview-public" id="ryPreviewPublic">
+                <div class="ry-tp-eyebrow">@(string.IsNullOrWhiteSpace(Model.HeroTitle) ? "Restoranınız" : Model.HeroTitle)</div>
+                <div class="ry-tp-title">Lezzetin Adresi</div>
+                <span class="ry-tp-btn">Menüyü Gör</span>
+                <div class="ry-tp-card">Kampanyalar, galeri ve rezervasyon kartları da bu temayı kullanır.</div>
+            </div>
+        </div>
+        <div>
+            <div class="ry-theme-preview-label"><i class="bi bi-eye me-1"></i>Önizleme — Yönetim Paneli</div>
+            <div class="ry-theme-preview ry-theme-preview-admin" id="ryPreviewAdmin">
+                <div class="ry-tp-sidebar">
+                    <div class="ry-tp-sidebar-dot active"></div>
+                    <div class="ry-tp-sidebar-dot"></div>
+                    <div class="ry-tp-sidebar-dot"></div>
+                    <div class="ry-tp-sidebar-dot"></div>
+                </div>
+                <div class="ry-tp-content">
+                    <span class="ry-tp-btn">+ Yeni</span>
+                    <div class="ry-tp-line"></div>
+                    <div class="ry-tp-line"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="ry-theme-section-title"><i class="bi bi-shop"></i>Herkese Açık Site</div>
+            <div class="ry-swatch-grid mb-3">
+                <label class="ry-swatch-tile">
+                    <input name="ThemePrimaryColor" type="color" value="@Model.ThemePrimaryColor" class="ry-theme-input" data-preview-var="--ry-tp-primary" title="Butonlar, ikonlar, çizgiler" />
+                    <span class="ry-swatch-tile-text"><span class="ry-swatch-tile-label">Ana Vurgu Rengi</span><span class="ry-swatch-tile-hex">@Model.ThemePrimaryColor</span></span>
+                </label>
+                <label class="ry-swatch-tile">
+                    <input name="ThemeDarkColor" type="color" value="@Model.ThemeDarkColor" class="ry-theme-input" data-preview-var="--ry-tp-dark" title="Hero, navigasyon, footer zemini" />
+                    <span class="ry-swatch-tile-text"><span class="ry-swatch-tile-label">Koyu Zemin Rengi</span><span class="ry-swatch-tile-hex">@Model.ThemeDarkColor</span></span>
+                </label>
+                <label class="ry-swatch-tile">
+                    <input name="ThemeBackgroundColor" type="color" value="@Model.ThemeBackgroundColor" class="ry-theme-input" data-preview-var="--ry-tp-bg" title="Sitenin genel arka planı" />
+                    <span class="ry-swatch-tile-text"><span class="ry-swatch-tile-label">Sayfa Zemin Rengi</span><span class="ry-swatch-tile-hex">@Model.ThemeBackgroundColor</span></span>
+                </label>
+                <label class="ry-swatch-tile">
+                    <input name="ThemeTextColor" type="color" value="@Model.ThemeTextColor" class="ry-theme-input" data-preview-var="--ry-tp-text2" title="Gövde yazı rengi" />
+                    <span class="ry-swatch-tile-text"><span class="ry-swatch-tile-label">Yazı Rengi</span><span class="ry-swatch-tile-hex">@Model.ThemeTextColor</span></span>
+                </label>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Başlık Fontu</label>
+                    <select name="ThemeHeadingFont" class="form-select">
+                        @foreach (var font in ThemeCatalog.HeadingFonts.Keys)
+                        {
+                            @if (Model.ThemeHeadingFont == font)
+                            {
+                                <option value="@font" selected>@font</option>
+                            }
+                            else
+                            {
+                                <option value="@font">@font</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Metin Fontu</label>
+                    <select name="ThemeBodyFont" class="form-select">
+                        @foreach (var font in ThemeCatalog.BodyFonts.Keys)
+                        {
+                            @if (Model.ThemeBodyFont == font)
+                            {
+                                <option value="@font" selected>@font</option>
+                            }
+                            else
+                            {
+                                <option value="@font">@font</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Köşe Stili</label>
+                    <select name="ThemeCornerStyle" class="form-select" id="ryCornerSelect">
+                        @foreach (var style in ThemeCatalog.CornerStyles)
+                        {
+                            @if (Model.ThemeCornerStyle == style.Key)
+                            {
+                                <option value="@style.Key" selected>@style.Value</option>
+                            }
+                            else
+                            {
+                                <option value="@style.Key">@style.Value</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="ry-theme-section-title"><i class="bi bi-layout-sidebar"></i>Yönetim Paneli</div>
+            <p class="text-muted small mb-3">Bu panelin (sol menü dahil) rengi — siteden bağımsız ayarlanır.</p>
+            <div class="ry-swatch-grid">
+                <label class="ry-swatch-tile">
+                    <input name="AdminAccentColor" type="color" value="@Model.AdminAccentColor" class="ry-theme-input" data-preview-var="--ry-tp-accent" title="Aktif menü, butonlar" />
+                    <span class="ry-swatch-tile-text"><span class="ry-swatch-tile-label">Panel Vurgu Rengi</span><span class="ry-swatch-tile-hex">@Model.AdminAccentColor</span></span>
+                </label>
+                <label class="ry-swatch-tile">
+                    <input name="AdminSidebarColor" type="color" value="@Model.AdminSidebarColor" class="ry-theme-input" data-preview-var="--ry-tp-sidebar" title="Sidebar zemini" />
+                    <span class="ry-swatch-tile-text"><span class="ry-swatch-tile-label">Sol Menü Rengi</span><span class="ry-swatch-tile-hex">@Model.AdminSidebarColor</span></span>
+                </label>
+                <label class="ry-swatch-tile">
+                    <input name="AdminBackgroundColor" type="color" value="@Model.AdminBackgroundColor" class="ry-theme-input" data-preview-var="--ry-tp-adminbg" title="Panelin genel arka planı" />
+                    <span class="ry-swatch-tile-text"><span class="ry-swatch-tile-label">Panel Zemin Rengi</span><span class="ry-swatch-tile-hex">@Model.AdminBackgroundColor</span></span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Kaydet</button>
+    </div>
+</form>
+<form asp-action="Reset" method="post" class="d-inline" data-confirm="Tüm görünüm ayarları (renkler, yazı tipleri vb.) varsayılana dönecek." data-confirm-title="Ayarlar sıfırlansın mı?" data-confirm-ok="Varsayılana Dön" data-confirm-danger>
+    <button type="submit" class="btn btn-outline-secondary mt-2"><i class="bi bi-arrow-counterclockwise me-1"></i>Varsayılana Döndür</button>
+</form>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <div class="ry-theme-section-title"><i class="bi bi-info-circle"></i>Diğer içerik ayarları</div>
+        <p class="text-muted mb-2">Metin, görsel, iletişim bilgisi gibi site içeriği ayarları <strong>Site İçeriği</strong> ekranında; modül aç/kapa ve rol izinleri <strong>Özellikler ve İzinler</strong> ekranındadır.</p>
+        <a asp-controller="SiteContent" asp-action="Index" class="btn btn-sm btn-outline-secondary me-2">Site İçeriği</a>
+        <a asp-controller="Features" asp-action="Index" class="btn btn-sm btn-outline-secondary">Özellikler ve İzinler</a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var publicUrlInput = document.getElementById('ryPublicUrlInput');
+            document.querySelectorAll('[data-ry-fill-url]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    publicUrlInput.value = button.getAttribute('data-ry-fill-url');
+                    publicUrlInput.focus();
+                });
+            });
+        })();
+
+        (function () {
+            var previewPublic = document.getElementById('ryPreviewPublic');
+            var previewAdmin = document.getElementById('ryPreviewAdmin');
+
+            document.querySelectorAll('.ry-theme-input').forEach(function (input) {
+                input.addEventListener('input', function () {
+                    var vars = (input.dataset.previewVar || '').split(',').filter(Boolean);
+                    vars.forEach(function (varName) {
+                        previewPublic.style.setProperty(varName, input.value);
+                        previewAdmin.style.setProperty(varName, input.value);
+                    });
+                    var hexEl = input.closest('.ry-swatch-tile').querySelector('.ry-swatch-tile-hex');
+                    if (hexEl) { hexEl.textContent = input.value; }
+                });
+            });
+
+            var form = document.getElementById('ryThemeForm');
+            var fields = {
+                Primary: 'ThemePrimaryColor', Dark: 'ThemeDarkColor', Background: 'ThemeBackgroundColor', Text: 'ThemeTextColor',
+                HeadingFont: 'ThemeHeadingFont', BodyFont: 'ThemeBodyFont', CornerStyle: 'ThemeCornerStyle',
+                AdminAccent: 'AdminAccentColor', AdminSidebar: 'AdminSidebarColor', AdminBackground: 'AdminBackgroundColor'
+            };
+            var fontCss = @Json.Serialize(ThemeCatalog.HeadingFonts.Keys.Concat(ThemeCatalog.BodyFonts.Keys).ToDictionary(f => f, ThemeCatalog.StylesheetsFor));
+
+            function loadFont(name) {
+                (fontCss[name] || []).forEach(function (href) {
+                    if (document.querySelector('link[href="' + href + '"]')) { return; }
+                    var link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = href;
+                    document.head.appendChild(link);
+                });
+            }
+
+            function applyFonts() {
+                var heading = form.elements.ThemeHeadingFont.value;
+                var body = form.elements.ThemeBodyFont.value;
+                loadFont(heading);
+                loadFont(body);
+                previewPublic.style.setProperty('--ry-tp-heading-font', "'" + heading + "', serif");
+                previewPublic.style.setProperty('--ry-tp-body-font', "'" + body + "', sans-serif");
+            }
+
+            form.elements.ThemeHeadingFont.addEventListener('change', applyFonts);
+            form.elements.ThemeBodyFont.addEventListener('change', applyFonts);
+            applyFonts();
+
+            var presetButtons = Array.prototype.slice.call(document.querySelectorAll('.ry-preset'));
+            var customNote = document.getElementById('ryPresetCustom');
+
+            function markSelected() {
+                var any = false;
+                presetButtons.forEach(function (button) {
+                    var preset = JSON.parse(button.dataset.preset);
+                    var match = Object.keys(fields).every(function (key) {
+                        return String(form.elements[fields[key]].value).toLowerCase() === String(preset[key]).toLowerCase();
+                    });
+                    button.setAttribute('aria-pressed', match ? 'true' : 'false');
+                    any = any || match;
+                });
+                customNote.hidden = any;
+            }
+
+            presetButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    var preset = JSON.parse(button.dataset.preset);
+                    Object.keys(fields).forEach(function (key) {
+                        var el = form.elements[fields[key]];
+                        el.value = preset[key];
+                        el.dispatchEvent(new Event(el.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true }));
+                    });
+                    markSelected();
+                });
+            });
+            form.addEventListener('input', markSelected);
+            form.addEventListener('change', markSelected);
+            markSelected();
+
+            var cornerSelect = document.getElementById('ryCornerSelect');
+            if (cornerSelect) {
+                var applyCorner = function () {
+                    var sharp = cornerSelect.value === 'sharp';
+                    previewPublic.style.setProperty('--ry-tp-corner', sharp ? '6px' : '18px');
+                };
+                cornerSelect.addEventListener('change', applyCorner);
+                applyCorner();
+            }
+        })();
+    </script>
+}

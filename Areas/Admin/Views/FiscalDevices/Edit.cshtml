@@ -1,0 +1,100 @@
+@model FiscalDeviceForm
+@{
+    ViewData["Title"] = Model.Id == 0 ? "Yeni Yazar Kasa" : "Yazar Kasayı Düzenle";
+}
+<h2 class="mb-4">@ViewData["Title"]</h2>
+
+<form method="get" asp-action="Edit" class="mb-3" style="max-width: 640px" id="ryAdapterForm">
+    @if (Model.Id != 0) { <input type="hidden" name="id" value="@Model.Id" /> }
+    <input type="hidden" name="name" data-copy-from="ryName" />
+    <input type="hidden" name="branchId" data-copy-from="ryBranch" />
+    <input type="hidden" name="isActive" data-copy-from="ryActive" />
+    <label class="form-label" for="ryAdapter">Bağdaştırıcı</label>
+    <div class="d-flex gap-2">
+        <select class="form-select" name="adapter" id="ryAdapter">
+            @foreach (var a in Model.Adapters)
+            {
+                <option value="@a.Key" selected="@(a.Key == Model.AdapterKey)">@a.DisplayName</option>
+            }
+        </select>
+        <button type="submit" class="btn btn-outline-secondary">Seç</button>
+    </div>
+    <div class="form-text">Bağdaştırıcı değişince ayar alanları ona göre yeniden çizilir.</div>
+</form>
+
+<form asp-action="Save" method="post" style="max-width: 640px">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <input type="hidden" name="id" value="@Model.Id" />
+    <input type="hidden" name="adapterKey" value="@Model.AdapterKey" />
+    <div class="row">
+        <div class="col-md mb-3">
+            <label class="form-label" for="ryName">Ad</label>
+            <input class="form-control" id="ryName" name="name" value="@Model.Name" maxlength="@FiscalDevice.NameMax" required placeholder="Örn. Merkez kasa ÖKC" />
+        </div>
+        <div class="col-md mb-3">
+            <label class="form-label" for="ryBranch">Şube</label>
+            <select class="form-select" id="ryBranch" name="branchId">
+                @foreach (var b in Model.Branches)
+                {
+                    <option value="@b.Id" selected="@(b.Id == Model.BranchId)">@b.Name</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    @if (Model.Adapter.SettingFields.Count == 0)
+    {
+        <p class="text-muted small">Bu bağdaştırıcının ayarı yok.</p>
+    }
+    @foreach (var f in Model.Adapter.SettingFields)
+    {
+        var inputId = "rySetting-" + f.Key;
+        var value = Model.Values.GetValueOrDefault(f.Key, "");
+        <div class="mb-3">
+            <label class="form-label" for="@inputId">@f.Label@(f.Required ? " *" : "")</label>
+            @switch (f.Kind)
+            {
+                case FiscalFieldKind.Select:
+                    <select class="form-select" id="@inputId" name="settings[@f.Key]">
+                        @foreach (var o in f.Options ?? Array.Empty<(string Value, string Label)>())
+                        {
+                            <option value="@o.Value" selected="@(o.Value == value)">@o.Label</option>
+                        }
+                    </select>
+                    break;
+                case FiscalFieldKind.Secret:
+                    <input class="form-control" id="@inputId" name="settings[@f.Key]" type="password" autocomplete="new-password"
+                           placeholder="@(Model.SecretsSet.Contains(f.Key) ? "Kayıtlı — değiştirmek için yeni değer girin" : "")" />
+                    break;
+                case FiscalFieldKind.Number:
+                    <input class="form-control" id="@inputId" name="settings[@f.Key]" type="number" value="@value" />
+                    break;
+                default:
+                    <input class="form-control" id="@inputId" name="settings[@f.Key]" value="@value" />
+                    break;
+            }
+            @if (!string.IsNullOrWhiteSpace(f.Help)) { <div class="form-text">@f.Help</div> }
+        </div>
+    }
+
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="ryActive" name="isActive" value="true" @(Model.IsActive ? "checked" : "") />
+        <label class="form-check-label" for="ryActive">Aktif (şube başına bir aktif cihaz)</label>
+    </div>
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>
+@section Scripts {
+    <script>
+        (function () {
+            var form = document.getElementById('ryAdapterForm');
+            form.addEventListener('submit', function () {
+                form.querySelectorAll('[data-copy-from]').forEach(function (input) {
+                    var source = document.getElementById(input.dataset.copyFrom);
+                    input.value = source.type === 'checkbox' ? String(source.checked) : source.value;
+                });
+            });
+            document.getElementById('ryAdapter').addEventListener('change', function () { form.requestSubmit(); });
+        })();
+    </script>
+}

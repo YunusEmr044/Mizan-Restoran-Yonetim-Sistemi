@@ -1,0 +1,53 @@
+@model RestoranYonetim.Controllers.LoginViewModel
+@inject RestoranYonetim.Services.Email.EmailService Email
+@{
+    ViewData["Title"] = "Giriş";
+    Layout = "_AuthLayout";
+}
+<p class="subtitle">@(Model.Locked ? "Oturum kilitli - devam etmek için şifreni gir" : "Personel ve yönetim paneline giriş")</p>
+@if (TempData["LoginInfo"] is string loginInfo)
+{
+    <p class="notice">@loginInfo</p>
+}
+<form method="post" action="/admin">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="ReturnUrl" />
+    <div asp-validation-summary="All" class="errors"></div>
+    <label asp-for="Email"></label>
+    @if (Model.Locked)
+    {
+        <input asp-for="Email" autocomplete="username" readonly />
+    }
+    else
+    {
+        <input asp-for="Email" autocomplete="username" autofocus />
+    }
+    <label asp-for="Password"></label>
+    <div class="password-wrap">
+        <input asp-for="Password" autocomplete="current-password" autofocus="@Model.Locked" />
+        <button type="button" class="password-toggle" id="passwordToggle" aria-label="Şifreyi göster">◉</button>
+    </div>
+    <button type="submit">Giriş Yap</button>
+</form>
+<div class="login-note">
+    Yetkili personel erişimi
+    @if (!Model.Locked && await Email.IsConfiguredAsync())
+    {
+        <br /><a href="/sifremi-unuttum">Şifremi unuttum</a>
+    }
+</div>
+@section Scripts {
+<script>
+    (function () {
+        var password = document.getElementById('Password');
+        var toggle = document.getElementById('passwordToggle');
+        if (!password || !toggle) return;
+        toggle.addEventListener('click', function () {
+            var visible = password.type === 'text';
+            password.type = visible ? 'password' : 'text';
+            toggle.setAttribute('aria-label', visible ? 'Şifreyi göster' : 'Şifreyi gizle');
+            toggle.textContent = visible ? '◉' : '○';
+        });
+    })();
+</script>
+}

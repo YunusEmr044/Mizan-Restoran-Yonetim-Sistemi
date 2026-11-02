@@ -1,0 +1,44 @@
+@{
+    ViewData["Title"] = "Eski Kayıtları Temizle";
+    int totalLogs = ViewBag.TotalLogs;
+    int totalNotifications = ViewBag.TotalNotifications;
+    DateTime? oldestLog = ViewBag.OldestLog;
+}
+<div class="mb-3">
+    <h2 class="mb-0">Eski Kayıtları Temizle</h2>
+    <p class="text-muted small mb-0">Seçtiğiniz tarihten ÖNCEKİ denetim kayıtlarını ve bildirimleri kalıcı olarak siler.</p>
+</div>
+
+<a asp-action="Index" class="btn btn-outline-secondary btn-sm mb-3"><i class="bi bi-arrow-left"></i> Loglara dön</a>
+
+<div class="alert alert-info">
+    Şu an sistemde <strong>@totalLogs</strong> denetim kaydı ve <strong>@totalNotifications</strong> bildirim var.
+    @if (oldestLog.HasValue)
+    {
+        <text>En eski kayıt <strong>@oldestLog.Value.ToString("dd.MM.yyyy")</strong> tarihine ait.</text>
+    }
+    Bu sistemde otomatik/zamanlanmış bir silme işlemi YOKTUR — kayıtlar yalnızca burada, siz açıkça onayladığınızda silinir.
+</div>
+
+
+<div class="card" style="max-width: 520px;">
+    <div class="card-body">
+        <form asp-action="TemizleOnayla" method="post">
+            @Html.AntiForgeryToken()
+            <div class="mb-3">
+                <label class="form-label">Bu tarihten önceki kayıtlar silinsin</label>
+                <input type="date" name="beforeDate" class="form-control" required max="@DateTime.Today.AddDays(-1).ToString("yyyy-MM-dd")" />
+                <div class="form-text">Seçtiğiniz tarih dahil değildir — sadece bu tarihten kesinlikle önceki kayıtlar silinir.</div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Onaylamak için kutuya <strong>SİL</strong> yazın</label>
+                <input type="text" name="confirmText" class="form-control" autocomplete="off" required placeholder="SİL" />
+            </div>
+            <div class="alert alert-warning small mb-3">
+                <i class="bi bi-exclamation-triangle-fill"></i> Bu işlem GERİ ALINAMAZ. Silmeden önce isterseniz
+                <a asp-action="Export">Dışa Aktar</a> ile mevcut kayıtların bir kopyasını indirebilirsiniz.
+            </div>
+            <button type="submit" class="btn btn-danger">Seçili Tarihten Öncekileri Kalıcı Olarak Sil</button>
+        </form>
+    </div>
+</div>

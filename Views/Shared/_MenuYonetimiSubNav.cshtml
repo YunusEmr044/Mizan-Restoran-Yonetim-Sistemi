@@ -1,0 +1,14 @@
+@using RestoranYonetim.Services
+@{
+    var current = AdminNavigation.Find(ViewContext.RouteData.Values);
+    var items = current == null ? new List<NavItem>() : current.Value.Group.Items.Where(i => i.IsVisibleTo(User)).ToList();
+}
+@if (items.Count > 1)
+{
+    <div class="ry-cat-chips mb-4">
+        @foreach (var item in items)
+        {
+            <a class="ry-cat-chip @(item == current!.Value.Item ? "active" : "")" asp-area="@item.Area" asp-controller="@item.Controller" asp-action="@item.Action"><i class="bi @item.Icon"></i> @item.Title</a>
+        }
+    </div>
+}

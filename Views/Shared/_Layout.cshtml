@@ -1,0 +1,261 @@
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.Extensions.Caching.Memory
+@using RestoranYonetim.Services
+@inject RestoranYonetim.Data.ApplicationDbContext Db
+@inject IMemoryCache Cache
+@{
+    // SiteContent bu layout üzerinden her admin sayfa yüklemesinde okunduğu için SiteContentCache ile önbelleğe alınıyor.
+    var ryThemeContent = await SiteContentCache.GetAsync(Db, Cache);
+    var ryAdminAccent = RestoranYonetim.Models.ThemeCatalog.SafeColor(ryThemeContent?.AdminAccentColor, RestoranYonetim.Models.ThemeCatalog.DefaultAdminAccent);
+    var ryAdminSidebar = RestoranYonetim.Models.ThemeCatalog.SafeColor(ryThemeContent?.AdminSidebarColor, RestoranYonetim.Models.ThemeCatalog.DefaultAdminSidebar);
+    var ryAdminBg = RestoranYonetim.Models.ThemeCatalog.SafeColor(ryThemeContent?.AdminBackgroundColor, RestoranYonetim.Models.ThemeCatalog.DefaultAdminBackground);
+    var ryAdminAccentRgb = RestoranYonetim.Models.ThemeCatalog.HexToRgbTriplet(ryAdminAccent);
+    var ryAdminAccentLight = RestoranYonetim.Models.ThemeCatalog.Lighten(ryAdminAccent, 0.4);
+    var ryHeadingFont = RestoranYonetim.Models.ThemeCatalog.SafeHeadingFont(ryThemeContent?.ThemeHeadingFont);
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - @ProductInfo.Name</title>
+    <link rel="icon" href="~/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="~/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#15120d" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    @foreach (var fontHref in RestoranYonetim.Models.ThemeCatalog.FontStylesheets(ryHeadingFont, RestoranYonetim.Models.ThemeCatalog.DefaultBodyFont))
+    {
+        <link rel="stylesheet" href="@fontHref" />
+    }
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+    <style>
+        /* admin.css varsayılanlarını burada geçersiz kılar (kaynak sırası nedeniyle bu blok kazanır). */
+        :root {
+            --ry-accent: @ryAdminAccent;
+            --ry-accent-rgb: @ryAdminAccentRgb;
+            --ry-accent-light: @ryAdminAccentLight;
+            --ry-sidebar-bg: @ryAdminSidebar;
+            --ry-on-accent: @RestoranYonetim.Models.ThemeCatalog.ReadableTextOn(ryAdminAccent);
+            --ry-on-accent-light: @RestoranYonetim.Models.ThemeCatalog.ReadableTextOn(ryAdminAccentLight);
+            --ry-heading-font: '@ryHeadingFont', Georgia, serif;
+            --ry-bg: @ryAdminBg;
+        }
+    </style>
+    @* Bu yardımcılar @{ } yerine @functions'ta tanımlı: @{ } içindeki yerel fonksiyon sadece o bloğa özel kalır, view genelinde kullanılamaz. *@
+    @functions {
+        string RyUserInitial()
+        {
+            var name = User.Identity?.Name?.Trim();
+            return !string.IsNullOrEmpty(name) ? name[0].ToString().ToUpperInvariant() : "?";
+        }
+    }
+</head>
+@{
+    // Girişli her sayfa otomatik "notifications" grubuna katılır; sayfa ViewBag.RealtimeGroups ile ek grup isteyebilir (bkz. wwwroot/js/realtime.js).
+    var ryIsAuthed = User.Identity != null && User.Identity.IsAuthenticated;
+    var ryExtraGroups = ViewBag.RealtimeGroups as string;
+    var ryRealtimeGroups = ryIsAuthed ? ("notifications " + (ryExtraGroups ?? "")).Trim() : "";
+}
+<body class="ry-admin" data-ry-realtime="@ryRealtimeGroups">
+    <div class="ry-shell">
+        <div class="ry-sidebar-backdrop" id="rySidebarBackdrop"></div>
+        <aside class="ry-sidebar" id="rySidebar">
+            <a class="ry-sidebar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                <img src="~/img/logo-mark.svg" alt="" class="ry-sidebar-logo" />
+                <span>@ProductInfo.Name<small>@ProductInfo.Tagline</small></span>
+            </a>
+
+            @if (ryIsAuthed)
+            {
+                @await Component.InvokeAsync("AdminNav")
+            }
+
+            @if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                <div class="ry-sidebar-footer">
+                    <div class="ry-user mb-2"><i class="bi bi-person-circle me-1"></i>@User.Identity.Name</div>
+                    <button type="button" id="ryInstallApp" class="btn btn-primary btn-sm w-100 mb-1" hidden><i class="bi bi-download me-1"></i>Uygulamayı yükle</button>
+                    <div id="ryInstallIos" class="small text-white-50 mb-2" hidden><i class="bi bi-phone me-1"></i>Uygulama olarak eklemek için Safari'de Paylaş → Ana Ekrana Ekle.</div>
+                    <a href="/hesabim/mesai" class="btn btn-outline-light btn-sm w-100 mb-1"><i class="bi bi-clock me-1"></i>Mesaim</a>
+                    <a asp-area="" asp-controller="Account" asp-action="ChangePassword" class="btn btn-outline-light btn-sm w-100 mb-1"><i class="bi bi-key me-1"></i>Şifremi değiştir</a>
+                    <div class="d-flex gap-1">
+                        <form asp-area="" asp-controller="Account" asp-action="Lock" method="post" class="flex-fill">
+                            <input type="hidden" name="returnUrl" value="@(Context.Request.Path)@(Context.Request.QueryString)" />
+                            <button type="submit" class="btn btn-outline-warning btn-sm w-100" title="Ekrandan uzaklaşırken oturumu kilitle - tekrar açmak için sadece şifre gerekir"><i class="bi bi-lock me-1"></i>Kilitle</button>
+                        </form>
+                        <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="flex-fill">
+                            <button type="submit" class="btn btn-outline-light btn-sm w-100"><i class="bi bi-box-arrow-right me-1"></i>Çıkış</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </aside>
+
+        <div class="ry-main">
+            <header class="ry-topbar">
+                <button type="button" class="ry-toggle-btn" id="rySidebarToggle" aria-label="Menüyü aç/kapat">
+                    <i class="bi bi-list fs-5"></i>
+                </button>
+                <div class="ry-topbar-title">
+                    @{
+                        var ryRouteController = ViewContext.RouteData.Values["controller"]?.ToString();
+                        var ryRouteAction = ViewContext.RouteData.Values["action"]?.ToString();
+                        var ryCrumb = AdminNavigation.Find(ViewContext.RouteData.Values);
+                    }
+                    @if (ryCrumb is { } crumb)
+                    {
+                        var onItemPage = string.Equals(ryRouteController, crumb.Item.Controller, StringComparison.OrdinalIgnoreCase)
+                                         && string.Equals(ryRouteAction, crumb.Item.Action, StringComparison.OrdinalIgnoreCase);
+                        <nav aria-label="breadcrumb">
+                            <ol class="ry-topbar-eyebrow ry-breadcrumb">
+                                <li>@crumb.Group.Title</li>
+                                <li>
+                                    @if (onItemPage)
+                                    {
+                                        <span aria-current="page">@crumb.Item.Title</span>
+                                    }
+                                    else
+                                    {
+                                        <a asp-area="@crumb.Item.Area" asp-controller="@crumb.Item.Controller" asp-action="@crumb.Item.Action">@crumb.Item.Title</a>
+                                    }
+                                </li>
+                            </ol>
+                        </nav>
+                    }
+                    else
+                    {
+                        <span class="ry-topbar-eyebrow">Yönetim Paneli</span>
+                    }
+                    <h1>@ViewData["Title"]</h1>
+                </div>
+
+                @if (User.Identity != null && User.Identity.IsAuthenticated)
+                {
+                    <a class="ry-bell" asp-area="" asp-controller="Notifications" asp-action="Index" title="Bildirimler">
+                        <i class="bi bi-bell"></i>
+                        <span id="notifBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" hidden>0</span>
+                    </a>
+                    <span class="ry-topbar-divider d-none d-sm-inline-flex"></span>
+                    <span class="ry-user-chip d-none d-sm-inline-flex">
+                        <span class="ry-avatar">@RyUserInitial()</span>
+                        @User.Identity.Name
+                    </span>
+                }
+                else
+                {
+                    <a class="btn btn-sm btn-outline-dark" asp-area="" asp-controller="Account" asp-action="Login">Giriş</a>
+                }
+            </header>
+
+            <main class="ry-content">
+                @if (NavPreview.RoleFor(Context) is { } ryPreviewRole)
+                {
+                    <div class="ry-preview-strip">
+                        <span><i class="bi bi-eye me-1"></i>Önizleme: <strong>@RolePermissions.DisplayName(ryPreviewRole)</strong> rolünün menüsü ve dashboard'u gösteriliyor. İşlem yetkilerin değişmedi.</span>
+                        <button type="button" class="btn btn-sm btn-dark" data-nav-preview-exit="@NavPreview.CookieName">Önizlemeden çık</button>
+                    </div>
+                }
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger">@TempData["Error"]</div>
+                }
+                @if (TempData["Info"] != null)
+                {
+                    <div class="alert alert-success">@TempData["Info"]</div>
+                }
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/ry-confirm.js" asp-append-version="true"></script>
+    <script src="~/js/admin-nav.js" asp-append-version="true"></script>
+    <script src="~/js/form-busy.js" asp-append-version="true"></script>
+    <script src="~/js/print-receipt.js" asp-append-version="true"></script>
+    <script src="~/js/pwa.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            var sidebar = document.getElementById('rySidebar');
+            var backdrop = document.getElementById('rySidebarBackdrop');
+            var toggle = document.getElementById('rySidebarToggle');
+            function closeSidebar() {
+                if (sidebar) { sidebar.classList.remove('ry-open'); }
+                if (backdrop) { backdrop.classList.remove('ry-open'); }
+            }
+            function openSidebar() {
+                if (sidebar) { sidebar.classList.add('ry-open'); }
+                if (backdrop) { backdrop.classList.add('ry-open'); }
+            }
+            if (toggle) {
+                toggle.addEventListener('click', function () {
+                    if (sidebar && sidebar.classList.contains('ry-open')) { closeSidebar(); } else { openSidebar(); }
+                });
+            }
+            if (backdrop) { backdrop.addEventListener('click', closeSidebar); }
+
+            // Tam sayfa yenilemede sidebar scroll konumu sıfırlanmasın diye sessionStorage'da tutup geri yüklüyoruz.
+            if (sidebar) {
+                var scrollKey = 'rySidebarScrollTop';
+                var saveTimer = null;
+                sidebar.addEventListener('scroll', function () {
+                    if (saveTimer) { clearTimeout(saveTimer); }
+                    saveTimer = setTimeout(function () {
+                        try { sessionStorage.setItem(scrollKey, String(sidebar.scrollTop)); } catch (e) { }
+                    }, 80);
+                }, { passive: true });
+
+                var restored = false;
+                try {
+                    var saved = sessionStorage.getItem(scrollKey);
+                    if (saved !== null) {
+                        sidebar.scrollTop = parseInt(saved, 10) || 0;
+                        restored = true;
+                    }
+                } catch (e) { }
+
+                if (!restored) {
+                    var active = sidebar.querySelector('.ry-nav-link.active');
+                    if (active) { active.scrollIntoView({ block: 'center' }); }
+                }
+            }
+        })();
+    </script>
+    @if (User.Identity != null && User.Identity.IsAuthenticated)
+    {
+        <script>
+            (function () {
+                var badge = document.getElementById('notifBadge');
+                if (!badge) { return; }
+                function refresh() {
+                    fetch('/bildirimler/sayac', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                        .then(function (r) { return r.ok ? r.json() : null; })
+                        .then(function (data) {
+                            if (!data) { return; }
+                            if (data.count > 0) {
+                                badge.textContent = data.count > 99 ? '99+' : data.count;
+                                badge.hidden = false;
+                            } else {
+                                badge.hidden = true;
+                            }
+                        })
+                        .catch(function () { });
+                }
+                refresh();
+                setInterval(refresh, 20000);
+                document.addEventListener('ry:realtime', function (e) {
+                    if (e.detail && e.detail.group === 'notifications') { refresh(); }
+                });
+            })();
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@@8/dist/browser/signalr.min.js"></script>
+        <script src="~/js/realtime.js" asp-append-version="true"></script>
+    }
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

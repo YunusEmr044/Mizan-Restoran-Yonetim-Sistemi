@@ -1,0 +1,51 @@
+@model List<ProductSalesRow>
+@{
+    ViewData["Title"] = "Ürün Satış Raporu";
+    ViewBag.ReportsActive = "urunler";
+    DateTime start = ViewBag.Start;
+    DateTime end = ViewBag.End;
+}
+<div class="mb-3">
+    <h2 class="mb-0">Raporlar</h2>
+    <p class="text-muted small mb-0">Ürün Satış Raporu</p>
+</div>
+
+@await Html.PartialAsync("_ReportsSubNav")
+
+<form method="get" class="row g-2 align-items-end mb-4">
+    <div class="col-auto">
+        <label class="form-label small">Başlangıç</label>
+        <input type="date" name="start" class="form-control" value="@start.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-auto">
+        <label class="form-label small">Bitiş</label>
+        <input type="date" name="end" class="form-control" value="@end.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Filtrele</button>
+    </div>
+    <div class="col-auto">
+        <a asp-action="UrunlerExport" asp-route-start="@start.ToString("yyyy-MM-dd")" asp-route-end="@end.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary"><i class="bi bi-download"></i> CSV İndir</a>
+    </div>
+</form>
+
+<table class="table">
+    <thead><tr><th>#</th><th>Ürün</th><th>Adet</th><th>Ciro</th></tr></thead>
+    <tbody>
+    @{ var rank = 1; }
+    @foreach (var p in Model)
+    {
+        <tr>
+            <td>@rank</td>
+            <td>@p.Name</td>
+            <td>@p.Quantity</td>
+            <td>@p.Revenue.ToString("0.00") ₺</td>
+        </tr>
+        rank++;
+    }
+    @if (!Model.Any())
+    {
+        <tr><td colspan="4" class="text-muted">Seçilen aralıkta veri yok.</td></tr>
+    }
+    </tbody>
+</table>

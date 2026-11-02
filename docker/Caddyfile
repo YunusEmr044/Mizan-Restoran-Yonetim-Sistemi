@@ -1,0 +1,5 @@
+# DOMAIN .env dosyasından gelir (ör. restoraniniz.com). Caddy sertifikayı Let's Encrypt'ten kendisi alır ve yeniler.
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy app:8080
+}

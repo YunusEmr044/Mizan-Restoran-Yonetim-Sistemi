@@ -1,0 +1,105 @@
+# Mizan: uygulama + SQL Server (+ isteğe bağlı otomatik HTTPS).
+#
+#   Yerelde / WSL'de:          docker compose up -d                      → http://localhost:5080
+#   Sunucuda domain + HTTPS:   docker compose --profile https up -d
+#   Kaynak koddan derlemek:    docker compose up -d --build
+#
+# Ayarlar .env dosyasından okunur (bkz. .env.example ve README.md).
+
+name: mizan
+
+services:
+  # SQL Server konteynerde "mssql" kullanıcısıyla (uid 10001) çalışır; yedek biriminin sahipliği başlamadan önce ona verilir.
+  db-init:
+    image: busybox:1.36
+    command: ["sh", "-c", "chown -R 10001:0 /backup && chmod 770 /backup"]
+    volumes:
+      - db-backup:/backup
+    restart: "no"
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: unless-stopped
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Express"
+      MSSQL_SA_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD .env dosyasında tanımlı olmalı}
+      TZ: Europe/Istanbul
+    volumes:
+      - db-data:/var/opt/mssql
+      - db-backup:/var/opt/mssql/backup
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q \"SELECT 1\" -b -o /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      mizan:
+        ipv4_address: 172.30.0.2
+
+  app:
+    # Hazır imaj GitHub'dan indirilir; kaynak koddan derlemek için: docker compose up -d --build
+    image: ${MIZAN_IMAGE:-ghcr.io/yunusemr044/mizan:latest}
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${MIZAN_ENVIRONMENT:-Production}
+      ConnectionStrings__DefaultConnection: "Server=db,1433;Database=${DB_NAME:-MizanDb};User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True;Encrypt=True;MultipleActiveResultSets=true"
+      INITIAL_SUPERADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      INITIAL_SUPERADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      PublicBaseUrl: ${PUBLIC_BASE_URL:-http://localhost:5080}
+      RequireHttps: ${REQUIRE_HTTPS:-false}
+      ReverseProxy__KnownProxies__0: 172.30.0.3
+      DatabaseBackup__Directory: /var/opt/mssql/backup
+      AllowedHosts: ${ALLOWED_HOSTS:-*}
+      TZ: Europe/Istanbul
+    ports:
+      - "${APP_PORT:-5080}:8080"
+    volumes:
+      - app-keys:/app/App_Data
+      - app-uploads:/app/wwwroot/uploads
+    networks:
+      mizan:
+        ipv4_address: 172.30.0.4
+
+  caddy:
+    image: caddy:2
+    profiles: ["https"]
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      DOMAIN: ${DOMAIN:-}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      mizan:
+        ipv4_address: 172.30.0.3
+
+volumes:
+  db-data:
+  db-backup:
+  app-keys:
+  app-uploads:
+  caddy-data:
+  caddy-config:
+
+networks:
+  mizan:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24

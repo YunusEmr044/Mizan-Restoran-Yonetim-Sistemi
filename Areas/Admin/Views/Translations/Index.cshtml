@@ -1,0 +1,100 @@
+@model TranslationsView
+@{
+    ViewData["Title"] = "Çeviriler";
+    var i = 0;
+}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-0">Çeviriler</h2>
+        <p class="text-muted small mb-0">Müşteri sitesinin ve QR menünün İngilizcesi. Boş bırakılan alan sitede Türkçe görünür.</p>
+    </div>
+    <a href="/en" target="_blank" rel="noopener" class="btn btn-outline-secondary"><i class="bi bi-box-arrow-up-right me-1"></i>İngilizce siteyi aç</a>
+</div>
+
+<div class="ry-cat-chips mb-3">
+    @foreach (var t in TranslationCatalog.Tabs)
+    {
+        var missing = Model.MissingByTab.GetValueOrDefault(t.Key);
+        <a class="ry-cat-chip @(t.Key == Model.Tab.Key ? "active" : "")" asp-action="Index" asp-route-tab="@t.Key" asp-route-missingOnly="@Model.MissingOnly">
+            <i class="bi @t.Icon"></i> @t.Title
+            @if (missing > 0)
+            {
+                <span class="badge bg-warning text-dark ms-1" title="Çevirisi eksik alan">@missing</span>
+            }
+        </a>
+    }
+</div>
+
+<div class="d-flex align-items-center gap-3 mb-3">
+    <a class="btn btn-sm @(Model.MissingOnly ? "btn-dark" : "btn-outline-dark")" asp-action="Index" asp-route-tab="@Model.Tab.Key" asp-route-missingOnly="@(!Model.MissingOnly)">
+        <i class="bi bi-funnel me-1"></i>@(Model.MissingOnly ? "Tümünü göster" : "Yalnızca eksikler")
+    </a>
+    <span class="small text-muted">@Model.TotalRows alan · @Model.MissingByTab.GetValueOrDefault(Model.Tab.Key) eksik</span>
+    <form method="get" asp-action="Index" class="ms-auto d-flex gap-2" role="search">
+        <input type="hidden" name="tab" value="@Model.Tab.Key" />
+        <input type="hidden" name="missingOnly" value="@Model.MissingOnly.ToString().ToLowerInvariant()" />
+        <input type="search" name="q" value="@Model.Query" class="form-control form-control-sm" placeholder="Kayıt ya da metin ara" aria-label="Çevirilerde ara" style="min-width: 220px" />
+        <button class="btn btn-sm btn-outline-dark" type="submit"><i class="bi bi-search"></i></button>
+    </form>
+</div>
+
+@if (!Model.Rows.Any())
+{
+    <partial name="_EmptyState" model='new EmptyStateModel("bi-translate", !string.IsNullOrEmpty(Model.Query) ? "Aramaya uyan alan yok." : Model.MissingOnly ? "Bu sekmede eksik çeviri yok." : "Bu sekmede çevrilecek metin yok.")' />
+}
+else
+{
+    <form asp-action="Save" method="post">
+        <input type="hidden" name="tab" value="@Model.Tab.Key" />
+        <input type="hidden" name="missingOnly" value="@Model.MissingOnly.ToString().ToLowerInvariant()" />
+        <input type="hidden" name="q" value="@Model.Query" />
+        <input type="hidden" name="page" value="@Model.Page" />
+        <div class="table-responsive">
+            <table class="table align-top">
+                <thead><tr><th style="width:18%">Kayıt</th><th style="width:12%">Alan</th><th style="width:35%">Türkçe</th><th>İngilizce</th></tr></thead>
+                <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    var name = $"items[{i}]";
+                    <tr>
+                        <td class="small fw-semibold">@row.RecordLabel</td>
+                        <td class="small text-muted">@row.FieldLabel</td>
+                        <td class="small" style="white-space: pre-line; max-height: 12rem; overflow: auto;">@(row.Turkish.Length > 600 ? row.Turkish[..600] + "…" : row.Turkish)</td>
+                        <td>
+                            <input type="hidden" name="@(name).EntityType" value="@row.EntityType" />
+                            <input type="hidden" name="@(name).EntityId" value="@row.EntityId" />
+                            <input type="hidden" name="@(name).Field" value="@row.Field" />
+                            @if (row.IsLong)
+                            {
+                                <textarea name="@(name).Value" class="form-control form-control-sm" rows="@(row.Field == "Body" ? 12 : 3)" maxlength="@row.MaxLength" lang="en" aria-label="@row.RecordLabel · @row.FieldLabel (İngilizce)">@row.English</textarea>
+                            }
+                            else
+                            {
+                                <input name="@(name).Value" value="@row.English" class="form-control form-control-sm" maxlength="@row.MaxLength" lang="en" aria-label="@row.RecordLabel · @row.FieldLabel (İngilizce)" />
+                            }
+                        </td>
+                    </tr>
+                    i++;
+                }
+                </tbody>
+            </table>
+        </div>
+        <div class="ry-sticky-actions d-flex justify-content-between align-items-center gap-2 py-2">
+            @if (Model.TotalPages > 1)
+            {
+                <nav aria-label="Sayfalar"><ul class="pagination pagination-sm mb-0">
+                    @for (var p = 1; p <= Model.TotalPages; p++)
+                    {
+                        <li class="page-item @(p == Model.Page ? "active" : "")"><a class="page-link" asp-action="Index" asp-route-tab="@Model.Tab.Key" asp-route-missingOnly="@Model.MissingOnly" asp-route-q="@Model.Query" asp-route-page="@p">@p</a></li>
+                    }
+                </ul></nav>
+                <span class="small text-muted">Kaydedilmemiş değişiklikler sayfa değişince kaybolur.</span>
+            }
+            else
+            {
+                <span></span>
+            }
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Kaydet</button>
+        </div>
+    </form>
+}

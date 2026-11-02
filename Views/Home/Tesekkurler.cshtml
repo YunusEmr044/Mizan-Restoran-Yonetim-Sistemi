@@ -1,0 +1,29 @@
+@model RestoranYonetim.Controllers.ThanksView
+@{
+    ViewData["Title"] = T["Teşekkürler"];
+    Layout = "_PublicLayout";
+    ViewData["HideMobileCta"] = true;
+}
+
+<div class="py-section py-thanks">
+    <div class="container" style="max-width:640px;">
+        <div class="py-thanks-card text-center py-reveal">
+            <div class="py-thanks-icon"><i class="bi @Model.Icon"></i></div>
+            <h1 class="py-serif fw-bold">@Model.Heading</h1>
+            <p class="text-muted mb-4">@Model.Text</p>
+            @if (Model.Reservation is { } r)
+            {
+                <dl class="py-thanks-summary">
+                    <div><dt>@T["Ad Soyad"]</dt><dd>@r.Name</dd></div>
+                    <div><dt>@T["Tarih"]</dt><dd>@r.Date</dd></div>
+                    <div><dt>@T["Saat"]</dt><dd>@r.Time</dd></div>
+                    <div><dt>@T["Kişi"]</dt><dd>@r.PartySize</dd></div>
+                </dl>
+            }
+            <div class="d-flex flex-wrap justify-content-center gap-2">
+                <a asp-action="Index" class="btn btn-py-gold"><i class="bi bi-house me-1"></i>@T["Ana sayfaya dön"]</a>
+                <a asp-action="Menu" class="btn btn-outline-dark"><i class="bi bi-journal-text me-1"></i>@T["Menüyü incele"]</a>
+            </div>
+        </div>
+    </div>
+</div>

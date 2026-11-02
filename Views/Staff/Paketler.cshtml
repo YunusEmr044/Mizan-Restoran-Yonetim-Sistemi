@@ -1,0 +1,96 @@
+@model List<Adisyon>
+@{
+    ViewData["Title"] = "Paketler";
+    var canCreate = User.HasClaim(Permissions.ClaimType, Permissions.Orders.Create);
+}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h2 class="mb-0">Paketler</h2>
+    <div class="d-flex gap-2">
+        @if (ViewBag.CanTakeaway == true)
+        {
+            <a class="btn btn-outline-primary" asp-action="YeniPaket" asp-route-tur="GelAl"><i class="bi bi-bag me-1"></i>Gel-Al</a>
+        }
+        @if (ViewBag.CanDelivery == true)
+        {
+            <a class="btn btn-outline-primary" asp-action="YeniPaket" asp-route-tur="AdreseTeslim"><i class="bi bi-truck me-1"></i>Adrese Teslim</a>
+        }
+        <a class="btn btn-outline-secondary" asp-action="Index">← Sipariş Ekranı</a>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <partial name="_EmptyState" model='new EmptyStateModel("bi-box-seam", "Açık paket yok. Gel-al ve adrese teslim paketleri burada görünür.")' />
+}
+<div class="row g-3">
+@foreach (var a in Model)
+{
+    var p = a.Package ?? new PackageInfo();
+    var stage = PackageFlow.Stage(a);
+    var items = a.Orders.Where(o => !o.IsDraft).SelectMany(o => o.Items).Where(i => i.Status != OrderStatus.IptalEdildi).ToList();
+    var hasDraft = a.Orders.Any(o => o.IsDraft);
+    <div class="col-md-6 col-xl-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <div class="fw-semibold">@AdisyonLabel.For(a)</div>
+                    <span class="badge @(stage is "Hazır" or "Teslim edildi" or "Teslim alındı" ? "bg-success" : stage == "Yolda" ? "bg-info text-dark" : "bg-secondary")">@stage</span>
+                </div>
+                <div class="small text-muted mt-1">
+                    @if (!string.IsNullOrWhiteSpace(p.CustomerPhone)) { <span><i class="bi bi-telephone me-1"></i>@p.CustomerPhone</span> }
+                    @if (p.PromisedAt != null) { <span class="ms-2"><i class="bi bi-clock me-1"></i>@p.PromisedAt.Value.ToString("HH:mm")</span> }
+                </div>
+                @if (!string.IsNullOrWhiteSpace(p.Address)) { <div class="small mt-1"><i class="bi bi-geo-alt me-1"></i>@p.Address</div> }
+                @if (!string.IsNullOrWhiteSpace(p.Note)) { <div class="small fst-italic mt-1">@p.Note</div> }
+                @if (!string.IsNullOrWhiteSpace(p.CourierName)) { <div class="small mt-1"><i class="bi bi-person me-1"></i>Kurye: @p.CourierName</div> }
+                <ul class="small mt-2 mb-2 ps-3">
+                    @foreach (var i in items) { <li>@i.Quantity x @i.MenuItemName <span class="text-muted">(@i.Status.Label())</span></li> }
+                    @if (hasDraft) { <li class="text-warning">Gönderilmemiş taslak var</li> }
+                </ul>
+                <div class="d-flex justify-content-between small">
+                    <span>Toplam <strong>@ReceiptLayout.Money(a.GrandTotal) TL</strong></span>
+                    <span>@(a.Status == AdisyonStatus.Odendi ? "Ödendi" : a.PaidTotal > 0 ? $"Ödenen {ReceiptLayout.Money(a.PaidTotal)} TL" : a.Status.Label())</span>
+                </div>
+            </div>
+            @if (canCreate)
+            {
+                <div class="card-footer d-flex flex-wrap gap-2">
+                    @if (!a.IsClosed)
+                    {
+                        <a class="btn btn-sm btn-outline-primary" asp-action="NewOrder" asp-route-adisyonId="@a.Id">+ Ürün</a>
+                        @if (a.Status is AdisyonStatus.Acik or AdisyonStatus.HesapIstendi && items.Any())
+                        {
+                            <form asp-action="KasayaGonder" method="post" class="d-inline"><input type="hidden" name="adisyonId" value="@a.Id" /><button class="btn btn-sm btn-outline-dark">Kasaya Gönder</button></form>
+                        }
+                    }
+                    <button type="button" class="btn btn-sm btn-outline-dark" data-print-url="@Url.Action("Yazdir", "Staff", new { id = a.Id })">🖨</button>
+                    @if (PackageFlow.HandOverBlockReason(a) == null)
+                    {
+                        <form asp-action="PaketTeslimAlindi" asp-route-id="@a.Id" method="post" class="d-inline"><button class="btn btn-sm btn-success">Teslim Alındı</button></form>
+                    }
+                    @if (PackageFlow.CanDispatch(a))
+                    {
+                        <form asp-action="PaketYolaCikti" asp-route-id="@a.Id" method="post" class="d-flex gap-1">
+                            <input class="form-control form-control-sm" name="courierName" placeholder="Kurye" maxlength="@PackageInfo.CourierMax" required aria-label="Kurye adı" style="width:8rem" />
+                            <button class="btn btn-sm btn-info">Yola Çıktı</button>
+                        </form>
+                    }
+                    @if (PackageFlow.DeliverBlockReason(a) == null)
+                    {
+                        <form asp-action="PaketTeslimEdildi" asp-route-id="@a.Id" method="post" class="d-inline"><button class="btn btn-sm btn-success">Teslim Edildi</button></form>
+                    }
+                    @if (PackageFlow.CancelBlockReason(a) == null)
+                    {
+                        <form asp-action="PaketIptal" asp-route-id="@a.Id" method="post" class="d-inline" data-confirm="Henüz ürün gönderilmemiş paket iptal edilecek." data-confirm-title="Paket iptal edilsin mi?" data-confirm-ok="İptal Et" data-confirm-danger><button class="btn btn-sm btn-outline-danger">İptal</button></form>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+</div>
+@section Scripts {
+    <script>
+        document.addEventListener('ry:realtime', function () { setTimeout(function () { location.reload(); }, 600); });
+    </script>
+}

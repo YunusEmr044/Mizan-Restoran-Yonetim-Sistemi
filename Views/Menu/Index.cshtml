@@ -1,0 +1,108 @@
+@model List<Category>
+@{
+    ViewData["Title"] = T["Menü"];
+    Layout = "_CustomerLayout";
+    var table = (RestaurantTable)ViewBag.Table;
+    var optionsByItem = ((List<MenuItemOption>)ViewBag.OptionsByItem).ToLookup(o => o.MenuItemId);
+}
+
+<header class="customer-hero">
+    <div class="customer-inner">
+        <div class="customer-eyebrow">@T["Masanızın menüsü"]</div>
+        <h1>@TableNames.Display(table.Name)</h1>
+@{
+    var konum = string.Join(" / ", new[] { table.Area?.Branch?.Restaurant?.Name, table.Area?.Branch?.Name, table.Area?.Name }.Where(s => !string.IsNullOrEmpty(s)));
+}
+@if (!string.IsNullOrEmpty(konum))
+{
+    <p class="mb-0" style="color:#d8c9b2;">@konum</p>
+}
+    <div class="customer-actions">
+        <form asp-action="CallWaiter" asp-route-token="@table.QrToken" method="post"><button type="submit">🔔 @T["Garson Çağır"]</button></form>
+        <form asp-action="HesapIste" asp-route-token="@table.QrToken" method="post"><button type="submit">🧾 @T["Hesap İste"]</button></form>
+        <partial name="_LanguageSwitch" />
+    </div>
+    </div>
+</header>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+@if (TempData["Info"] != null)
+{
+    <div class="alert alert-success">@TempData["Info"]</div>
+}
+
+<nav class="customer-nav">
+    <div class="customer-inner">
+        @foreach (var category in Model.Where(c => c.MenuItems.Any()))
+        {
+            <a href="#cat-@category.Id" data-category="cat-@category.Id">@category.Name</a>
+        }
+    </div>
+</nav>
+
+<form asp-action="PlaceOrder" asp-route-token="@table.QrToken" method="post" id="orderForm">
+<main class="customer-content">
+    @foreach (var category in Model)
+    {
+        if (!category.MenuItems.Any())
+        {
+            continue;
+        }
+        <div class="category-title" id="cat-@category.Id"><h2>@category.Name</h2><div></div></div>
+        <div class="menu-grid">
+            @foreach (var item in category.MenuItems)
+            {
+                <article class="menu-card">
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                        <div><h3>@item.Name</h3><div class="menu-description">@item.Description</div></div>
+                        <div class="menu-price">@item.Price.ToString("0.00") ₺</div>
+                    </div>
+                    <div class="quantity mt-3"><button type="button" data-change="-1">−</button><input type="number" min="0" max="20" value="0" name="quantities[@item.Id]" /><button type="button" data-change="1">+</button></div>
+                    @if (optionsByItem[item.Id].Any())
+                    {
+                        <div class="option-list">
+                            @foreach (var opt in optionsByItem[item.Id])
+                            {
+                                <div class="form-check form-check-inline small">
+                                    <input class="form-check-input" type="checkbox" name="selectedOptions" value="@opt.Id" id="opt@(opt.Id)" />
+                                    <label class="form-check-label" for="opt@(opt.Id)">
+                                        @opt.Name @(opt.ExtraPrice > 0 ? $"(+{opt.ExtraPrice:0.00} ₺)" : "")
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    }
+                </article>
+            }
+        </div>
+    }
+    <div class="mb-3 mt-4" style="max-width:600px;">
+        <label class="form-label">@T["Not (opsiyonel)"]</label>
+        <textarea name="notes" class="form-control" rows="2"></textarea>
+    </div>
+</main>
+<div class="order-bar"><div class="order-bar-inner"><small>@T["Ürünlerinizi seçin, siparişinizi kolayca oluşturun."]</small><button type="submit" class="order-submit">@T["Sepete Ekle"] →</button></div></div>
+</form>
+
+<script>
+    document.querySelectorAll('[data-change]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            var input = button.parentElement.querySelector('input');
+            var next = Math.max(0, Math.min(20, Number(input.value || 0) + Number(button.dataset.change)));
+            input.value = next;
+        });
+    });
+    var pills = document.querySelectorAll('[data-category]');
+    var sections = document.querySelectorAll('.category-title');
+    function activate(id) { pills.forEach(function (p) { p.classList.toggle('active', p.dataset.category === id); }); }
+    pills.forEach(function (p) { p.addEventListener('click', function () { activate(p.dataset.category); }); });
+    if (sections.length) {
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) { if (e.isIntersecting) activate(e.target.id); });
+        }, { rootMargin: '-75px 0px -70% 0px' });
+        sections.forEach(function (section) { observer.observe(section); });
+    }
+</script>

@@ -1,0 +1,38 @@
+@model Supplier
+@{
+    ViewData["Title"] = "Yeni Tedarikçi";
+}
+<h2 class="mb-4">Yeni Tedarikçi</h2>
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label asp-for="ContactName" class="form-label"></label>
+            <input asp-for="ContactName" class="form-control" />
+        </div>
+        <div class="col-md mb-3">
+            <label asp-for="Phone" class="form-label"></label>
+            <input asp-for="Phone" class="form-control" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" />
+        </div>
+        <div class="col-md mb-3">
+            <label asp-for="TaxNumber" class="form-label"></label>
+            <input asp-for="TaxNumber" class="form-control" />
+        </div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Address" class="form-label"></label>
+        <textarea asp-for="Address" class="form-control" rows="2"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>

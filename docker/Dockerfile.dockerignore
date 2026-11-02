@@ -1,0 +1,19 @@
+# Bu dosya docker/Dockerfile ile derlerken kullanılır (BuildKit "<Dockerfile>.dockerignore" kuralı).
+**/bin/
+**/obj/
+.git/
+.vs/
+.vscode/
+.idea/
+.claude/
+.superpowers/
+tests/
+docs/
+docker/
+App_Data/
+wwwroot/uploads/
+*.user
+*.log
+*.bak
+ORNEK-KULLANICI-HESAPLARI.txt
+appsettings.Development.json

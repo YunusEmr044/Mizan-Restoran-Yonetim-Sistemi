@@ -1,0 +1,26 @@
+@model CashShift
+@{
+    ViewData["Title"] = "Vardiyayı Kapat";
+    var expected = Model.ExpectedCash;
+}
+<h2 class="mb-4">Vardiyayı Kapat</h2>
+
+<div class="card mb-4" style="max-width: 480px;">
+    <div class="card-body">
+        <p class="mb-1">Açılış: <strong>@Model.OpeningAmount.ToString("0.00") ₺</strong> (@Model.OpenedAt.ToString("dd.MM.yyyy HH:mm") — @Model.OpenedByUserName)</p>
+        <p class="mb-1">Nakit Ödemeler Toplamı: <strong>@Model.CashPaymentsTotal.ToString("0.00") ₺</strong></p>
+        <p class="mb-3">Beklenen Kasa Tutarı: <strong>@expected.ToString("0.00") ₺</strong></p>
+
+        <form asp-action="CloseShift" method="post" data-confirm="Vardiya kapatılacak ve sayılan tutar kaydedilecek." data-confirm-title="Vardiya kapatılsın mı?" data-confirm-ok="Vardiyayı Kapat" data-confirm-danger>
+            <input type="hidden" name="shiftId" value="@Model.Id" />
+            <div class="mb-3">
+                <label class="form-label">Sayılan Nakit Tutar (₺)</label>
+                <input type="number" step="0.01" min="0" name="countedAmount" class="form-control" required autofocus />
+            </div>
+            <button type="submit" class="btn btn-danger">
+                Vardiyayı Kapat
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+        </form>
+    </div>
+</div>
