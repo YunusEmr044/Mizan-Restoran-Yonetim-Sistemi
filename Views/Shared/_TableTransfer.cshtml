@@ -1,0 +1,83 @@
+@model TransferPanel
+@{
+    var a = Model.Adisyon;
+    var items = a.Orders.Where(o => !o.IsDraft).SelectMany(o => o.Items).Where(i => i.Status != OrderStatus.IptalEdildi).ToList();
+    var groups = Model.Targets.GroupBy(t => t.AreaName);
+    var itemBlock = TableTransferRules.ItemSourceBlockReason(a);
+}
+<div class="d-inline-flex gap-2 flex-wrap ry-transfer-actions">
+    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#ryMoveModal"><i class="bi bi-arrow-left-right me-1"></i>Masayı Taşı / Birleştir</button>
+    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#ryItemsModal"><i class="bi bi-box-arrow-right me-1"></i>Ürün Aktar</button>
+</div>
+
+<div class="modal fade" id="ryMoveModal" tabindex="-1" aria-labelledby="ryMoveTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <form method="post" action="@Model.MoveUrl" class="modal-content" data-confirm="Seçilen masa doluysa iki adisyon birleştirilecek." data-confirm-title="Masa işlemi yapılsın mı?" data-confirm-ok="Devam et">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="adisyonId" value="@a.Id" />
+            <input type="hidden" name="sourceTableId" value="@a.TableId" />
+            <div class="modal-header"><h5 class="modal-title" id="ryMoveTitle">@AdisyonLabel.For(a) — hedef masa</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button></div>
+            <div class="modal-body">
+                <p class="small text-muted">Boş masa seçerseniz adisyon oraya taşınır. Dolu masa seçerseniz iki adisyon tek hesapta birleşir; siparişler, ödemeler ve indirimler aktarılır.</p>
+                @foreach (var g in groups)
+                {
+                    <div class="fw-semibold small text-uppercase text-muted mt-2">@g.Key</div>
+                    <div class="d-flex flex-wrap gap-2 mt-1">
+                        @foreach (var t in g)
+                        {
+                            <input type="radio" class="btn-check" name="targetTableId" id="mv-@t.Id" value="@t.Id" required />
+                            <label class="btn btn-sm @(t.Occupied ? "btn-outline-warning" : "btn-outline-success")" for="mv-@t.Id">@t.Name@(t.Occupied ? " · dolu" : "")</label>
+                        }
+                    </div>
+                }
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button><button type="submit" class="btn btn-primary">Uygula</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="ryItemsModal" tabindex="-1" aria-labelledby="ryItemsTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <form method="post" action="@Model.ItemsUrl" class="modal-content">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="adisyonId" value="@a.Id" />
+            <input type="hidden" name="sourceTableId" value="@a.TableId" />
+            <div class="modal-header"><h5 class="modal-title" id="ryItemsTitle">Ürün aktar</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button></div>
+            <div class="modal-body">
+                @if (itemBlock != null)
+                {
+                    <div class="alert alert-warning small mb-0">@itemBlock</div>
+                }
+                else
+                {
+                    <p class="small text-muted">Aktarılacak adetleri seçin; kalanlar bu masada kalır.</p>
+                    <table class="table table-sm align-middle">
+                        <tbody>
+                        @foreach (var item in items)
+                        {
+                            <tr>
+                                <td>@item.MenuItemName <span class="text-muted small">(@item.Quantity adet)</span></td>
+                                <td style="width:7rem"><input type="number" class="form-control form-control-sm" name="quantities[@item.Id]" min="0" max="@item.Quantity" value="0" aria-label="@item.MenuItemName aktarılacak adet" /></td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                    <label class="form-label small fw-semibold" for="ryItemsTarget">Hedef masa</label>
+                    <select class="form-select" id="ryItemsTarget" name="targetTableId" required>
+                        <option value="">Seçin</option>
+                        @foreach (var g in groups)
+                        {
+                            <optgroup label="@g.Key">
+                                @foreach (var t in g)
+                                {
+                                    <option value="@t.Id">@t.Name@(t.Occupied ? " (dolu)" : "")</option>
+                                }
+                            </optgroup>
+                        }
+                    </select>
+                }
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>@if (itemBlock == null) { <button type="submit" class="btn btn-primary">Aktar</button> }</div>
+        </form>
+    </div>
+</div>

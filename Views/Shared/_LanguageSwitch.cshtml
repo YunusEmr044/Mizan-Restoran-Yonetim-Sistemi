@@ -1,0 +1,10 @@
+@* Müşteri tarafı dil seçici: aynı sayfanın diğer dildeki adresine gider. *@
+@{
+    var current = SiteLanguages.Current;
+    var path = Context.Request.Path;
+    var query = Context.Request.QueryString;
+}
+<div class="py-lang-switch" role="group" aria-label="@T["Dil"]">
+    <a href="@SiteLanguages.PathFor("tr", path, query)" hreflang="tr" lang="tr" class="@(current == "tr" ? "active" : "")" aria-current="@(current == "tr" ? "true" : null)" title="Türkçe">TR</a>
+    <a href="@SiteLanguages.PathFor("en", path, query)" hreflang="en" lang="en" class="@(current == "en" ? "active" : "")" aria-current="@(current == "en" ? "true" : null)" title="English">EN</a>
+</div>

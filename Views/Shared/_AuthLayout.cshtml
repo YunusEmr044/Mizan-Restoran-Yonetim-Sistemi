@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - @ProductInfo.Name</title>
+    <link rel="icon" href="~/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="~/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#15120d" />
+    <meta name="robots" content="noindex" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    @foreach (var fontHref in RestoranYonetim.Models.ThemeCatalog.FontStylesheets(RestoranYonetim.Models.ThemeCatalog.DefaultHeadingFont, RestoranYonetim.Models.ThemeCatalog.DefaultBodyFont))
+    {
+        <link rel="stylesheet" href="@fontHref" />
+    }
+    <style>
+        :root { color-scheme: light; font-family: Poppins, sans-serif; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: linear-gradient(135deg, #17130e, #3a2b1c); }
+        .login-card { width: min(430px, calc(100% - 32px)); padding: 42px; background: #fffdf9; border-radius: 18px; box-shadow: 0 25px 70px rgba(0,0,0,.35); }
+        .brand-mark { display: block; width: 76px; height: auto; margin: 0 auto 12px; }
+        .brand { color: #b17d35; font-family: "Playfair Display", serif; font-size: 2.1rem; text-align: center; margin-bottom: 0; line-height: 1.1; }
+        .tagline { color: #a0927f; text-align: center; font-size: .72rem; letter-spacing: .22em; text-transform: uppercase; margin: 4px 0 14px; }
+        .subtitle { color: #756b5d; text-align: center; margin: 0 0 30px; font-size: .9rem; }
+        label { display: block; color: #40382e; font-size: .88rem; font-weight: 600; margin: 16px 0 7px; }
+        input { width: 100%; border: 1px solid #ded4c7; border-radius: 9px; padding: 12px 13px; font: inherit; outline: none; }
+        input:focus { border-color: #b17d35; box-shadow: 0 0 0 3px rgba(177,125,53,.15); }
+        .password-wrap { position: relative; }
+        .password-wrap input { padding-right: 48px; }
+        .password-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; margin: 0; padding: 0; background: transparent; color: #756b5d; }
+        .password-toggle:hover { background: transparent; color: #956526; }
+        button { width: 100%; margin-top: 24px; border: 0; border-radius: 9px; padding: 13px; color: white; background: #b17d35; font: 600 1rem Poppins, sans-serif; cursor: pointer; }
+        button:hover { background: #956526; }
+        .errors { color: #b42318; font-size: .85rem; margin-bottom: 10px; }
+        .notice { color: #40382e; background: #f5efe6; border-radius: 9px; padding: 12px 14px; font-size: .88rem; }
+        .login-note { color: #8b8174; font-size: .78rem; text-align: center; margin-top: 22px; }
+        .login-note a { color: #956526; }
+    </style>
+</head>
+<body>
+    <main class="login-card">
+        <img src="~/img/logo-mark.svg" alt="" class="brand-mark" />
+        <div class="brand">@ProductInfo.Name</div>
+        <div class="tagline">@ProductInfo.Tagline</div>
+        @RenderBody()
+    </main>
+    <script src="~/js/pwa.js" asp-append-version="true"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

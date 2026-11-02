@@ -1,0 +1,54 @@
+@model ChefSpecial
+@{
+    ViewData["Title"] = "Yeni Şefin Önerisi";
+    var menuItems = (List<MenuItem>)ViewBag.MenuItems;
+}
+<h2 class="mb-4">Yeni Şefin Önerisi</h2>
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="MenuItemId" class="form-label"></label>
+        <select asp-for="MenuItemId" class="form-select">
+            <option value="">— Ürün seçin —</option>
+            @foreach (var m in menuItems)
+            {
+                <option value="@m.Id">@m.Name (@m.Price.ToString("0.00") ₺)</option>
+            }
+        </select>
+    </div>
+    <div class="alert alert-info small">Aşağıdaki alanları boş bırakırsanız ürünün kendi bilgileri (isim/açıklama/görsel/fiyat) kullanılır - sadece farklı göstermek istediğinizde doldurun.</div>
+    <div class="mb-3">
+        <label asp-for="TitleOverride" class="form-label"></label>
+        <input asp-for="TitleOverride" class="form-control" placeholder="Özel Soslu Izgara Bonfile" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="DescriptionOverride" class="form-label"></label>
+        <textarea asp-for="DescriptionOverride" class="form-control" rows="2"></textarea>
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label class="form-label">Görsel</label>
+            <input type="file" name="imageFile" class="form-control" accept="image/*" />
+        </div>
+        <div class="col-md mb-3">
+            <label asp-for="PriceOverride" class="form-label"></label>
+            <input asp-for="PriceOverride" class="form-control" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label asp-for="StartDate" class="form-label"></label>
+            <input asp-for="StartDate" type="date" class="form-control" value="@Model.StartDate.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md mb-3">
+            <label asp-for="EndDate" class="form-label"></label>
+            <input asp-for="EndDate" type="date" class="form-control" value="@Model.EndDate.ToString("yyyy-MM-dd")" />
+        </div>
+    </div>
+    <div class="form-check mb-3">
+        <input asp-for="IsActive" class="form-check-input" checked />
+        <label asp-for="IsActive" class="form-check-label"></label>
+    </div>
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>

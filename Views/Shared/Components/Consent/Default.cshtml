@@ -1,0 +1,57 @@
+@model RestoranYonetim.ViewComponents.ConsentViewModel
+@using RestoranYonetim.Models
+@if (Model.RequiresConsent)
+{
+    <div class="py-consent" id="pyConsent" role="dialog" aria-label="@T["Çerez tercihleri"]" aria-live="polite" @(Model.ShowBanner ? "" : "hidden")>
+        <div class="py-consent-inner">
+            <div class="py-consent-text">
+                <strong>@T["Çerez tercihleriniz"]</strong>
+                <p>@T["Sitenin çalışması için zorunlu çerezler kullanıyoruz. Ziyaretleri anlamak için analitik çerezleri de yalnızca onay verirseniz kullanırız."] @T["Ayrıntılar:"] <a href="~/cerez-politikasi">@T["Çerez Politikası"]</a>.</p>
+                <div class="py-consent-prefs" id="pyConsentPrefs" hidden>
+                    <label class="py-consent-pref"><input type="checkbox" checked disabled /> @T["Zorunlu çerezler"] <span>(@T["her zaman açık"])</span></label>
+                    <label class="py-consent-pref"><input type="checkbox" id="pyConsentAnalytics" /> @T["Analitik çerezler"]</label>
+                </div>
+            </div>
+            <div class="py-consent-actions">
+                <button type="button" class="btn btn-sm btn-outline-light" data-consent-action="prefs" id="pyConsentPrefsBtn">@T["Tercihler"]</button>
+                <button type="button" class="btn btn-sm btn-outline-light" data-consent-action="deny">@T["Reddet"]</button>
+                <button type="button" class="btn btn-sm btn-py-gold" data-consent-action="accept">@T["Kabul et"]</button>
+                <button type="button" class="btn btn-sm btn-py-gold" data-consent-action="save" hidden>@T["Kaydet"]</button>
+            </div>
+        </div>
+    </div>
+    <style>
+        .py-consent { position: fixed; left: 1rem; right: 1rem; bottom: 1rem; z-index: 1080; display: flex; justify-content: center; }
+        .py-consent[hidden] { display: none; }
+        .py-consent-inner { max-width: 960px; width: 100%; background: var(--py-bg); color: #e9e1d3; border: 1px solid rgba(var(--py-gold-rgb), .35); border-radius: 16px; box-shadow: 0 20px 50px -20px rgba(0,0,0,.6); padding: 1rem 1.25rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+        .py-consent-text { flex: 1 1 420px; font-size: .88rem; }
+        .py-consent-text strong { color: var(--py-gold-light); display: block; margin-bottom: .25rem; }
+        .py-consent-text p { margin: 0; }
+        .py-consent-text a { color: var(--py-gold-light); text-decoration: underline; }
+        .py-consent-prefs { margin-top: .6rem; display: flex; flex-direction: column; gap: .3rem; }
+        .py-consent-pref span { opacity: .6; font-size: .8rem; }
+        .py-consent-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+    </style>
+}
+@if (Model.Provider == AnalyticsProvider.GoogleAnalytics4)
+{
+    <script type="text/plain" data-consent="analytics" data-src="https://www.googletagmanager.com/gtag/js?id=@Model.AnalyticsId"></script>
+    <script type="text/plain" data-consent="analytics">
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', @Json.Serialize(Model.AnalyticsId), { anonymize_ip: true });
+    </script>
+}
+else if (Model.Provider == AnalyticsProvider.Plausible)
+{
+    <script defer data-domain="@Model.AnalyticsId" src="https://plausible.io/js/script.js"></script>
+}
+else if (Model.Provider == AnalyticsProvider.Umami)
+{
+    <script defer data-website-id="@Model.AnalyticsId" src="@Model.ScriptUrl"></script>
+}
+@if (Model.RequiresConsent)
+{
+    <script src="~/js/consent.js" asp-append-version="true"></script>
+}

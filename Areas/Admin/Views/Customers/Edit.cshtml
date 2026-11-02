@@ -1,0 +1,42 @@
+@model Customer
+@{
+    ViewData["Title"] = "Müşteri Düzenle";
+}
+<h2 class="mb-4">Müşteri Düzenle</h2>
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="CreatedAt" />
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label asp-for="Phone" class="form-label"></label>
+            <input asp-for="Phone" class="form-control" />
+        </div>
+        <div class="col-md mb-3">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label asp-for="Points" class="form-label"></label>
+            <input asp-for="Points" class="form-control" />
+        </div>
+        <div class="col-md mb-3">
+            <label asp-for="Level" class="form-label"></label>
+            <select asp-for="Level" class="form-select">
+                <option value="0">Standart</option>
+                <option value="1">Silver</option>
+                <option value="2">Gold</option>
+                <option value="3">VIP</option>
+            </select>
+        </div>
+    </div>
+    <p class="text-muted small">Toplam harcama: @Model.TotalSpent.ToString("0.00") ₺ (otomatik hesaplanır, kasadan ödeme onaylandıkça artar)</p>
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>

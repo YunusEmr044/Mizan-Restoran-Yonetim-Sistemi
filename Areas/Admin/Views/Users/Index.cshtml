@@ -1,0 +1,48 @@
+@model List<UserListItem>
+@{
+    ViewData["Title"] = "Kullanıcılar";
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+}
+<div class="d-flex justify-content-between mb-3">
+    <h2>Kullanıcılar</h2>
+    <a asp-action="Create" class="btn btn-primary">+ Yeni Kullanıcı</a>
+</div>
+<div class="table-responsive">
+<table class="table">
+    <thead><tr><th>Ad</th><th>E-posta</th><th>Rol(ler)</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>
+                @item.User.FullName
+                @if (item.IsDeactivated)
+                {
+                    <span class="badge bg-secondary ms-1">Pasif</span>
+                }
+            </td>
+            <td>@item.User.Email</td>
+            <td>@string.Join(", ", item.Roles)</td>
+            <td class="text-end">
+                <a asp-action="Edit" asp-route-id="@item.User.Id" class="btn btn-sm btn-outline-primary">Düzenle</a>
+                @if (item.User.Id != currentUserId)
+                {
+                    <form asp-action="ToggleActive" asp-route-id="@item.User.Id" method="post" class="d-inline"
+                          data-confirm="@(item.IsDeactivated ? item.User.Email + " tekrar giriş yapabilecek." : item.User.Email + " giriş yapamayacak; açık oturumu en geç 30 dakika içinde kapanır.")"
+                          data-confirm-title="@(item.IsDeactivated ? "Hesap aktif edilsin mi?" : "Hesap pasife alınsın mı?")"
+                          data-confirm-ok="@(item.IsDeactivated ? "Aktif Et" : "Pasife Al")">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">@(item.IsDeactivated ? "Aktif et" : "Pasife al")</button>
+                    </form>
+                }
+                @if (User.HasClaim(Permissions.ClaimType, Permissions.Users.Delete))
+                {
+                    <form asp-action="Delete" asp-route-id="@item.User.Id" method="post" class="d-inline" data-confirm="@item.User.Email hesabı silinecek. Bu işlem geri alınamaz." data-confirm-title="Kullanıcı silinsin mi?" data-confirm-ok="Kullanıcıyı Sil" data-confirm-danger>
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                    </form>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+</div>

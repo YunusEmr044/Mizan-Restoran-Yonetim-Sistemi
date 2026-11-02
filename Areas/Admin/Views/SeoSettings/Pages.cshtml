@@ -1,0 +1,46 @@
+@model List<(SeoPageDefinition Def, PageSeo Row)>
+@{
+    ViewData["Title"] = "Sayfa SEO";
+}
+<h2 class="mb-1">Sayfa SEO</h2>
+<p class="text-muted small mb-3">Her sabit sayfa için başlık/açıklama/canonical/noindex/Open Graph override'ı - boş bırakılan alanlar için makul bir Türkçe varsayılan kullanılır.</p>
+
+@await Html.PartialAsync("_SeoSubNav")
+
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Sayfa</th>
+                <th>Yol</th>
+                <th>SEO Başlığı</th>
+                <th>Durum</th>
+                <th class="text-end">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var (def, row) in Model)
+            {
+                <tr>
+                    <td>@def.Label</td>
+                    <td><code>@def.Path</code></td>
+                    <td>@(string.IsNullOrWhiteSpace(row.Title) ? def.DefaultTitle : row.Title)</td>
+                    <td>
+                        @if (row.NoIndex)
+                        {
+                            <span class="badge bg-secondary">noindex</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">indeksleniyor</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a asp-action="PageEdit" asp-route-key="@def.Key" class="btn btn-sm btn-outline-secondary">Düzenle</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,52 @@
+@model PackageInfo
+@{
+    var type = (OrderType)ViewBag.Type;
+    var branches = (List<Branch>)ViewBag.Branches;
+    var delivery = type == OrderType.AdreseTeslim;
+    ViewData["Title"] = delivery ? "Yeni Adrese Teslim" : "Yeni Gel-Al";
+}
+<h2 class="mb-1">@(delivery ? "Adrese Teslim Paket" : "Gel-Al Paket")</h2>
+<p class="text-muted small mb-4">Müşteri bilgilerini girin; sonraki adımda ürünleri seçip mutfağa gönderirsiniz.</p>
+
+<form asp-action="YeniPaket" method="post" class="row g-3" style="max-width:720px">
+    <input type="hidden" name="tur" value="@type" />
+    <div class="col-md-6">
+        <label class="form-label" for="pkName">Müşteri adı</label>
+        <input class="form-control" id="pkName" name="CustomerName" value="@Model.CustomerName" maxlength="@PackageInfo.NameMax" required autofocus />
+    </div>
+    <div class="col-md-6">
+        <label class="form-label" for="pkPhone">Telefon @(delivery ? "" : "(isteğe bağlı)")</label>
+        <input class="form-control" id="pkPhone" name="CustomerPhone" value="@Model.CustomerPhone" maxlength="@PackageInfo.PhoneMax" inputmode="tel" required="@delivery" />
+    </div>
+    @if (delivery)
+    {
+        <div class="col-12">
+            <label class="form-label" for="pkAddress">Adres</label>
+            <textarea class="form-control" id="pkAddress" name="Address" rows="2" maxlength="@PackageInfo.AddressMax" required>@Model.Address</textarea>
+        </div>
+    }
+    <div class="col-md-4">
+        <label class="form-label" for="pkTime">Teslim saati (isteğe bağlı)</label>
+        <input class="form-control" id="pkTime" name="promisedTime" type="time" />
+    </div>
+    @if (branches.Count > 1)
+    {
+        <div class="col-md-8">
+            <label class="form-label" for="pkBranch">Şube</label>
+            <select class="form-select" id="pkBranch" name="branchId" required>
+                @foreach (var b in branches)
+                {
+                    <option value="@b.Id">@b.Name</option>
+                }
+            </select>
+        </div>
+    }
+    <div class="col-12">
+        <label class="form-label" for="pkNote">Not (isteğe bağlı)</label>
+        <input class="form-control" id="pkNote" name="Note" value="@Model.Note" maxlength="@PackageInfo.NoteMax" placeholder="Örn. zil çalışmıyor, arayın" />
+    </div>
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">Ürünleri Seç →</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+    </div>
+</form>

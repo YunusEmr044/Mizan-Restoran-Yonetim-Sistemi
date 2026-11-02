@@ -1,0 +1,49 @@
+@model List<LegalPage>
+@{
+    ViewData["Title"] = "Yasal Sayfalar";
+}
+<div class="mb-3">
+    <h2 class="mb-0">Yasal Sayfalar</h2>
+    <p class="text-muted small mb-0">KVKK aydınlatma metni, gizlilik ve çerez politikası ile kullanım koşulları. Yayındaki sayfalar sitenin alt bilgisinde listelenir.</p>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Başlık</th>
+                <th>Adres</th>
+                <th>Durum</th>
+                <th>Son güncelleme</th>
+                <th class="text-end">İşlemler</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td class="fw-semibold">@p.Title</td>
+                    <td><code>/@p.Slug</code></td>
+                    <td>
+                        @if (p.IsPublished)
+                        {
+                            <span class="badge bg-success">Yayında</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Taslak</span>
+                        }
+                    </td>
+                    <td class="text-muted small text-nowrap">@p.UpdatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                    <td class="text-end text-nowrap">
+                        @if (p.IsPublished)
+                        {
+                            <a href="/@p.Slug" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary"><i class="bi bi-box-arrow-up-right"></i> Görüntüle</a>
+                        }
+                        <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Düzenle</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,580 @@
+@using RestoranYonetim.Services
+@model SiteContent
+@{
+    ViewData["Title"] = T["Ana Sayfa"];
+    Layout = "_PublicLayout";
+
+    // Bölümler HomeSection tablosundaki sıraya göre render edilir (bkz. HomePageController.Sections). Footer bu listede yok, her zaman gösterilir.
+    var sectionOrder = (List<string>)(ViewBag.SectionOrder ?? new List<string>());
+    var gallery = (List<GalleryImage>)ViewBag.GalleryPreview;
+    var campaigns = (List<Campaign>)ViewBag.ActiveCampaigns;
+    var testimonials = (List<Feedback>)ViewBag.Testimonials;
+    var heroSlides = (List<HeroSlide>)ViewBag.HeroSlides;
+    var stats = (List<HomeStat>)ViewBag.Stats;
+    var features = (List<HomeFeature>)ViewBag.Features;
+    var featuredMenu = (List<MenuItem>)ViewBag.FeaturedMenu;
+    var chefSpecial = (ChefSpecial?)ViewBag.ChefSpecial;
+    var workingHoursDays = (List<WorkingHoursDay>)ViewBag.WorkingHoursDays;
+    var hoursStatus = (WorkingHoursStatus.Result)ViewBag.WorkingHoursStatus;
+
+    // HeroSlide yoksa (yeni kurulum) SiteContent'in eski tekil Hero* alanlarından tek bir slayt üretilir.
+    var effectiveSlides = heroSlides.Any()
+        ? heroSlides
+        : new List<HeroSlide>
+        {
+            new HeroSlide
+            {
+                Title = Model.HeroTitle,
+                Subtitle = Model.HeroSubtitle,
+                ImageUrl = Model.HeroImageUrl,
+                PrimaryButtonText = Model.HeroPrimaryButtonText,
+                PrimaryButtonUrl = Model.HeroPrimaryButtonUrl,
+                SecondaryButtonText = Model.HeroSecondaryButtonText,
+                SecondaryButtonUrl = Model.HeroSecondaryButtonUrl
+            }
+        };
+
+    string Fallback(string? value, string fallback) => string.IsNullOrWhiteSpace(value) ? fallback : value;
+    // İçerikteki site içi bağlantılar ("/menu") ziyaretçinin dil önekiyle ("/en/menu") açılır.
+    string? LocalUrl(string? url) => url != null && url.StartsWith("/") && !url.StartsWith("//") ? Context.Request.PathBase + url : url;
+
+    string AboutTeaser()
+    {
+        if (string.IsNullOrWhiteSpace(Model.AboutText)) { return T["Yıllardır aynı özen ve tutkuyla, her tabakta unutulmaz bir deneyim sunuyoruz."]; }
+        var text = Model.AboutText.Trim();
+        return text.Length > 240 ? text.Substring(0, 240).TrimEnd() + "…" : text;
+    }
+}
+
+@* Not: Hero admin panelden sıralanamaz, her zaman en üstte kalır - sadece açık/kapalı durumu etkilidir. Diğer bölümler admin sırasına göre render edilir. *@
+@if (sectionOrder.Contains(HomeSectionCatalog.Hero))
+{
+<section class="py-hero" id="pyHero">
+    @for (var i = 0; i < effectiveSlides.Count; i++)
+    {
+        var slide = effectiveSlides[i];
+        <div class="py-hero-slide @(i == 0 ? "py-hero-active" : "")" data-slide-index="@i">
+            @if (!string.IsNullOrEmpty(slide.ImageUrl))
+            {
+                <div class="py-hero-slide-img" style="background-image:url('@slide.ImageUrl');"></div>
+            }
+            <div class="py-hero-scrim"></div>
+            <div class="container py-hero-content text-center text-md-start">
+                <div class="py-eyebrow justify-content-center justify-content-md-start">@T["Hoş Geldiniz"]</div>
+                <h1 class="mb-3 py-reveal py-in">@slide.Title</h1>
+                @if (!string.IsNullOrEmpty(slide.Subtitle))
+                {
+                    <p class="lead mx-auto mx-md-0 py-reveal py-in py-delay-1">@slide.Subtitle</p>
+                }
+                @if (!string.IsNullOrEmpty(slide.Description))
+                {
+                    <p class="mx-auto mx-md-0 py-reveal py-in py-delay-1" style="color:#d8cfbf; max-width:560px;">@slide.Description</p>
+                }
+                <div class="d-flex flex-wrap gap-3 mt-4 justify-content-center justify-content-md-start py-reveal py-in py-delay-2">
+                    @if (!string.IsNullOrWhiteSpace(slide.PrimaryButtonText))
+                    {
+                        <a href="@(string.IsNullOrWhiteSpace(slide.PrimaryButtonUrl) ? Url.Action("Menu") : LocalUrl(slide.PrimaryButtonUrl))" class="btn btn-py-gold btn-lg"><i class="bi bi-journal-richtext me-2"></i>@slide.PrimaryButtonText</a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(slide.SecondaryButtonText))
+                    {
+                        <a href="@(string.IsNullOrWhiteSpace(slide.SecondaryButtonUrl) ? Url.Action("Rezervasyon") : LocalUrl(slide.SecondaryButtonUrl))" class="btn btn-py-outline btn-lg"><i class="bi bi-calendar-check me-2"></i>@slide.SecondaryButtonText</a>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    @if (effectiveSlides.Count > 1)
+    {
+        <div class="py-hero-dots">
+            @for (var i = 0; i < effectiveSlides.Count; i++)
+            {
+                <button type="button" class="py-hero-dot @(i == 0 ? "py-hero-dot-active" : "")" data-dot-index="@i" aria-label="@T["Slayt {0}", i + 1]"></button>
+            }
+        </div>
+    }
+    <div class="py-scroll-cue"><i class="bi bi-chevron-double-down"></i></div>
+</section>
+}
+
+@foreach (var key in sectionOrder.Where(k => k != HomeSectionCatalog.Hero))
+{
+    @if (key == HomeSectionCatalog.Stats && stats.Any())
+    {
+        <section class="py-stats-strip">
+            <div class="container">
+                <div class="row g-4">
+                    @foreach (var s in stats)
+                    {
+                        <div class="col-6 col-md-3 py-stat-item py-reveal">
+                            @if (!string.IsNullOrEmpty(s.Icon))
+                            {
+                                <div class="py-stat-icon"><i class="bi @s.Icon"></i></div>
+                            }
+                            <div class="py-stat-value" data-count-value="@s.Value">@s.Value</div>
+                            <div class="py-stat-label">@s.Label</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+    }
+    else if (key == HomeSectionCatalog.Features && features.Any())
+    {
+        <section class="py-section py-section-alt">
+            <div class="container">
+                <div class="text-center mb-5 py-reveal">
+                    <div class="py-eyebrow justify-content-center">@T["Bizi Özel Kılan"]</div>
+                    <h2 class="py-serif fw-bold">@Fallback(Model.FeaturesSectionTitle, T["Neden Bizi Seçmelisiniz"])</h2>
+                    @if (!string.IsNullOrWhiteSpace(Model.FeaturesSectionSubtitle))
+                    {
+                        <p class="text-muted mx-auto" style="max-width:560px;">@Model.FeaturesSectionSubtitle</p>
+                    }
+                </div>
+                <div class="row g-4">
+                    @for (var i = 0; i < features.Count; i++)
+                    {
+                        var f = features[i];
+                        <div class="col-md-4 py-reveal @(i == 1 ? "py-delay-1" : i == 2 ? "py-delay-2" : "")">
+                            <div class="py-usp-card">
+                                <div class="py-usp-icon"><i class="bi @(string.IsNullOrEmpty(f.Icon) ? "bi-star-fill" : f.Icon)"></i></div>
+                                <h5 class="py-serif fw-bold mb-2">@f.Title</h5>
+                                @if (!string.IsNullOrEmpty(f.Description))
+                                {
+                                    <p class="text-muted small mb-0">@f.Description</p>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+    }
+    else if (key == HomeSectionCatalog.FeaturedMenu && featuredMenu.Any())
+    {
+        <section class="py-section">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-end mb-4 py-reveal flex-wrap gap-2">
+                    <div>
+                        <div class="py-eyebrow">@T["Menüden"]</div>
+                        <h2 class="py-serif fw-bold mb-0">@Fallback(Model.FeaturedMenuSectionTitle, T["Öne Çıkan Lezzetler"])</h2>
+                        @if (!string.IsNullOrWhiteSpace(Model.FeaturedMenuSectionSubtitle))
+                        {
+                            <p class="text-muted small mb-0 mt-1">@Model.FeaturedMenuSectionSubtitle</p>
+                        }
+                    </div>
+                    <a asp-action="Menu" class="btn btn-py-outline">@T["Tüm Menüyü Gör"] <i class="bi bi-arrow-right ms-1"></i></a>
+                </div>
+                <div class="py-highlight-strip py-reveal">
+                    @foreach (var item in featuredMenu)
+                    {
+                        <div class="py-highlight-card">
+                            <div class="py-highlight-img">
+                                @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                {
+                                    <img src="@item.ImageUrl" alt="@item.Name" loading="lazy" />
+                                }
+                            </div>
+                            <div class="py-highlight-body">
+                                <div class="fw-semibold small">@item.Name</div>
+                                <div class="py-highlight-price">@item.Price.ToString("0.00") ₺</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+    }
+    else if (key == HomeSectionCatalog.Story)
+    {
+        <section class="py-section py-section-alt">
+            <div class="container">
+                <div class="row align-items-center g-5">
+                    @if (!string.IsNullOrEmpty(Model.AboutImageUrl))
+                    {
+                        <div class="col-lg-5 py-reveal">
+                            <div class="py-about-frame">
+                                <img src="@Model.AboutImageUrl" alt="@Model.AboutTitle" loading="lazy" />
+                            </div>
+                        </div>
+                    }
+                    <div class="col-lg py-reveal py-delay-1">
+                        <div class="py-eyebrow">@T["Hikâyemiz"]</div>
+                        <h2 class="py-serif fw-bold mb-3">@Model.AboutTitle</h2>
+                        <p class="fs-5" style="color:#3a3025;">@AboutTeaser()</p>
+                        <a asp-action="Hakkimizda" class="btn btn-py-dark mt-2">@Fallback(Model.AboutButtonText, T["Hikâyemizi Okuyun"]) <i class="bi bi-arrow-right ms-1"></i></a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    }
+    else if (key == HomeSectionCatalog.ChefSpecial && chefSpecial != null)
+    {
+        <section class="py-section">
+            <div class="container">
+                <div class="py-chef-card py-reveal">
+                    @if (!string.IsNullOrEmpty(chefSpecial.EffectiveImageUrl))
+                    {
+                        <div class="py-chef-img">
+                            <img src="@chefSpecial.EffectiveImageUrl" alt="@chefSpecial.EffectiveTitle" loading="lazy" />
+                        </div>
+                    }
+                    <div class="py-chef-body">
+                        <div class="py-eyebrow">@Fallback(Model.ChefSpecialSectionTitle, T["Şefin Önerisi"])</div>
+                        @if (!string.IsNullOrWhiteSpace(Model.ChefSpecialSectionSubtitle))
+                        {
+                            <p class="text-muted small mb-2">@Model.ChefSpecialSectionSubtitle</p>
+                        }
+                        <h2 class="py-serif fw-bold mb-2">@chefSpecial.EffectiveTitle</h2>
+                        @if (!string.IsNullOrEmpty(chefSpecial.EffectiveDescription))
+                        {
+                            <p class="text-muted mb-3">@chefSpecial.EffectiveDescription</p>
+                        }
+                        <div class="d-flex align-items-center gap-3 flex-wrap">
+                            <span class="py-chef-price">@chefSpecial.EffectivePrice.ToString("0.00") ₺</span>
+                            <a asp-action="Menu" class="btn btn-py-gold">@T["Menüde Gör"] <i class="bi bi-arrow-right ms-1"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    }
+    else if (key == HomeSectionCatalog.Campaigns && campaigns.Any())
+    {
+        var bigCampaign = campaigns[0];
+        var smallCampaigns = campaigns.Skip(1).Take(3).ToList();
+        <section class="py-section py-section-alt">
+            <div class="container">
+                <div class="text-center mb-5 py-reveal">
+                    <div class="py-eyebrow justify-content-center">@T["Kaçırmayın"]</div>
+                    <h2 class="py-serif fw-bold">@Fallback(Model.CampaignsSectionTitle, T["Güncel Kampanyalar"])</h2>
+                </div>
+                <div class="row g-4">
+                    <div class="col-lg-7 py-reveal">
+                        <div class="py-campaign-big" style="@(!string.IsNullOrEmpty(bigCampaign.ImageUrl) ? $"background-image:url('{bigCampaign.ImageUrl}');" : "")">
+                            <div class="py-campaign-big-scrim"></div>
+                            <div class="py-campaign-big-body">
+                                <span class="badge mb-2" style="background:linear-gradient(135deg, var(--py-gold-light), var(--py-gold)); color:#241a0c; width:fit-content;">
+                                    @(bigCampaign.DiscountType == CampaignDiscountType.Yuzde ? T["%{0} indirim", bigCampaign.Value.ToString("0.##")] : T["{0} ₺ indirim", bigCampaign.Value.ToString("0.00")])
+                                </span>
+                                <h3 class="py-serif fw-bold">@bigCampaign.Name</h3>
+                                @if (!string.IsNullOrEmpty(bigCampaign.Description))
+                                {
+                                    <p class="mb-3" style="max-width:480px;">@bigCampaign.Description</p>
+                                }
+                                <div class="d-flex align-items-center gap-3 flex-wrap">
+                                    <a href="@(LocalUrl(bigCampaign.ButtonUrl) ?? Url.Action("Menu"))" class="btn btn-py-gold">@Fallback(bigCampaign.ButtonText, T["Detayları Gör"])</a>
+                                    <span class="small" style="color:#d8cfbf;">@T["{0} tarihine kadar geçerli", bigCampaign.EndDate.ToString("d")]</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="d-flex flex-column gap-3 h-100">
+                            @foreach (var c in smallCampaigns)
+                            {
+                                <div class="py-campaign-small py-reveal">
+                                    @if (!string.IsNullOrEmpty(c.ImageUrl))
+                                    {
+                                        <img src="@c.ImageUrl" alt="@c.Name" loading="lazy" />
+                                    }
+                                    else
+                                    {
+                                        <div class="py-campaign-small-icon"><i class="bi bi-tag-fill"></i></div>
+                                    }
+                                    <div class="flex-fill">
+                                        <div class="fw-semibold">@c.Name</div>
+                                        <span class="small" style="color:var(--py-gold);">
+                                            @(c.DiscountType == CampaignDiscountType.Yuzde ? T["%{0} indirim", c.Value.ToString("0.##")] : T["{0} ₺ indirim", c.Value.ToString("0.00")])
+                                        </span>
+                                    </div>
+                                </div>
+                            }
+                            @if (!smallCampaigns.Any())
+                            {
+                                <div class="py-campaign-small py-reveal justify-content-center text-muted small">@T["Şu an başka aktif kampanya yok."]</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    }
+    else if (key == HomeSectionCatalog.Testimonials)
+    {
+        @await Html.PartialAsync("_Testimonials", testimonials, new ViewDataDictionary(ViewData) { ["Title"] = Model.TestimonialsSectionTitle })
+    }
+    else if (key == HomeSectionCatalog.Gallery && gallery.Any())
+    {
+        <section class="py-section">
+            <div class="container">
+                <div class="text-center mb-5 py-reveal">
+                    <div class="py-eyebrow justify-content-center">Galeriden</div>
+                    <h2 class="py-serif fw-bold">@Fallback(Model.GallerySectionTitle, T["Mekanımızdan Kareler"])</h2>
+                </div>
+                <div class="py-bento-grid py-reveal">
+                    @for (var i = 0; i < gallery.Count; i++)
+                    {
+                        <div class="py-gallery-tile @(i == 0 ? "py-bento-big" : "")">
+                            <img src="@gallery[i].ImageUrl" alt="@gallery[i].Caption" loading="lazy" />
+                        </div>
+                    }
+                </div>
+                <div class="text-center mt-4 py-reveal">
+                    <a asp-action="Galeri" class="btn btn-py-dark"><i class="bi bi-images me-2"></i>@T["Tüm Galeriyi Gör"]</a>
+                </div>
+            </div>
+        </section>
+    }
+    else if (key == HomeSectionCatalog.Qr)
+    {
+        @* Not: burada gerçek bir QR kod gösterilmez (QR'lar masalara özel); bölüm sadece telefon mockup'ı ile deneyimi anlatır. *@
+        <section class="py-section py-section-alt">
+            <div class="container">
+                <div class="py-qr-section">
+                    <div class="py-reveal">
+                        <div class="py-eyebrow">@T["Dijital Menü"]</div>
+                        <h2 class="py-serif fw-bold mb-3">@Fallback(Model.QrSectionTitle, T["Masadan Menünüze, Bir Dokunuşla"])</h2>
+                        <p class="mb-0" style="max-width:520px; color:#6b5f4e;">
+                            @Fallback(Model.QrSectionSubtitle, T["Masanızdaki size özel QR kodu telefonunuzla okutun. Menümüzü keşfedin, lezzetlerimizi inceleyin ve siparişinizi doğrudan masanızdan kolayca oluşturun."])
+                        </p>
+                        <div class="py-qr-steps">
+                            <div class="py-qr-step">
+                                <div class="py-qr-step-num">01</div>
+                                <div>
+                                    <div class="py-qr-step-title">@Fallback(Model.QrStep1Title, T["QR Kodunuzu Okutun"])</div>
+                                    <p class="py-qr-step-text">@Fallback(Model.QrStep1Text, T["Masanızda bulunan size özel QR kodu telefonunuzla tarayın."])</p>
+                                </div>
+                            </div>
+                            <div class="py-qr-step">
+                                <div class="py-qr-step-num">02</div>
+                                <div>
+                                    <div class="py-qr-step-title">@Fallback(Model.QrStep2Title, T["Menüyü Keşfedin"])</div>
+                                    <p class="py-qr-step-text">@Fallback(Model.QrStep2Text, T["Güncel menümüzü, ürünleri, içerikleri ve fiyatları kolayca inceleyin."])</p>
+                                </div>
+                            </div>
+                            <div class="py-qr-step">
+                                <div class="py-qr-step-num">03</div>
+                                <div>
+                                    <div class="py-qr-step-title">@Fallback(Model.QrStep3Title, T["Siparişinizi Oluşturun"])</div>
+                                    <p class="py-qr-step-text">@Fallback(Model.QrStep3Text, T["Siparişinizi doğrudan masanızdan kolayca oluşturun ve süreci takip edin."])</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="py-qr-phone-wrap py-reveal py-delay-1">
+                        <div class="py-qr-phone">
+                            <div class="py-qr-phone-screen">
+                                @if (!string.IsNullOrEmpty(Model.QrPhoneImageUrl))
+                                {
+                                    <img src="@Model.QrPhoneImageUrl" alt="@T["Dijital menü önizlemesi"]" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <div class="py-qr-phone-mock">
+                                        <div class="py-qr-phone-mock-bar">
+                                            <span>12:30</span>
+                                            <span><i class="bi bi-reception-4"></i><i class="bi bi-wifi"></i><i class="bi bi-battery-full"></i></span>
+                                        </div>
+                                        <div class="py-qr-phone-mock-header">
+                                            <div class="py-qr-phone-mock-title">@Fallback(Model.HeroTitle, T["Menümüz"])</div>
+                                            <i class="bi bi-search"></i>
+                                        </div>
+                                        <div class="py-qr-phone-mock-list">
+                                            @if (featuredMenu.Any())
+                                            {
+                                                @foreach (var item in featuredMenu.Take(3))
+                                                {
+                                                    <div class="py-qr-phone-mock-item">
+                                                        <div class="py-qr-phone-mock-item-dot"><i class="bi bi-egg-fried"></i></div>
+                                                        <div class="py-qr-phone-mock-item-info">
+                                                            <div class="py-qr-phone-mock-item-name">@item.Name</div>
+                                                        </div>
+                                                        <div class="py-qr-phone-mock-item-price">@item.Price.ToString("0.00") ₺</div>
+                                                    </div>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <div class="py-qr-phone-mock-item py-qr-phone-mock-item-skeleton"></div>
+                                                <div class="py-qr-phone-mock-item py-qr-phone-mock-item-skeleton"></div>
+                                                <div class="py-qr-phone-mock-item py-qr-phone-mock-item-skeleton"></div>
+                                            }
+                                        </div>
+                                        <div class="py-qr-phone-mock-cta"><i class="bi bi-cart3 me-1"></i>@T["Sipariş Ver"]</div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    }
+    else if (key == HomeSectionCatalog.Reservation)
+    {
+        <section class="py-reservation-cta py-reveal" style="@(!string.IsNullOrEmpty(Model.ReservationCtaImageUrl) ? $"background-image:url('{Model.ReservationCtaImageUrl}');" : "")">
+            <div class="py-reservation-scrim"></div>
+            <div class="container position-relative text-center">
+                <h2 class="py-serif fw-bold mb-3">@Fallback(Model.ReservationCtaTitle, T["Bir Masa Ayırtın"])</h2>
+                <p class="mx-auto mb-4" style="max-width:560px; color:#e9e1d3;">@Fallback(Model.ReservationCtaText, T["Özel bir akşam yemeği ya da kalabalık bir davet — masanızı şimdiden ayırtın, sizi ağırlamaktan mutluluk duyarız."])</p>
+                <a asp-action="Rezervasyon" class="btn btn-py-gold btn-lg"><i class="bi bi-calendar-check me-2"></i>@Fallback(Model.ReservationCtaButtonText, T["Rezervasyon Yap"])</a>
+            </div>
+        </section>
+    }
+    else if (key == HomeSectionCatalog.Contact)
+    {
+        <section class="py-section py-section-alt">
+            <div class="container">
+                <div class="row g-5 align-items-center">
+                    <div class="col-lg-6 py-reveal">
+                        <div class="py-eyebrow">@T["Bize Ulaşın"]</div>
+                        <h2 class="py-serif fw-bold mb-3">@T["Konum ve İletişim"]</h2>
+                        <div class="py-open-badge @(hoursStatus.IsOpen ? "py-open-yes" : "py-open-no")">
+                            <span class="py-open-dot"></span>
+                            @hoursStatus.StatusText
+                            @if (!string.IsNullOrEmpty(hoursStatus.ClosingOrOpeningText))
+                            {
+                                <span class="text-muted small ms-1">— @hoursStatus.ClosingOrOpeningText</span>
+                            }
+                        </div>
+                        <ul class="list-unstyled mt-4 d-flex flex-column gap-2">
+                            @if (!string.IsNullOrEmpty(Model.ContactAddress))
+                            {
+                                <li><i class="bi bi-geo-alt me-2" style="color:var(--py-gold);"></i>@Model.ContactAddress</li>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.ContactPhone))
+                            {
+                                <li><i class="bi bi-telephone me-2" style="color:var(--py-gold);"></i>@Model.ContactPhone</li>
+                            }
+                            @if (hoursStatus.TodayHoursText != null)
+                            {
+                                <li><i class="bi bi-clock me-2" style="color:var(--py-gold);"></i>@T["Bugün:"] @hoursStatus.TodayHoursText</li>
+                            }
+                        </ul>
+                        <a asp-action="Iletisim" class="btn btn-py-dark mt-3">@T["Tüm İletişim Bilgileri"] <i class="bi bi-arrow-right ms-1"></i></a>
+                    </div>
+                    <div class="col-lg-6 py-reveal py-delay-1">
+                        @if (!string.IsNullOrEmpty(Model.MapEmbedUrl))
+                        {
+                            <div class="py-map-frame">
+                                <partial name="_MapEmbed" model="Model" />
+                            </div>
+                        }
+                        else if (!string.IsNullOrEmpty(Model.AboutImageUrl))
+                        {
+                            <div class="py-about-frame">
+                                <img src="@Model.AboutImageUrl" alt="Konum" loading="lazy" />
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </section>
+    }
+    else if (key == HomeSectionCatalog.Instagram && gallery.Any())
+    {
+        <section class="py-section">
+            <div class="container">
+                <div class="text-center mb-5 py-reveal">
+                    <div class="py-eyebrow justify-content-center">@T["Sosyal Medya"]</div>
+                    <h2 class="py-serif fw-bold">@Fallback(Model.InstagramSectionTitle, T["Instagram'da Bizi Takip Edin"])</h2>
+                    @if (!string.IsNullOrWhiteSpace(Model.InstagramHandle))
+                    {
+                        <p class="text-muted">@@@Model.InstagramHandle</p>
+                    }
+                </div>
+                <div class="row row-cols-3 row-cols-md-6 g-2 py-reveal">
+                    @foreach (var img in gallery.Take(6))
+                    {
+                        <div class="col">
+                            <div class="py-insta-tile">
+                                <img src="@img.ImageUrl" alt="@img.Caption" loading="lazy" />
+                                <div class="py-insta-overlay"><i class="bi bi-instagram"></i></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(Model.InstagramUrl))
+                {
+                    <div class="text-center mt-4 py-reveal">
+                        <a href="@Model.InstagramUrl" target="_blank" rel="noopener" class="btn btn-py-outline" style="color:var(--py-text); border-color:var(--py-text);"><i class="bi bi-instagram me-2"></i>@T["Takip Et"]</a>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+}
+
+@section Scripts {
+    <script>
+        (function () {
+            var slides = document.querySelectorAll('#pyHero .py-hero-slide');
+            var dots = document.querySelectorAll('#pyHero .py-hero-dot');
+            if (slides.length > 1) {
+                var current = 0;
+                var timer = null;
+
+                function showSlide(index) {
+                    slides.forEach(function (s, i) { s.classList.toggle('py-hero-active', i === index); });
+                    dots.forEach(function (d, i) { d.classList.toggle('py-hero-dot-active', i === index); });
+                    current = index;
+                }
+
+                function nextSlide() { showSlide((current + 1) % slides.length); }
+
+                function startAuto() {
+                    stopAuto();
+                    timer = setInterval(nextSlide, 6500);
+                }
+                function stopAuto() { if (timer) { clearInterval(timer); timer = null; } }
+
+                dots.forEach(function (dot) {
+                    dot.addEventListener('click', function () {
+                        showSlide(parseInt(dot.getAttribute('data-dot-index'), 10));
+                        startAuto();
+                    });
+                });
+
+                var heroEl = document.getElementById('pyHero');
+                heroEl.addEventListener('mouseenter', stopAuto);
+                heroEl.addEventListener('mouseleave', startAuto);
+                startAuto();
+            }
+
+            // "15+", "1000+" gibi metinlerin baştaki sayısal kısmı 0'dan hedefe animasyonla sayılır, geri kalan metin korunur.
+            var statEls = document.querySelectorAll('[data-count-value]');
+            function animateCount(el) {
+                var raw = el.getAttribute('data-count-value') || '';
+                var match = raw.match(/^(\d+(?:[.,]\d+)?)/);
+                if (!match) { return; }
+                var numText = match[1].replace(',', '.');
+                var target = parseFloat(numText);
+                var decimals = numText.indexOf('.') > -1 ? numText.split('.')[1].length : 0;
+                var suffix = raw.slice(match[1].length);
+                var duration = 1200;
+                var startTs = null;
+
+                function step(ts) {
+                    if (!startTs) { startTs = ts; }
+                    var progress = Math.min((ts - startTs) / duration, 1);
+                    var eased = 1 - Math.pow(1 - progress, 3);
+                    var value = (target * eased).toFixed(decimals);
+                    el.textContent = value + suffix;
+                    if (progress < 1) { requestAnimationFrame(step); } else { el.textContent = raw; }
+                }
+                requestAnimationFrame(step);
+            }
+            if ('IntersectionObserver' in window && statEls.length) {
+                var statIo = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (entry) {
+                        if (entry.isIntersecting) {
+                            animateCount(entry.target);
+                            statIo.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.4 });
+                statEls.forEach(function (el) { statIo.observe(el); });
+            }
+        })();
+    </script>
+}

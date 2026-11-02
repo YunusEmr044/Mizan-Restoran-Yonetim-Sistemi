@@ -1,0 +1,107 @@
+@model ShiftWeekView
+@{
+    ViewData["Title"] = "Vardiya Planı";
+    var tr = System.Globalization.CultureInfo.GetCultureInfo("tr-TR");
+    var days = Enumerable.Range(0, 7).Select(i => Model.WeekStart.AddDays(i)).ToList();
+    var weekParam = Model.WeekStart.ToString("yyyy-MM-dd");
+}
+<style>
+    .ry-shift-grid th, .ry-shift-grid td { min-width: 118px; vertical-align: top; }
+    .ry-shift-grid td:first-child, .ry-shift-grid th:first-child { min-width: 150px; position: sticky; left: 0; background: var(--bs-body-bg, #fff); }
+    .ry-shift { display: flex; justify-content: space-between; gap: 4px; align-items: center; padding: 3px 6px; margin-bottom: 4px; border-radius: 6px; background: rgba(var(--ry-accent-rgb), .14); font-size: .82rem; }
+    .ry-shift form { margin: 0; }
+    .ry-shift button { border: 0; background: none; padding: 0 2px; color: #a33; line-height: 1; }
+    .ry-leave { padding: 3px 6px; border-radius: 6px; background: #eef2f6; font-size: .78rem; color: #475467; }
+    .ry-today { background: rgba(var(--ry-accent-rgb), .06); }
+    @@media print {
+        .ry-sidebar, .ry-topbar, .ry-no-print, .ry-shift button, .ry-preview-strip { display: none !important; }
+        .ry-shift-grid td:first-child, .ry-shift-grid th:first-child { position: static; }
+    }
+</style>
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-0">Vardiya Planı</h2>
+        <p class="text-muted small mb-0">@Model.WeekStart.ToString("d MMMM", tr) – @Model.WeekStart.AddDays(6).ToString("d MMMM yyyy", tr)</p>
+    </div>
+    <div class="d-flex gap-2 ry-no-print">
+        <a class="btn btn-outline-secondary" asp-action="Shifts" asp-route-week="@Model.WeekStart.AddDays(-7).ToString("yyyy-MM-dd")"><i class="bi bi-chevron-left"></i> Önceki</a>
+        <a class="btn btn-outline-secondary" asp-action="Shifts">Bu hafta</a>
+        <a class="btn btn-outline-secondary" asp-action="Shifts" asp-route-week="@Model.WeekStart.AddDays(7).ToString("yyyy-MM-dd")">Sonraki <i class="bi bi-chevron-right"></i></a>
+        <button type="button" class="btn btn-outline-dark" onclick="window.print()"><i class="bi bi-printer me-1"></i>Yazdır</button>
+    </div>
+</div>
+
+<div class="card mb-3 ry-no-print"><div class="card-body">
+    <form asp-action="AddShift" method="post" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small" for="ryStaff">Personel</label>
+            <select class="form-select" id="ryStaff" name="userId" required>
+                <option value="">Seçin</option>
+                @foreach (var s in Model.Staff) { <option value="@s.Id">@s.Name</option> }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small" for="ryDate">Gün</label>
+            <select class="form-select" id="ryDate" name="date">
+                @foreach (var d in days) { <option value="@d.ToString("yyyy-MM-dd")" selected="@(d == DateTime.Today)">@d.ToString("ddd d MMM", tr)</option> }
+            </select>
+        </div>
+        <div class="col-md-2"><label class="form-label small" for="ryStart">Başlangıç</label><input class="form-control" id="ryStart" name="start" type="time" value="09:00" required /></div>
+        <div class="col-md-2"><label class="form-label small" for="ryEnd">Bitiş</label><input class="form-control" id="ryEnd" name="end" type="time" value="17:00" required /></div>
+        <div class="col-md-2"><label class="form-label small" for="ryNote">Not</label><input class="form-control" id="ryNote" name="note" maxlength="200" placeholder="Örn. Bar" /></div>
+        <div class="col-md-1"><button type="submit" class="btn btn-primary w-100">Ekle</button></div>
+    </form>
+    <div class="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-2">
+        <span class="form-text">Bitiş başlangıçtan önceyse vardiya gece yarısını geçer (ör. 18:00–02:00).</span>
+        <form asp-action="CopyPreviousWeek" method="post" data-confirm="Geçen haftanın vardiyaları bu haftaya kopyalansın mı? Bu hafta vardiyası olan günler atlanır." data-confirm-ok="Kopyala">
+            <input type="hidden" name="week" value="@weekParam" />
+            <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-copy me-1"></i>Geçen haftayı kopyala</button>
+        </form>
+    </div>
+</div></div>
+
+<div class="table-responsive">
+    <table class="table table-bordered ry-shift-grid">
+        <thead>
+            <tr>
+                <th>Personel</th>
+                @foreach (var d in days) { <th class="@(d == DateTime.Today ? "ry-today" : "")">@d.ToString("ddd d MMM", tr)</th> }
+                <th class="text-end">Saat</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var s in Model.Staff)
+        {
+            var mine = Model.Shifts.Where(x => x.UserId == s.Id).ToList();
+            var mineLeaves = Model.Leaves.Where(l => l.UserId == s.Id).ToList();
+            if (mine.Count == 0 && mineLeaves.Count == 0) { continue; }
+            <tr>
+                <td class="fw-semibold">@s.Name</td>
+                @foreach (var d in days)
+                {
+                    <td class="@(d == DateTime.Today ? "ry-today" : "")">
+                        @foreach (var l in mineLeaves.Where(l => l.StartDate <= d && l.EndDate >= d))
+                        {
+                            <div class="ry-leave"><i class="bi bi-calendar-x me-1"></i>@l.Type.Label()</div>
+                        }
+                        @foreach (var x in mine.Where(x => x.Date == d))
+                        {
+                            <div class="ry-shift" title="@x.Note">
+                                <span>@x.Start.ToString(@"hh\:mm")–@x.End.ToString(@"hh\:mm")@(string.IsNullOrEmpty(x.Note) ? "" : " · " + x.Note)</span>
+                                <form asp-action="DeleteShift" asp-route-id="@x.Id" method="post" data-confirm="Vardiya silinsin mi?" data-confirm-ok="Sil" data-confirm-danger>
+                                    <button type="submit" aria-label="Vardiyayı sil"><i class="bi bi-x"></i></button>
+                                </form>
+                            </div>
+                        }
+                    </td>
+                }
+                <td class="text-end">@mine.Sum(x => RestoranYonetim.Services.PersonnelRules.ShiftLength(x.Start, x.End).TotalHours).ToString("0.#")</td>
+            </tr>
+        }
+        @if (!Model.Shifts.Any() && !Model.Leaves.Any())
+        {
+            <tr><td colspan="9"><partial name="_EmptyState" model='new EmptyStateModel("bi-calendar-week", "Bu hafta için vardiya girilmemiş.", null, null)' /></td></tr>
+        }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,37 @@
+@model List<Faq>
+@{
+    ViewData["Title"] = T["Sıkça Sorulan Sorular"];
+    Layout = "_PublicLayout";
+}
+
+<div class="py-page-hero py-faq-hero">
+    <div class="container">
+        <div class="py-eyebrow justify-content-center">@T["Yardım"]</div>
+        <h1 class="py-serif fw-bold">@T["Sıkça Sorulan Sorular"]</h1>
+    </div>
+</div>
+
+<div class="py-section">
+    <div class="container" style="max-width:820px;">
+        @if (!Model.Any())
+        {
+            <p class="text-muted text-center">@T["Şu anda yayında bir soru bulunmuyor."]</p>
+        }
+        else
+        {
+            @foreach (var group in Model.GroupBy(f => string.IsNullOrWhiteSpace(f.Category) ? T["Genel"] : f.Category))
+            {
+                <div class="py-faq-category py-reveal">
+                    <h2 class="py-serif fw-bold">@group.Key</h2>
+                    @foreach (var faq in group.OrderBy(f => f.DisplayOrder))
+                    {
+                        <details class="py-faq-item">
+                            <summary>@faq.Question</summary>
+                            <div class="py-faq-answer">@faq.Answer</div>
+                        </details>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>

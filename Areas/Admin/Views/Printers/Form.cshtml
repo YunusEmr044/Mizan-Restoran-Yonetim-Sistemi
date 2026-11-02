@@ -1,0 +1,66 @@
+@model KitchenPrinter
+@{
+    var isNew = Model.Id == 0;
+    ViewData["Title"] = isNew ? "Yeni Yazıcı" : "Yazıcıyı Düzenle";
+    var branches = ViewBag.Branches as List<Branch> ?? new();
+}
+<h2 class="mb-4">@ViewData["Title"]</h2>
+<form asp-action="@(isNew ? "Create" : "Edit")" asp-route-id="@(isNew ? null : Model.Id)" method="post" style="max-width: 640px">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" maxlength="@KitchenPrinter.NameMax" required placeholder="Örn. Ocakbaşı yazıcısı" />
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label asp-for="BranchId" class="form-label"></label>
+            <select asp-for="BranchId" class="form-select" asp-items="@(new SelectList(branches, "Id", "Name"))"></select>
+        </div>
+        <div class="col-md mb-3">
+            <label asp-for="Department" class="form-label"></label>
+            <select asp-for="Department" class="form-select" asp-items="Html.GetEnumSelectList<MenuDepartment>()"></select>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label asp-for="Connection" class="form-label"></label>
+            <select asp-for="Connection" class="form-select" asp-items="Html.GetEnumSelectList<PrinterConnection>()" id="ryPrinterConnection"></select>
+        </div>
+        <div class="col-md mb-3">
+            <label asp-for="PaperWidthMm" class="form-label"></label>
+            <select asp-for="PaperWidthMm" class="form-select">
+                @foreach (var w in KitchenPrinterValidation.PaperWidths)
+                {
+                    <option value="@w">@w mm</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="row" id="ryPrinterNetwork">
+        <div class="col-md-8 mb-3">
+            <label asp-for="Host" class="form-label"></label>
+            <input asp-for="Host" class="form-control" maxlength="@KitchenPrinter.HostMax" placeholder="192.168.1.50" />
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="Port" class="form-label"></label>
+            <input asp-for="Port" class="form-control" type="number" min="1" max="65535" />
+        </div>
+    </div>
+    <div class="form-check mb-3">
+        <input asp-for="IsActive" class="form-check-input" />
+        <label asp-for="IsActive" class="form-check-label"></label>
+    </div>
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>
+@section Scripts {
+    <script>
+        (function () {
+            var select = document.getElementById('ryPrinterConnection');
+            var network = document.getElementById('ryPrinterNetwork');
+            function sync() { network.hidden = select.value !== '@((int)PrinterConnection.Ag)'; }
+            select.addEventListener('change', sync);
+            sync();
+        })();
+    </script>
+}

@@ -1,0 +1,25 @@
+@{
+    ViewData["Title"] = "Yeni Kullanıcı";
+}
+<h2 class="mb-4">Yeni Kullanıcı</h2>
+<div asp-validation-summary="All" class="text-danger"></div>
+<form method="post">
+    <div class="mb-3">
+        <label class="form-label">Ad Soyad</label>
+        <input name="fullName" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">E-posta</label>
+        <input name="email" class="form-control" type="email" required />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Şifre</label>
+        <input name="password" class="form-control" type="password" required />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Rol</label>
+        <select name="role" class="form-select" asp-items="ViewBag.Roles" required></select>
+    </div>
+    <button type="submit" class="btn btn-primary">Oluştur</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>

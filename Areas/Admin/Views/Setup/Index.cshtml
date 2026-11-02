@@ -1,0 +1,70 @@
+@model SetupView
+@{
+    ViewData["Title"] = "Kurulum";
+    var done = Model.Steps.Count(s => s.Done);
+    var links = new Dictionary<string, (string Text, string Controller)>
+    {
+        ["name"] = ("Site İçeriği", "SiteContent"),
+        ["logo"] = ("Site İçeriği", "SiteContent"),
+        ["contact"] = ("Site İçeriği", "SiteContent"),
+        ["tables"] = ("Masalar / QR", "Tables"),
+        ["menu"] = ("Menü Ürünleri", "MenuItems"),
+        ["url"] = ("Ayarlar", "Settings")
+    };
+}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-0">Kurulum</h2>
+        <p class="text-muted small mb-0">Restoranınızı canlıya hazırlamak için gereken adımlar. Tamamlanan adımlar kendiliğinden işaretlenir.</p>
+    </div>
+    <span class="badge @(done == Model.Steps.Count ? "bg-success" : "bg-secondary") fs-6">@done / @Model.Steps.Count tamamlandı</span>
+</div>
+
+<div class="progress mb-4" role="progressbar" aria-label="Kurulum ilerlemesi" aria-valuenow="@done" aria-valuemin="0" aria-valuemax="@Model.Steps.Count" style="height:8px">
+    <div class="progress-bar" style="width:@(done * 100 / Model.Steps.Count)%; background-color: rgb(var(--ry-accent-rgb))"></div>
+</div>
+
+<div class="list-group mb-4">
+    @foreach (var step in Model.Steps)
+    {
+        var link = links[step.Key];
+        <div class="list-group-item d-flex align-items-center gap-3 py-3">
+            <i class="bi @(step.Done ? "bi-check-circle-fill text-success" : "bi-circle text-muted") fs-4"></i>
+            <div class="flex-grow-1">
+                <div class="fw-semibold">@step.Title</div>
+                <div class="small text-muted">@step.Hint</div>
+            </div>
+            <a asp-controller="@link.Controller" asp-action="Index" class="btn btn-sm @(step.Done ? "btn-outline-secondary" : "btn-primary")">@(step.Done ? "Düzenle" : link.Text + " →")</a>
+        </div>
+    }
+</div>
+
+@if (!Model.HasTables)
+{
+    <div class="card mb-4" style="max-width: 640px">
+        <div class="card-body">
+            <h5 class="card-title"><i class="bi bi-lightning-charge me-1"></i>Masaları tek adımda oluştur</h5>
+            <p class="small text-muted">Restoran, "Merkez Şube" ve girdiğiniz alan yoksa oluşturulur; masalar "Masa 1, Masa 2…" diye adlandırılır. Sonradan Masalar / QR sayfasından değiştirebilirsiniz.</p>
+            <form asp-action="CreateTables" method="post" class="row g-2 align-items-end">
+                <div class="col-sm-6">
+                    <label class="form-label" for="ryArea">Alan adı</label>
+                    <input class="form-control" id="ryArea" name="areaName" value="Salon" maxlength="100" />
+                </div>
+                <div class="col-sm-3">
+                    <label class="form-label" for="ryCount">Masa sayısı</label>
+                    <input class="form-control" id="ryCount" name="count" type="number" min="1" max="@SetupController.MaxTables" value="10" required />
+                </div>
+                <div class="col-sm-3"><button type="submit" class="btn btn-primary w-100">Oluştur</button></div>
+            </form>
+        </div>
+    </div>
+}
+
+<div class="card"><div class="card-body small">
+    <h6 class="card-title">Ayrıca kontrol edin</h6>
+    <ul class="mb-0">
+        <li>Masaların QR kodlarını <a asp-controller="Tables" asp-action="Index">Masalar / QR</a> sayfasından yazdırıp masalara koyun.</li>
+        <li><a asp-controller="LegalPages" asp-action="Index">Yasal Sayfalar</a>'daki KVKK, gizlilik ve çerez metinlerini işletmenize göre gözden geçirin.</li>
+        <li>Personel hesaplarını <a asp-controller="Users" asp-action="Index">Kullanıcılar</a> sayfasından açın.</li>
+    </ul>
+</div></div>

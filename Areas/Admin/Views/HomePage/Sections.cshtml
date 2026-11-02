@@ -1,0 +1,84 @@
+@using RestoranYonetim.Security
+@{
+    ViewData["Title"] = "Ana Sayfa Bölümleri";
+    ViewBag.SiteActive = "sections";
+    var merged = ViewBag.Merged;
+
+    // Birden fazla bölüm aynı "Site İçeriği" formunu paylaştığında (Hikâyemiz/QR/Rezervasyon/İletişim) ilgili alana kayan bir "#çapa" ile gidilir (bkz. SiteContent/Index.cshtml id="hakkimizda" vb.).
+    (string Controller, string Action, string? Fragment) SectionTarget(string key) => key switch
+    {
+        HomeSectionCatalog.Hero => ("HomePage", "Hero", null),
+        HomeSectionCatalog.Stats => ("HomePage", "Stats", null),
+        HomeSectionCatalog.Features => ("HomePage", "Features", null),
+        HomeSectionCatalog.FeaturedMenu => ("MenuItems", "Index", null),
+        HomeSectionCatalog.Story => ("SiteContent", "Index", "hakkimizda"),
+        HomeSectionCatalog.ChefSpecial => ("ChefSpecial", "Index", null),
+        HomeSectionCatalog.Campaigns => ("Campaigns", "Index", null),
+        HomeSectionCatalog.Testimonials => ("Feedback", "Index", null),
+        HomeSectionCatalog.Gallery => ("Gallery", "Index", null),
+        HomeSectionCatalog.Qr => ("SiteContent", "Index", "qr"),
+        HomeSectionCatalog.Reservation => ("SiteContent", "Index", "rezervasyon-cta"),
+        HomeSectionCatalog.Contact => ("SiteContent", "Index", "iletisim"),
+        HomeSectionCatalog.Instagram => ("SiteContent", "Index", "iletisim"),
+        _ => ("SiteContent", "Index", null)
+    };
+}
+<div class="mb-3">
+    <h2 class="mb-0">Ana Sayfa Bölümleri</h2>
+    <p class="text-muted small mb-0">Bölümleri açıp kapatabilir, sürükleyerek sırasını değiştirebilirsiniz. Değişiklik anında ana sayfaya yansır.</p>
+</div>
+
+@await Html.PartialAsync("_HomeLayoutSubNav")
+
+
+@Html.AntiForgeryToken()
+
+<div class="list-group" id="sectionsList">
+    @foreach (var row in merged)
+    {
+        var def = row.Definition;
+        var isEnabled = row.Row != null ? (bool)row.Row.IsEnabled : true;
+        var target = SectionTarget(def.Key);
+        <div class="list-group-item d-flex align-items-center gap-3" data-key="@def.Key" style="cursor: grab;">
+            <i class="bi bi-grip-vertical text-muted"></i>
+            <div class="flex-grow-1">
+                <strong>@def.Label</strong>
+            </div>
+            <a class="btn btn-sm btn-outline-primary" asp-area="Admin" asp-controller="@target.Controller" asp-action="@target.Action" asp-fragment="@target.Fragment">
+                <i class="bi bi-pencil-square me-1"></i>Düzenle
+            </a>
+            <form asp-action="ToggleSection" method="post" class="mb-0">
+                <input type="hidden" name="key" value="@def.Key" />
+                <button type="submit" class="btn btn-sm @(isEnabled ? "btn-success" : "btn-outline-secondary")">
+                    @(isEnabled ? "Açık" : "Kapalı")
+                </button>
+            </form>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script>
+        (function () {
+            var list = document.getElementById('sectionsList');
+            if (!list || typeof Sortable === 'undefined') return;
+
+            Sortable.create(list, {
+                handle: '.bi-grip-vertical',
+                animation: 150,
+                onEnd: function () {
+                    var keys = Array.prototype.map.call(list.children, function (el) { return el.getAttribute('data-key'); });
+                    fetch('@Url.Action("ReorderSections")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: JSON.stringify(keys)
+                    });
+                }
+            });
+        })();
+    </script>
+}

@@ -1,0 +1,112 @@
+@model ComparisonView
+@using RestoranYonetim.Services.Reports
+@{
+    ViewData["Title"] = "Karşılaştırma ve Kayıplar";
+    ViewBag.ReportsActive = "karsilastirma";
+    var cards = new[]
+    {
+        (Icon: "bi-cash-stack", Label: "Net ciro", Current: Model.Current.TotalRevenue, Previous: Model.Previous.TotalRevenue, Money: true, UpIsGood: true),
+        (Icon: "bi-receipt", Label: "Kapanan adisyon", Current: (decimal)Model.Current.TotalCount, Previous: (decimal)Model.Previous.TotalCount, Money: false, UpIsGood: true),
+        (Icon: "bi-calculator", Label: "Ortalama fiş", Current: Model.Current.AvgTicket, Previous: Model.Previous.AvgTicket, Money: true, UpIsGood: true),
+        (Icon: "bi-arrow-counterclockwise", Label: "İade", Current: Model.Current.TotalRefunds, Previous: Model.Previous.TotalRefunds, Money: true, UpIsGood: false)
+    };
+    string Fmt(decimal v, bool money) => money ? $"{v:0.00} ₺" : v.ToString("0");
+}
+<div class="mb-3">
+    <h2 class="mb-0">Raporlar</h2>
+    <p class="text-muted small mb-0">Karşılaştırma ve Kayıplar</p>
+</div>
+
+@await Html.PartialAsync("_ReportsSubNav")
+
+<form method="get" class="row g-2 align-items-end mb-2">
+    <div class="col-auto">
+        <label class="form-label small">Başlangıç</label>
+        <input type="date" name="start" class="form-control" value="@Model.Start.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-auto">
+        <label class="form-label small">Bitiş</label>
+        <input type="date" name="end" class="form-control" value="@Model.End.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Filtrele</button>
+    </div>
+</form>
+<p class="text-muted small mb-4">
+    Bu dönem: @Model.Start.ToString("dd.MM.yyyy") – @Model.End.ToString("dd.MM.yyyy") ·
+    Önceki dönem: @Model.PreviousStart.ToString("dd.MM.yyyy") – @Model.PreviousEnd.ToString("dd.MM.yyyy")
+</p>
+
+<div class="row g-3 mb-4">
+    @foreach (var c in cards)
+    {
+        var change = PeriodComparison.Change(c.Current, c.Previous);
+        var good = (change > 0) == c.UpIsGood;
+        <div class="col-sm-6 col-lg-3">
+            <div class="ry-kpi h-100">
+                <div class="ry-kpi-label"><i class="bi @c.Icon"></i> @c.Label</div>
+                <div class="ry-kpi-value">@Fmt(c.Current, c.Money)</div>
+                <div class="small text-muted d-flex align-items-center gap-2 flex-wrap">
+                    @if (change is decimal pct)
+                    {
+                        <span class="badge @(pct == 0 ? "bg-secondary" : good ? "bg-success" : "bg-danger")">@(pct > 0 ? "▲" : pct < 0 ? "▼" : "")@Math.Abs(pct).ToString("0.0")%</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary" title="Önceki dönemde veri yok">—</span>
+                    }
+                    <span>önceki: @Fmt(c.Previous, c.Money)</span>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<h5>Günlük ciro</h5>
+<div class="card mb-4"><div class="card-body">
+    @await Html.PartialAsync("_LineChart", Model.Chart)
+</div></div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <h5>Kayıplar</h5>
+        <table class="table align-middle">
+            <thead><tr><th>Kalem</th><th class="text-end">Adet</th><th class="text-end">Tutar</th></tr></thead>
+            <tbody>
+            @foreach (var line in Model.Losses.Lines)
+            {
+                <tr class="@(line.Count == 0 ? "text-muted" : "")"><td>@line.Label</td><td class="text-end">@line.Count</td><td class="text-end">@line.Amount.ToString("0.00") ₺</td></tr>
+            }
+            </tbody>
+            <tfoot>
+                <tr class="fw-semibold">
+                    <td>Toplam kayıp</td>
+                    <td class="text-end small text-muted fw-normal">@(Model.Losses.ShareOfRevenue is decimal share ? $"cironun %{share:0.0}" : "—")</td>
+                    <td class="text-end">@Model.Losses.Total.ToString("0.00") ₺</td>
+                </tr>
+            </tfoot>
+        </table>
+        <p class="text-muted small">İptal edilen kalemler siparişin gönderildiği güne, indirim ve iptal talepleri onaylandığı güne, iade ve ödeme iptalleri kaydın yapıldığı güne göre sayılır.</p>
+    </div>
+    <div class="col-lg-6">
+        <h5>En sık nedenler</h5>
+        <table class="table align-middle">
+            <thead><tr><th>Neden</th><th>Tür</th><th class="text-end">Adet</th><th class="text-end">Tutar</th></tr></thead>
+            <tbody>
+            @foreach (var r in Model.Reasons)
+            {
+                <tr>
+                    <td>@r.Reason</td>
+                    <td><span class="badge @(r.Kind == ReasonKind.Iptal ? "bg-danger-subtle text-danger-emphasis" : "bg-warning-subtle text-warning-emphasis")">@(r.Kind == ReasonKind.Iptal ? "İptal" : "İndirim")</span></td>
+                    <td class="text-end">@r.Count</td>
+                    <td class="text-end">@r.Amount.ToString("0.00") ₺</td>
+                </tr>
+            }
+            @if (!Model.Reasons.Any())
+            {
+                <tr><td colspan="4" class="text-muted">Bu dönemde onaylanan iptal ya da indirim talebi yok.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

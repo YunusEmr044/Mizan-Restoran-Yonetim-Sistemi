@@ -1,0 +1,8 @@
+@{
+    var active = ViewBag.SiteActive as string ?? "";
+}
+<div class="ry-cat-chips mb-4">
+    <a class="ry-cat-chip @(active == "seo" ? "active" : "")" asp-area="Admin" asp-controller="SeoSettings" asp-action="Index"><i class="bi bi-graph-up-arrow"></i> SEO Ayarları</a>
+    <a class="ry-cat-chip @(active == "seopages" ? "active" : "")" asp-area="Admin" asp-controller="SeoSettings" asp-action="Pages"><i class="bi bi-file-earmark-text"></i> Sayfa SEO</a>
+    <a class="ry-cat-chip @(active == "faq" ? "active" : "")" asp-area="Admin" asp-controller="Faq" asp-action="Index"><i class="bi bi-question-circle"></i> SSS</a>
+</div>

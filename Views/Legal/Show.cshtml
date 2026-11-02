@@ -1,0 +1,25 @@
+@model RestoranYonetim.Controllers.LegalPageView
+@{
+    ViewData["Title"] = Model.Title;
+    Layout = "_PublicLayout";
+}
+
+<div class="py-page-hero py-legal-hero">
+    <div class="container">
+        <div class="py-eyebrow justify-content-center">@T["Yasal Bilgiler"]</div>
+        <h1 class="py-serif fw-bold">@Model.Title</h1>
+    </div>
+</div>
+
+<div class="py-section">
+    <div class="container" style="max-width:820px;">
+        @if (Model.TurkishOnly)
+        {
+            <p class="alert alert-secondary small" lang="en">This page is available in Turkish only.</p>
+        }
+        <article class="py-legal-body" lang="@(Model.TurkishOnly ? "tr" : SiteLanguages.Current)">
+            @Html.Raw(Model.Html)
+        </article>
+        <p class="text-muted small mt-5 mb-0">@T["Son güncelleme:"] @Model.UpdatedAt.ToString("d")</p>
+    </div>
+</div>

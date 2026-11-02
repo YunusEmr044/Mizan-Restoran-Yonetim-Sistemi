@@ -1,0 +1,10 @@
+@model Area
+@{
+    ViewData["Title"] = "Alan Sil";
+}
+<h2 class="mb-4">Alanı Sil</h2>
+<p>"<strong>@Model.Name</strong>" (@(Model.Branch?.Name)) alanını silmek istediğinize emin misiniz? Bağlı masalar varsa silme işlemi başarısız olabilir.</p>
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+    <button type="submit" class="btn btn-danger">Evet, Sil</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>

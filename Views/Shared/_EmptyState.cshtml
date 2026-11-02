@@ -1,0 +1,9 @@
+@model RestoranYonetim.Models.EmptyStateModel
+<div class="ry-empty-state">
+    <i class="bi @Model.Icon"></i>
+    <p>@Model.Message</p>
+    @if (Model.ActionText != null && Model.ActionUrl != null)
+    {
+        <a href="@Model.ActionUrl" class="btn btn-primary btn-sm">@Model.ActionText</a>
+    }
+</div>

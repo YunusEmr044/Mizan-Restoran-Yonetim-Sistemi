@@ -1,0 +1,60 @@
+@model List<CashShift>
+@{
+    ViewData["Title"] = "Kasa Raporu";
+    ViewBag.ReportsActive = "kasa";
+    DateTime? start = ViewBag.Start;
+    DateTime? end = ViewBag.End;
+}
+<div class="mb-3">
+    <h2 class="mb-0">Raporlar</h2>
+    <p class="text-muted small mb-0">Kasa Raporu — Vardiya Geçmişi</p>
+</div>
+
+@await Html.PartialAsync("_ReportsSubNav")
+
+<form method="get" class="row g-2 align-items-end mb-4">
+    <div class="col-auto">
+        <label class="form-label small">Başlangıç</label>
+        <input type="date" name="start" class="form-control" value="@(start?.ToString("yyyy-MM-dd"))" />
+    </div>
+    <div class="col-auto">
+        <label class="form-label small">Bitiş</label>
+        <input type="date" name="end" class="form-control" value="@(end?.ToString("yyyy-MM-dd"))" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Filtrele</button>
+    </div>
+    <div class="col-auto">
+        <a asp-action="Kasa" class="btn btn-outline-secondary">Temizle (Son 60)</a>
+    </div>
+    <div class="col-auto">
+        <a asp-action="KasaExport" asp-route-start="@(start?.ToString("yyyy-MM-dd"))" asp-route-end="@(end?.ToString("yyyy-MM-dd"))" class="btn btn-outline-secondary"><i class="bi bi-download"></i> CSV İndir</a>
+    </div>
+</form>
+<p class="text-muted small">@(start.HasValue || end.HasValue ? "Seçilen tarih aralığındaki tüm vardiyalar gösteriliyor." : "Tarih filtresi uygulanmadığında en son 60 vardiya gösterilir.")</p>
+
+<div class="table-responsive">
+<table class="table align-middle">
+    <thead><tr><th>Açılış</th><th>Kapanış</th><th>Açan</th><th>Kapatan</th><th>Beklenen</th><th>Sayılan</th><th>Fark</th></tr></thead>
+    <tbody>
+    @foreach (var s in Model)
+    {
+        <tr>
+            <td>@s.OpenedAt.ToString("dd.MM.yyyy HH:mm")</td>
+            <td>@(s.ClosedAt.HasValue ? s.ClosedAt.Value.ToString("dd.MM.yyyy HH:mm") : "Açık")</td>
+            <td>@s.OpenedByUserName</td>
+            <td>@s.ClosedByUserName</td>
+            <td>@s.ExpectedCash.ToString("0.00") ₺</td>
+            <td>@(s.ClosingCountedAmount.HasValue ? s.ClosingCountedAmount.Value.ToString("0.00") + " ₺" : "—")</td>
+            <td class="@(s.CashDifference.HasValue && s.CashDifference != 0 ? (s.CashDifference < 0 ? "text-danger" : "text-success") : "")">
+                @(s.CashDifference.HasValue ? s.CashDifference.Value.ToString("0.00") + " ₺" : "—")
+            </td>
+        </tr>
+    }
+    @if (!Model.Any())
+    {
+        <tr><td colspan="7" class="text-muted">Henüz vardiya kaydı yok.</td></tr>
+    }
+    </tbody>
+</table>
+</div>

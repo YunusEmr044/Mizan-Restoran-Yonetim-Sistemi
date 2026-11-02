@@ -1,0 +1,25 @@
+@model RestaurantTable
+@{
+    ViewData["Title"] = "Masa Düzenle";
+}
+<h2 class="mb-4">Masa Düzenle</h2>
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="AreaId" class="form-label">Alan</label>
+        <select asp-for="AreaId" class="form-select" asp-items="@(new SelectList(ViewBag.Areas, "Id", "Name"))">
+            <option value="">-- Alan seçin --</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Status" class="form-label"></label>
+        <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<TableStatus>()"></select>
+    </div>
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>

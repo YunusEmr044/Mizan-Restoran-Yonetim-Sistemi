@@ -1,0 +1,58 @@
+@model Reservation
+@{
+    ViewData["Title"] = T["Rezervasyon"];
+    Layout = "_PublicLayout";
+    ViewData["HideMobileCta"] = true;
+}
+
+<div class="py-page-hero py-res-hero">
+    <div class="container">
+        <div class="py-eyebrow justify-content-center">@T["Yeriniz Ayrılsın"]</div>
+        <h1 class="py-serif fw-bold">@T["Rezervasyon"]</h1>
+        <p class="text-white-50 mb-0">@T["Formu doldurun, sizi ağırlamaktan mutluluk duyarız."]</p>
+    </div>
+</div>
+
+<div class="py-section">
+    <div class="container" style="max-width: 620px;">
+        <div class="py-form-card py-res-card py-reveal">
+            <form asp-action="Rezervasyon" method="post">
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label"><i class="bi bi-person me-1"></i>@T["Ad Soyad"]</label>
+                    <input asp-for="Name" class="form-control" placeholder="@T["Adınız Soyadınız"]" />
+                </div>
+                <div class="row">
+                    <div class="col-md mb-3">
+                        <label asp-for="Phone" class="form-label"><i class="bi bi-telephone me-1"></i>@T["Telefon"]</label>
+                        <input asp-for="Phone" class="form-control" placeholder="05xx xxx xx xx" />
+                    </div>
+                    <div class="col-md mb-3">
+                        <label asp-for="Email" class="form-label"><i class="bi bi-envelope me-1"></i>@T["E-posta"]</label>
+                        <input asp-for="Email" class="form-control" placeholder="@T["ornek@eposta.com"]" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col mb-3">
+                        <label asp-for="Date" class="form-label"><i class="bi bi-calendar3 me-1"></i>@T["Tarih"]</label>
+                        <input asp-for="Date" class="form-control" type="date" />
+                    </div>
+                    <div class="col mb-3">
+                        <label asp-for="Time" class="form-label"><i class="bi bi-clock me-1"></i>@T["Saat"]</label>
+                        <input asp-for="Time" class="form-control" type="time" />
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="PartySize" class="form-label"><i class="bi bi-people me-1"></i>@T["Kişi Sayısı"]</label>
+                    <input asp-for="PartySize" class="form-control" type="number" min="1" />
+                </div>
+                <div class="mb-4">
+                    <label asp-for="Note" class="form-label"><i class="bi bi-chat-left-text me-1"></i>@T["Not"]</label>
+                    <textarea asp-for="Note" class="form-control" rows="2" placeholder="@T["Özel bir isteğiniz var mı?"]"></textarea>
+                </div>
+                <button type="submit" class="btn btn-py-gold w-100 btn-lg"><i class="bi bi-send-check me-2"></i>@T["Rezervasyon Talebi Gönder"]</button>
+                <p class="small text-muted text-center mt-3 mb-0">@T["Kişisel verileriniz"] <a href="~/kvkk" class="text-decoration-underline">@T["KVKK Aydınlatma Metni"]</a> @T["kapsamında işlenir."]</p>
+            </form>
+        </div>
+    </div>
+</div>

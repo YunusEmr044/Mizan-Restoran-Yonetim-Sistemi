@@ -1,0 +1,35 @@
+@model List<GalleryImage>
+@{
+    ViewData["Title"] = T["Galeri"];
+    Layout = "_PublicLayout";
+}
+
+<div class="py-page-hero py-gal-hero">
+    <div class="container">
+        <div class="py-eyebrow justify-content-center">@T["Bir Bakış"]</div>
+        <h1 class="py-serif fw-bold">@T["Galeri"]</h1>
+    </div>
+</div>
+
+<div class="py-section">
+    <div class="container">
+        @if (!Model.Any())
+        {
+            <p class="text-muted text-center">@T["Henüz galeri fotoğrafı eklenmedi."]</p>
+        }
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
+            @foreach (var img in Model)
+            {
+                <div class="col py-reveal">
+                    <div class="py-gal-tile">
+                        <img src="@img.ImageUrl" alt="@img.Caption" loading="lazy" />
+                        @if (!string.IsNullOrEmpty(img.Caption))
+                        {
+                            <div class="py-gal-caption">@img.Caption</div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,60 @@
+@model List<KitchenPrinter>
+@{
+    ViewData["Title"] = "Yazıcılar";
+}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-0">Yazıcılar</h2>
+        <p class="text-muted small mb-0">Mutfak ve bar fişleri, şube ve bölüme göre bu yazıcılardan çıkar.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">+ Yeni Yazıcı</a>
+</div>
+
+@if (ViewBag.ModuleEnabled != true)
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-1"></i>Mutfak Yazıcısı modülü kapalı; sipariş fişleri basılmaz. Açmak için <a asp-controller="Features" asp-action="Index">Özellikler ve İzinler</a> sayfasını kullanın. Test fişi modül kapalıyken de denenebilir.
+    </div>
+}
+
+<div class="table-responsive">
+    <table class="table align-middle">
+        <thead><tr><th>Ad</th><th>Şube</th><th>Bölüm</th><th>Bağlantı</th><th>Kâğıt</th><th>Durum</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var p in Model)
+        {
+            <tr class="@(p.IsActive ? "" : "text-muted")">
+                <td class="fw-semibold">@p.Name</td>
+                <td>@p.Branch?.Name</td>
+                <td>@p.Department.Label()</td>
+                <td>@p.Connection.Label()@(p.Connection == PrinterConnection.Ag ? $" · {p.Host}:{p.Port}" : "")</td>
+                <td>@p.PaperWidthMm mm</td>
+                <td><span class="badge @(p.IsActive ? "bg-success" : "bg-secondary")">@(p.IsActive ? "Aktif" : "Pasif")</span></td>
+                <td class="text-end">
+                    <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
+                        <form asp-action="Test" asp-route-id="@p.Id" method="post" class="d-inline"><button class="btn btn-sm btn-outline-dark"><i class="bi bi-printer me-1"></i>Test fişi bas</button></form>
+                        @if (p.Connection == PrinterConnection.Tarayici)
+                        {
+                            <a class="btn btn-sm btn-outline-secondary" asp-area="" asp-controller="Yazici" asp-action="Istasyon" asp-route-id="@p.Id" target="_blank" rel="noopener">İstasyonu aç</a>
+                        }
+                        <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary">Düzenle</a>
+                        <form asp-action="ToggleActive" asp-route-id="@p.Id" method="post" class="d-inline"><button class="btn btn-sm btn-outline-@(p.IsActive ? "danger" : "success")">@(p.IsActive ? "Pasife al" : "Aktif et")</button></form>
+                    </div>
+                </td>
+            </tr>
+        }
+        @if (!Model.Any())
+        {
+            <tr><td colspan="7"><partial name="_EmptyState" model='new EmptyStateModel("bi-printer", "Henüz yazıcı eklenmemiş.", "Yeni ekle", Url.Action("Create"))' /></td></tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+<div class="card mt-4">
+    <div class="card-body small">
+        <h6 class="card-title">Kurulum</h6>
+        <p class="mb-1"><strong>Ağ yazıcısı:</strong> ESC/POS destekli termal yazıcının IP adresini girin (genellikle port 9100). Sunucu restoran ağında çalışmalıdır.</p>
+        <p class="mb-0"><strong>Tarayıcı yazıcısı:</strong> Mutfaktaki cihazda "İstasyonu aç" sayfasını açık tutun. Yazdırma penceresi açılmadan basmak için tarayıcıyı <code>--kiosk-printing</code> ayarıyla başlatın; ayrıntılar README'de.</p>
+    </div>
+</div>

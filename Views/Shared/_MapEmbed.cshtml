@@ -1,0 +1,15 @@
+@model RestoranYonetim.Models.SiteContent
+@* Google haritası ziyaretçi istemeden yüklenmez (üçüncü taraf çerez/istek); tıklanınca map-embed.js iframe'i ekler. *@
+<div class="py-map-placeholder" data-map-src="@Model.MapEmbedUrl">
+    <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
+    @if (!string.IsNullOrEmpty(Model.ContactAddress))
+    {
+        <p class="py-map-address">@Model.ContactAddress</p>
+    }
+    <button type="button" class="btn btn-py-gold btn-sm" data-map-load>@T["Haritayı göster"]</button>
+    <small>@T["Harita Google tarafından yüklenir."]</small>
+    @if (!string.IsNullOrEmpty(Model.ContactAddress))
+    {
+        <a class="py-map-external" href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString(Model.ContactAddress)" target="_blank" rel="noopener">@T["Google Haritalar'da aç"] <i class="bi bi-box-arrow-up-right"></i></a>
+    }
+</div>

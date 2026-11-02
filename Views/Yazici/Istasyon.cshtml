@@ -1,0 +1,25 @@
+@model KitchenPrinter
+@{
+    ViewData["Title"] = "Yazıcı İstasyonu";
+}
+<h2 class="mb-1"><i class="bi bi-printer me-2"></i>Yazıcı İstasyonu</h2>
+<p class="text-muted mb-3">@Model.Name · @Model.Branch?.Name · @Model.Department.Label() · @Model.PaperWidthMm mm</p>
+
+<div class="alert alert-secondary d-flex align-items-center gap-2" id="ryStationStatus" role="status">
+    <i class="bi bi-hourglass-split"></i><span>Bağlanıyor…</span>
+</div>
+<div class="alert alert-warning small">
+    Bu sayfayı yalnızca <strong>bir sekmede</strong> açık tutun; iki sekmede açıksa fişler iki kez basılır.
+    Yazdırma penceresi açılmadan basmak için tarayıcıyı <code>--kiosk-printing</code> ayarıyla başlatın (README'de anlatılıyor).
+</div>
+
+<h5 class="mt-4">Son basılanlar</h5>
+<ul class="list-group" id="ryStationLog">
+    <li class="list-group-item text-muted small" data-empty>Henüz fiş gelmedi.</li>
+</ul>
+
+<form id="ryStationAck" method="post" asp-action="Basildi" hidden></form>
+
+@section Scripts {
+    <script src="~/js/print-station.js" asp-append-version="true"></script>
+}

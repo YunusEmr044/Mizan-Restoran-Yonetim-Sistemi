@@ -1,0 +1,72 @@
+@model LegalPage
+@{
+    ViewData["Title"] = "Yasal Sayfayı Düzenle";
+}
+<style>
+    .ry-legal-editor { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .85rem; min-height: 520px; }
+    .ry-legal-preview { min-height: 520px; max-height: 70vh; overflow-y: auto; background: var(--ry-card-bg); border: 1px solid var(--ry-border); border-radius: var(--ry-radius); padding: 1.25rem 1.5rem; line-height: 1.7; }
+    .ry-legal-preview h2 { font-size: 1.15rem; margin-top: 1.5rem; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-0">@Model.Title</h2>
+        <p class="text-muted small mb-0">Adres: <code>/@Model.Slug</code></p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Listeye dön</a>
+</div>
+
+<div class="alert alert-warning small"><i class="bi bi-exclamation-triangle me-1"></i>Bu metinler başlangıç şablonudur. Yayına almadan önce bir hukukçuya kontrol ettirmeniz önerilir.</div>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" id="legalForm">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="row g-3 mb-3">
+        <div class="col-md-8">
+            <label asp-for="Title" class="form-label"></label>
+            <input asp-for="Title" class="form-control" />
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <div class="form-check">
+                <input asp-for="IsPublished" class="form-check-input" />
+                <label asp-for="IsPublished" class="form-check-label"></label>
+            </div>
+        </div>
+    </div>
+
+    <p class="small text-muted mb-2">
+        Biçimlendirme: <code>## Başlık</code>, <code>**kalın**</code>, <code>- liste</code>, <code>[metin](/adres)</code>.
+        Otomatik doldurulan alanlar: <code>{RestoranAdi}</code> <code>{Adres}</code> <code>{Eposta}</code> <code>{Telefon}</code> <code>{SiteAdresi}</code> (Site İçeriği'nden gelir).
+    </p>
+    <div class="row g-3 mb-3">
+        <div class="col-lg-6">
+            <label asp-for="Body" class="form-label"></label>
+            <textarea asp-for="Body" class="form-control ry-legal-editor" id="legalBody" rows="24"></textarea>
+        </div>
+        <div class="col-lg-6">
+            <label class="form-label">Önizleme</label>
+            <div class="ry-legal-preview" id="legalPreview" aria-live="polite"></div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>
+
+<script>
+    (function () {
+        const body = document.getElementById('legalBody');
+        const preview = document.getElementById('legalPreview');
+        const token = document.querySelector('#legalForm input[name="__RequestVerificationToken"]').value;
+        const url = '@Url.Action("Preview")';
+        let timer;
+
+        async function render() {
+            const data = new URLSearchParams({ body: body.value, __RequestVerificationToken: token });
+            const response = await fetch(url, { method: 'POST', body: data });
+            preview.innerHTML = response.ok ? await response.text() : '<p class="text-danger">Önizleme yüklenemedi.</p>';
+        }
+
+        body.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(render, 400); });
+        render();
+    })();
+</script>

@@ -1,0 +1,45 @@
+@model RestoranYonetim.ViewComponents.AdminNavViewModel
+@if (Model.CanPreview)
+{
+    <div class="ry-nav-preview">
+        <label for="ryNavPreview"><i class="bi bi-eye me-1"></i>Menüyü şu gözle göster</label>
+        <select id="ryNavPreview" class="form-select form-select-sm" data-cookie="@NavPreview.CookieName">
+            <option value="">Kendim (Süper Admin)</option>
+            @foreach (var role in RolePermissions.AllRoles.Where(r => r != RolePermissions.SuperAdmin))
+            {
+                <option value="@role" selected="@(role == Model.PreviewRole)">@RolePermissions.DisplayName(role)</option>
+            }
+        </select>
+        @if (Model.PreviewRole != null)
+        {
+            <div class="ry-nav-preview-note">Önizleme: <strong>@RolePermissions.DisplayName(Model.PreviewRole)</strong> bu menüyü görür. Yetkilerin değişmedi.</div>
+        }
+    </div>
+}
+@if (Model.Groups.Count > 0)
+{
+    <div class="ry-nav-search">
+        <i class="bi bi-search"></i>
+        <input type="search" id="ryNavSearch" placeholder="Menüde ara… (Ctrl+K)" aria-label="Menüde ara" autocomplete="off" />
+    </div>
+    <nav class="ry-nav" id="ryNav" aria-label="Yönetim menüsü">
+        @foreach (var group in Model.Groups)
+        {
+            var isActiveGroup = Model.ActiveGroup?.Key == group.Key;
+            <div class="ry-nav-group" data-key="@group.Key" data-active="@(isActiveGroup ? "1" : null)">
+                <button type="button" class="ry-nav-section" aria-expanded="true" aria-controls="ry-nav-@group.Key">
+                    <span>@group.Title</span><i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="ry-nav-items" id="ry-nav-@group.Key">
+                    @foreach (var item in group.Items)
+                    {
+                        var isActive = Model.ActiveItem == item;
+                        <a class="ry-nav-link @(isActive ? "active" : "")" aria-current="@(isActive ? "page" : null)"
+                           asp-area="@item.Area" asp-controller="@item.Controller" asp-action="@item.Action"><i class="bi @item.Icon"></i>@item.Title</a>
+                    }
+                </div>
+            </div>
+        }
+        <div class="ry-nav-empty" hidden>Sonuç yok</div>
+    </nav>
+}

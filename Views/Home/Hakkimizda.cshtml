@@ -1,0 +1,40 @@
+@model SiteContent
+@{
+    ViewData["Title"] = T["Hakkımızda"];
+    Layout = "_PublicLayout";
+}
+
+<div class="py-page-hero py-about-hero">
+    <div class="container">
+        <div class="py-eyebrow justify-content-center">@T["Hikayemiz"]</div>
+        <h1 class="py-serif fw-bold">@Model.AboutTitle</h1>
+    </div>
+</div>
+
+<div class="py-section">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            @if (!string.IsNullOrEmpty(Model.AboutImageUrl))
+            {
+                <div class="col-lg-5 py-reveal">
+                    <div class="py-about-frame">
+                        <img src="@Model.AboutImageUrl" alt="@Model.AboutTitle" />
+                    </div>
+                </div>
+            }
+            <div class="col-lg py-reveal py-delay-1">
+                <div class="py-eyebrow">@T["Bizi Tanıyın"]</div>
+                @if (!string.IsNullOrEmpty(Model.AboutText))
+                {
+                    <p class="fs-5" style="white-space: pre-line; color: #3a3025;">@Model.AboutText</p>
+                }
+                else
+                {
+                    <p class="text-muted">@T["İçerik yakında eklenecek."]</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("_Testimonials", (List<Feedback>)ViewBag.Testimonials)

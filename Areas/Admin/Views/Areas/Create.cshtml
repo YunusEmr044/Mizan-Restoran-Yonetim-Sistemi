@@ -1,0 +1,20 @@
+@model Area
+@{
+    ViewData["Title"] = "Yeni Alan";
+}
+<h2 class="mb-4">Yeni Alan</h2>
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="BranchId" class="form-label">Şube</label>
+        <select asp-for="BranchId" class="form-select" asp-items="@(new SelectList(ViewBag.Branches, "Id", "Name"))">
+            <option value="">-- Şube seçin --</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" placeholder="Örn: Salon, Bahçe, Teras" />
+    </div>
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+</form>

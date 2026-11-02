@@ -1,0 +1,67 @@
+@using RestoranYonetim.Services.Fiscal
+@model List<FiscalReceipt>
+@* Kesilmemiş mali fişler: tekrar dene, cihazdaki fiş numarasını gir ya da gerekçeyle fişsiz kapat. *@
+@{
+    var canOperate = User.HasClaim(Permissions.ClaimType, Permissions.Cash.Operate);
+    var canClose = User.HasClaim(Permissions.ClaimType, Permissions.Cash.ApproveRefund);
+}
+@if (Model.Any())
+{
+    <h5 class="mb-2"><i class="bi bi-receipt-cutoff me-1"></i>Mali fiş bekleyenler</h5>
+    <div class="mb-4 d-flex flex-column gap-2">
+        @foreach (var r in Model)
+        {
+            var badge = r.Status switch
+            {
+                FiscalReceiptStatus.Belirsiz => "bg-warning text-dark",
+                FiscalReceiptStatus.Hata => "bg-danger",
+                _ => "bg-secondary"
+            };
+            <div class="card">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                        <div>
+                            <strong>@(r.Adisyon == null ? $"Adisyon #{r.AdisyonId}" : AdisyonLabel.For(r.Adisyon))</strong>
+                            <span class="text-muted small ms-1">#@r.AdisyonId · @r.Total.ToString("0.00") ₺ · @r.CreatedAt.ToString("HH:mm")</span>
+                            <span class="badge @badge ms-1">@r.Status.Label()</span>
+                            @if (r.IsSimulated) { <span class="badge bg-info text-dark ms-1">SİMÜLATÖR</span> }
+                            @if (!string.IsNullOrWhiteSpace(r.LastError)) { <div class="small text-danger mt-1">@r.LastError</div> }
+                            @if (r.Status == FiscalReceiptStatus.Belirsiz)
+                            {
+                                <div class="small mt-1">Cihaz yanıt vermedi; fiş basılmış olabilir. Cihazda bu adisyonun fişi çıktıysa numarasını girin, çıkmadıysa onaylayıp tekrar deneyin.</div>
+                            }
+                        </div>
+                        @if (canOperate)
+                        {
+                            <div class="d-flex flex-wrap gap-2 align-items-start">
+                                @if (r.Status != FiscalReceiptStatus.ElleGirilecek)
+                                {
+                                    <form asp-action="RetryReceipt" asp-route-receiptId="@r.Id" method="post" class="d-flex align-items-center gap-2">
+                                        @if (r.Status == FiscalReceiptStatus.Belirsiz)
+                                        {
+                                            <label class="small form-check mb-0"><input type="checkbox" class="form-check-input" name="confirmedNotPrinted" value="true" required /> Cihazda fiş çıkmadı</label>
+                                        }
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">Tekrar dene</button>
+                                    </form>
+                                }
+                                <form asp-action="EnterReceiptNumber" asp-route-receiptId="@r.Id" method="post" class="d-flex gap-1">
+                                    <input name="receiptNo" class="form-control form-control-sm" placeholder="Fiş no" maxlength="@FiscalReceiptRules.ReceiptNoMax" required style="width:7rem" aria-label="Fiş numarası" />
+                                    <input name="zNo" class="form-control form-control-sm" placeholder="Z no" maxlength="@FiscalReceiptRules.ZNoMax" style="width:5rem" aria-label="Z numarası" />
+                                    <button type="submit" class="btn btn-sm btn-success">Kaydet</button>
+                                </form>
+                                @if (canClose)
+                                {
+                                    <form asp-action="CloseWithoutReceipt" asp-route-receiptId="@r.Id" method="post" class="d-flex gap-1"
+                                          data-confirm="Bu adisyon için mali fiş kaydı fişsiz kapatılacak." data-confirm-title="Fişsiz kapatılsın mı?" data-confirm-ok="Kapat" data-confirm-danger>
+                                        <input name="reason" class="form-control form-control-sm" placeholder="Gerekçe" maxlength="300" required style="width:10rem" aria-label="Fişsiz kapatma gerekçesi" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Fişsiz kapat</button>
+                                    </form>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

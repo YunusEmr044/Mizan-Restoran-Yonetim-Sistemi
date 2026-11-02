@@ -1,0 +1,43 @@
+@model Feedback
+@{
+    ViewData["Title"] = T["Değerlendirme"];
+    Layout = "_PublicLayout";
+}
+
+<div class="py-page-hero py-fb-hero">
+    <div class="container">
+        <div class="py-eyebrow justify-content-center">@T["Fikriniz Bizim İçin Değerli"]</div>
+        <h1 class="py-serif fw-bold">@T["Değerlendirme"]</h1>
+    </div>
+</div>
+
+<div class="py-section">
+    <div class="container" style="max-width: 560px;">
+        <div class="py-form-card py-fb-card py-reveal">
+            <form asp-action="Degerlendirme" method="post">
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                <input type="hidden" asp-for="TableId" />
+                <div class="mb-4 text-center">
+                    <label class="form-label d-block">@T["Puanınız"]</label>
+                    <div class="py-star-input">
+                        @for (var i = 5; i >= 1; i--)
+                        {
+                            <input type="radio" id="star@(i)" name="Rating" value="@i" @(Model.Rating == i ? "checked" : "") />
+                            <label for="star@(i)" title="@T["{0} yıldız", i]"><i class="bi bi-star-fill"></i></label>
+                        }
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label">@T["Ad (isteğe bağlı)"]</label>
+                    <input asp-for="Name" class="form-control" />
+                </div>
+                <div class="mb-4">
+                    <label asp-for="Comment" class="form-label">@T["Yorumunuz"]</label>
+                    <textarea asp-for="Comment" class="form-control" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-py-gold w-100 btn-lg"><i class="bi bi-send-check me-2"></i>@T["Gönder"]</button>
+                <p class="small text-muted text-center mt-3 mb-0">@T["Kişisel verileriniz"] <a href="~/kvkk" class="text-decoration-underline">@T["KVKK Aydınlatma Metni"]</a> @T["kapsamında işlenir."]</p>
+            </form>
+        </div>
+    </div>
+</div>

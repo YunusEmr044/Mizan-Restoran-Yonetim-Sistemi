@@ -1,0 +1,64 @@
+@model HeroSlide
+@{
+    ViewData["Title"] = "Yeni Hero Slaytı";
+}
+<h2 class="mb-4">Yeni Hero Slaytı</h2>
+<form asp-action="HeroCreate" method="post" enctype="multipart/form-data">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Subtitle" class="form-label"></label>
+        <input asp-for="Subtitle" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label class="form-label">Görsel (Masaüstü)</label>
+            <input type="file" name="imageFile" class="form-control" accept="image/*" />
+        </div>
+        <div class="col-md mb-3">
+            <label class="form-label">Görsel (Mobil, opsiyonel)</label>
+            <input type="file" name="mobileImageFile" class="form-control" accept="image/*" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label asp-for="PrimaryButtonText" class="form-label"></label>
+            <input asp-for="PrimaryButtonText" class="form-control" placeholder="Menüyü Keşfet" />
+        </div>
+        <div class="col-md mb-3">
+            <label asp-for="PrimaryButtonUrl" class="form-label"></label>
+            <input asp-for="PrimaryButtonUrl" class="form-control" placeholder="/Home/Menu" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label asp-for="SecondaryButtonText" class="form-label"></label>
+            <input asp-for="SecondaryButtonText" class="form-control" placeholder="Rezervasyon Yap" />
+        </div>
+        <div class="col-md mb-3">
+            <label asp-for="SecondaryButtonUrl" class="form-label"></label>
+            <input asp-for="SecondaryButtonUrl" class="form-control" placeholder="/Home/Rezervasyon" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md mb-3">
+            <label asp-for="DisplayOrder" class="form-label"></label>
+            <input asp-for="DisplayOrder" class="form-control" />
+        </div>
+        <div class="col-md mb-3 d-flex align-items-end">
+            <div class="form-check">
+                <input asp-for="IsActive" class="form-check-input" checked />
+                <label asp-for="IsActive" class="form-check-label"></label>
+            </div>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+    <a asp-action="Hero" class="btn btn-outline-secondary">Vazgeç</a>
+</form>

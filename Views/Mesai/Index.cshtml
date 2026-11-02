@@ -1,0 +1,115 @@
+@model RestoranYonetim.Controllers.MyWorkView
+@{
+    ViewData["Title"] = "Mesaim";
+    var tr = System.Globalization.CultureInfo.GetCultureInfo("tr-TR");
+}
+<h2 class="mb-3">Mesaim</h2>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-5">
+        <div class="card h-100"><div class="card-body text-center py-4">
+            @if (Model.OpenEntry is { } open)
+            {
+                <div class="text-muted small">İşe başlama</div>
+                <div class="fs-2 fw-semibold">@open.ClockIn.ToString("HH:mm")</div>
+                <div class="text-muted small mb-3">@open.ClockIn.ToString("d MMMM dddd", tr)</div>
+                <form asp-action="ClockOut" method="post" data-confirm="Çıkış saatiniz kaydedilsin mi?" data-confirm-ok="Çıkış yap">
+                    <button class="btn btn-lg btn-dark px-5"><i class="bi bi-box-arrow-right me-1"></i>Çıkış yap</button>
+                </form>
+            }
+            else
+            {
+                <div class="text-muted small mb-2">Şu an mesaide değilsiniz.</div>
+                <form asp-action="ClockIn" method="post">
+                    <button class="btn btn-lg btn-primary px-5"><i class="bi bi-play-circle me-1"></i>İşe başla</button>
+                </form>
+            }
+        </div></div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card h-100"><div class="card-body">
+            <h6>Vardiyalarım (bu hafta ve gelecek hafta)</h6>
+            @if (Model.Shifts.Any())
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var s in Model.Shifts)
+                    {
+                        <li class="list-group-item d-flex justify-content-between @(s.Date == DateTime.Today ? "fw-semibold" : "")">
+                            <span>@s.Date.ToString("ddd d MMM", tr)@(s.Date == DateTime.Today ? " (bugün)" : "")</span>
+                            <span>@s.Start.ToString(@"hh\:mm")–@s.End.ToString(@"hh\:mm")@(string.IsNullOrEmpty(s.Note) ? "" : " · " + s.Note)</span>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p class="text-muted small mb-0">Size atanmış vardiya yok.</p>
+            }
+        </div></div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card"><div class="card-body">
+            <h6>İzin iste</h6>
+            <form asp-action="RequestLeave" method="post" class="row g-2">
+                <div class="col-6"><label class="form-label small" for="ryLs">Başlangıç</label><input class="form-control" id="ryLs" type="date" name="startDate" required value="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" /></div>
+                <div class="col-6"><label class="form-label small" for="ryLe">Bitiş</label><input class="form-control" id="ryLe" type="date" name="endDate" required value="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" /></div>
+                <div class="col-12">
+                    <label class="form-label small" for="ryLt">Tür</label>
+                    <select class="form-select" id="ryLt" name="type">
+                        @foreach (var t in Enum.GetValues<LeaveType>()) { <option value="@t">@t.Label()</option> }
+                    </select>
+                </div>
+                <div class="col-12"><label class="form-label small" for="ryLr">Açıklama (isteğe bağlı)</label><input class="form-control" id="ryLr" name="reason" maxlength="300" /></div>
+                <div class="col-12"><button class="btn btn-primary w-100">Talep gönder</button></div>
+            </form>
+        </div></div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card mb-3"><div class="card-body">
+            <h6>İzin taleplerim</h6>
+            @if (Model.Leaves.Any())
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var l in Model.Leaves)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                            <span>@l.StartDate.ToString("dd.MM.yyyy")@(l.EndDate != l.StartDate ? " – " + l.EndDate.ToString("dd.MM.yyyy") : "") · @l.Type.Label()</span>
+                            <span class="d-flex align-items-center gap-2">
+                                <span class="badge @(l.Status switch { LeaveStatus.Onaylandi => "bg-success", LeaveStatus.Reddedildi => "bg-danger", LeaveStatus.Beklemede => "bg-warning text-dark", _ => "bg-secondary" })">@l.Status.Label()</span>
+                                @if (l.Status == LeaveStatus.Beklemede)
+                                {
+                                    <form asp-action="WithdrawLeave" asp-route-id="@l.Id" method="post" data-confirm="Talep geri çekilsin mi?" data-confirm-ok="Geri çek"><button class="btn btn-sm btn-link p-0">Geri çek</button></form>
+                                }
+                            </span>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p class="text-muted small mb-0">Henüz izin talebiniz yok.</p>
+            }
+        </div></div>
+        <div class="card"><div class="card-body">
+            <h6>Son mesai kayıtlarım</h6>
+            @if (Model.Recent.Any())
+            {
+                <table class="table table-sm mb-0">
+                    <tbody>
+                    @foreach (var e in Model.Recent)
+                    {
+                        <tr><td>@e.ClockIn.ToString("dd.MM ddd", tr)</td><td>@e.ClockIn.ToString("HH:mm") – @(e.ClockOut?.ToString("HH:mm") ?? "…")</td><td class="text-end">@(e.ClockOut is { } c ? (c - e.ClockIn).TotalHours.ToString("0.##") + " sa" : "")</td></tr>
+                    }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p class="text-muted small mb-0">Henüz kayıt yok.</p>
+            }
+        </div></div>
+    </div>
+</div>
